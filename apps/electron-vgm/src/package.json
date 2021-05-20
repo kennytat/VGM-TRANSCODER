@@ -1,0 +1,49 @@
+{
+  "name": "vgm",
+  "version": "1.0.0",
+  "description": "Vgm description.",
+  "main": "index.js",
+  "author": {
+    "name": "Your name",
+    "email": "name@company.com"
+  },
+  "homepage": "https://nstudio.io/xplat",
+  "repository": {
+    "url": "https://github.com/nstudio/xplat"
+  },
+  "license": "MIT",
+  "build": {
+    "appId": "com.company.vgm",
+    "productName": "Vgm",
+    "copyright": "Copyright © 2018-2019 vgm-converter",
+    "asar": false,
+    "npmRebuild": false,
+    "directories": {
+      "buildResources": "icons",
+      "output": "../electronvgm-packages"
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "icon.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "linux": {
+      "icon": "icon.png",
+      "target": [
+        "AppImage",
+        "deb",
+        "tar.gz"
+      ],
+      "synopsis": "Vgm",
+      "category": "Development"
+    },
+    "nsis": {
+      "createDesktopShortcut": "always",
+      "installerIcon": "icon.ico",
+      "artifactName": "Vgm-Setup-${version}.${ext}"
+    }
+  }
+}

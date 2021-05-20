@@ -15,7 +15,24 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@vgm-converter/api-interfaces": ["libs/api-interfaces/src/index.ts"]
+      "@vgm-converter/api-interfaces": ["libs/api-interfaces/src/index.ts"],
+      "@vgm-converter/xplat/core": ["libs/xplat/core/src/index.ts"],
+      "@vgm-converter/xplat/features": ["libs/xplat/features/src/index.ts"],
+      "@vgm-converter/xplat/utils": ["libs/xplat/utils/src/index.ts"],
+      "@vgm-converter/xplat/ionic/core": ["libs/xplat/ionic/core/src/index.ts"],
+      "@vgm-converter/xplat/ionic/features": [
+        "libs/xplat/ionic/features/src/index.ts"
+      ],
+      "@vgm-converter/xplat/web/core": ["libs/xplat/web/core/src/index.ts"],
+      "@vgm-converter/xplat/web/features": [
+        "libs/xplat/web/features/src/index.ts"
+      ],
+      "@vgm-converter/xplat/environments": [
+        "libs/xplat/core/src/lib/environments/base/index.ts"
+      ],
+      "@vgm-converter/xplat/electron/core": [
+        "libs/xplat/electron/core/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]
