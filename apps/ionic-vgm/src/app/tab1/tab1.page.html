@@ -72,8 +72,8 @@
               <ion-label position="stacked">Browse Input Source</ion-label>
               <ion-grid>
                 <ion-row>
-                  <ion-col size="9"><ion-input value="" placeholder="./your input folder..." readonly class="path"></ion-input></ion-col>
-                  <ion-col size="3"><ion-button id="open-btn" expand="block" size="small" (click)="OpenDialog()">Browse</ion-button><div id="selected-file"></div></ion-col>
+                  <ion-col size="9"><ion-input value={{inputPath}} placeholder="./Select input source..." readonly class="path"></ion-input></ion-col>
+                  <ion-col size="3"><ion-button id="open-btn" expand="block" size="small" (click)="OpenDialog()">Browse</ion-button></ion-col>
                 </ion-row>
               </ion-grid>
             </ion-card-content>
@@ -83,16 +83,16 @@
               <ion-grid>
                 <ion-row>
                   <ion-col size="9">
-                    <ion-input value="" placeholder="./your output folder..." readonly class="path"></ion-input>
+                    <ion-input value={{outputPath}} placeholder="./Select ouput destination (leave blank if same as input)" readonly class="path"></ion-input>
                   </ion-col>
-                  <ion-col size="3"><ion-button expand="block" size="small">Browse</ion-button></ion-col>
+                  <ion-col size="3"><ion-button expand="block" size="small" (click)="SaveDialog()">Browse</ion-button></ion-col>
                 </ion-row>
               </ion-grid>
             
             </ion-card-content>
             <hr class="new">
             <ion-card-content>
-                <ion-button expand="block">START CONVERSION</ion-button>
+                <ion-button expand="block" (click)="Convert()">START CONVERSION</ion-button>
           
             </ion-card-content>
           </ion-card>

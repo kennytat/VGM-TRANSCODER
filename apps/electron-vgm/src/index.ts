@@ -1,6 +1,7 @@
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, dialog } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
+import { execFile } from 'child_process';
 
 let serve;
 const args = process.argv.slice(1);
@@ -55,6 +56,8 @@ function createWindow() {
 
     mainWindowSettings.width = 800;
     mainWindowSettings.height = 600;
+    mainWindowSettings.minWidth = 800;
+    mainWindowSettings.minHeight = 600;
   } else {
     mainWindowSettings.width = sizes.width;
     mainWindowSettings.height = sizes.height;
@@ -117,6 +120,79 @@ try {
     win.restore();
   });
 
+// Listen to renderer process and open dialog for input and output path
+  ipcMain.on('open-file-dialog', (event) => {
+    dialog.showOpenDialog({
+      title: 'Browse Video Folder',
+      properties: ['openDirectory']
+  }).then(result => {
+    event.sender.send('directory-path', result.filePaths)
+  }).catch(err => {console.log(err)});
+  })
+
+  ipcMain.on('save-dialog', (event) => {
+    dialog.showOpenDialog({
+      title: 'Browse Output Folder',
+      properties: ['openDirectory']
+  }).then(result => {
+    event.sender.send('saved-path', result.filePaths)
+  }).catch(err => {console.log(err)});
+  })
+
+  ipcMain.on('missing-path', (event, arg) => {
+    dialog.showErrorBox('Oops! Something went wrong!', 'Invalid input path or output path');
+  })
+
+  // Get input and output path from above and execute sh file
+  ipcMain.on('start-convert', (event, arg) => {
+    let inPath = arg[0]; 
+    let outPath;
+    if (arg[1] == "") {
+      outPath = arg[0];
+    } else {
+      outPath = arg[1];
+    }
+    
+    execFile('./ffmpeg-exec.sh', [inPath, outPath], (error, stdout, stderr) => {
+      if (error) {
+        dialog.showMessageBox(null, {
+          type: 'error',
+          title: 'Error',
+          message: 'Error converting files',
+          detail: 'None expected errors occured, please try again.',
+        }).then( result => {
+            console.log(result.response);
+            console.log(result.checkboxChecked);
+          }).catch(err => {console.log(err)});
+      } else if (stderr) {
+        dialog.showMessageBox(null, {
+          type: 'warning',
+          title: 'Stderror',
+          message: 'Error converting files',
+          detail: 'None expected standard errors occured, please try again.',
+        }).then( result => {
+            console.log(result.response);
+            console.log(result.checkboxChecked);
+          }).catch(err => {console.log(err)});
+        // event.sender.send('convert-message', stderr);
+        console.log(`Stdout: ${stderr}`);
+      } else {
+        dialog.showMessageBox(null, {
+          type: 'info',
+          title: 'Done',
+          message: 'Congratulations',
+          detail: 'Your files have been converted sucessfully',
+        }).then( result => {
+            console.log(result.response);
+            console.log(result.checkboxChecked);
+          }).catch(err => {console.log(err)});
+        // event.sender.send('convert-message', 'Your files have been converted sucessfully');
+        console.log(`Stdout: ${stdout}`);
+      }
+    });
+  })
+  
+
   app.on('activate', () => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
@@ -131,3 +207,6 @@ function quit() {
     app.quit();
   }
 }
+
+
+ 
