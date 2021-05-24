@@ -120,6 +120,7 @@ try {
     win.restore();
   });
 
+// Listen to renderer process and open dialog for input and output path
   ipcMain.on('open-file-dialog', (event) => {
     dialog.showOpenDialog({
       title: 'Browse Video Folder',
@@ -142,6 +143,7 @@ try {
     dialog.showErrorBox('Oops! Something went wrong!', 'Invalid input path or output path');
   })
 
+  // Get input and output path from above and execute sh file
   ipcMain.on('start-convert', (event, arg) => {
     let inPath = arg[0]; 
     let outPath;
@@ -162,12 +164,7 @@ try {
             console.log(result.response);
             console.log(result.checkboxChecked);
           }).catch(err => {console.log(err)});
-
-        // event.sender.send('convert-message', error);
-        console.log(`Error: ${error}`);
-      }  
-      if (stderr) {
-
+      } else if (stderr) {
         dialog.showMessageBox(null, {
           type: 'warning',
           title: 'Stderror',
@@ -179,9 +176,7 @@ try {
           }).catch(err => {console.log(err)});
         // event.sender.send('convert-message', stderr);
         console.log(`Stdout: ${stderr}`);
-      } 
-      else {
-
+      } else {
         dialog.showMessageBox(null, {
           type: 'info',
           title: 'Done',
