@@ -30,7 +30,7 @@
           
             <ion-item href="javascript:void(0)" class="ion-activated" (click)="ShowDiv('B')">
               <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
-              <ion-label>M3U8 Convertsion</ion-label>
+              <ion-label>M3U8 Conversion</ion-label>
               
             </ion-item>
 
@@ -72,7 +72,7 @@
               <ion-label position="stacked">Browse Input Source</ion-label>
               <ion-grid>
                 <ion-row>
-                  <ion-col size="9"><ion-input value={{inputPath}} placeholder="./Select input source..." readonly class="path"></ion-input></ion-col>
+                  <ion-col size="9"><ion-input value={{inputPath}} placeholder="Select input source..." readonly class="path"></ion-input></ion-col>
                   <ion-col size="3"><ion-button id="open-btn" expand="block" size="small" (click)="OpenDialog()">Browse</ion-button></ion-col>
                 </ion-row>
               </ion-grid>
@@ -83,7 +83,7 @@
               <ion-grid>
                 <ion-row>
                   <ion-col size="9">
-                    <ion-input value={{outputPath}} placeholder="./Select ouput destination (leave blank if same as input)" readonly class="path"></ion-input>
+                    <ion-input value={{outputPath}} placeholder="Select ouput destination (leave blank if same as input)" readonly class="path"></ion-input>
                   </ion-col>
                   <ion-col size="3"><ion-button expand="block" size="small" (click)="SaveDialog()">Browse</ion-button></ion-col>
                 </ion-row>
@@ -91,10 +91,17 @@
             
             </ion-card-content>
             <hr class="new">
-            <ion-card-content>
+            <ion-card-content *ngIf="convert_button; else stop_convert">
                 <ion-button expand="block" (click)="Convert()">START CONVERSION</ion-button>
-          
             </ion-card-content>
+            <ng-template #stop_convert>
+              <ion-card-content>
+                <ion-progress-bar color="primary" value="0.5"></ion-progress-bar>
+              </ion-card-content>
+              <ion-card-content>
+                <ion-button expand="block" (click)="Cancel()">STOP</ion-button>
+              </ion-card-content>
+            </ng-template>         
           </ion-card>
         </div>
 

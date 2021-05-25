@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 
 
@@ -10,7 +10,8 @@ import { ElectronService } from 'ngx-electron';
 export class Tab1Page {
   inputPath: string = "";
   outputPath: string = "";
-  constructor(private _electronService: ElectronService) {}
+  // electronService API for ipcMain and ipcRenderer communication, ngZone for immediately reflect data change from ipcMain sender
+  constructor(private _electronService: ElectronService, private zone:NgZone)  {}
 
   currDiv: string = 'A';
   ShowDiv(divVal: string) {
@@ -20,26 +21,43 @@ export class Tab1Page {
   public OpenDialog() {
     if(this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.send('open-file-dialog');   
-      this._electronService.ipcRenderer.on('directory-path', (event, inpath)  => { this.inputPath = inpath[0];})    
+      this._electronService.ipcRenderer.on('directory-path', (event, inpath)  => { 
+        this.zone.run(()=>{
+          this.inputPath = inpath[0];
+       });
+      
+      })    
     }
   }
 
   public SaveDialog() {
     if(this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.send('save-dialog');   
-      this._electronService.ipcRenderer.on('saved-path', (event, outpath)  => {this.outputPath = outpath[0];})
+      this._electronService.ipcRenderer.on('saved-path', (event, outpath)  => {
+        this.zone.run(()=>{
+          this.outputPath = outpath[0];
+       });
+      })
     } 
   }
 
+  convert_button:boolean = true;
   public Convert() {
+    this.convert_button = false;
     if(this._electronService.isElectronApp) {
       if (this.inputPath === "") {
         this._electronService.ipcRenderer.send('missing-path'); 
       } else {
-        this._electronService.ipcRenderer.send('start-convert', [this.inputPath, this.outputPath]); 
-      // this._electronService.ipcRenderer.on('saved-path', (event, outpath)  => {this.outputPath = outpath[0];})
-      }
-      
+        this._electronService.ipcRenderer.send('start-convert', [this.inputPath, this.outputPath]);
+      }    
     } 
   }
+  
+  public Cancel() {
+    if(this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.send('stop-convert');   
+      this.convert_button = true;   
+    } 
+  }
+
 }

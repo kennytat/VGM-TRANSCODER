@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, screen, dialog } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
-import { execFile } from 'child_process';
+import { exec, execFile, spawn } from 'child_process';
 
 let serve;
 const args = process.argv.slice(1);
@@ -151,9 +151,9 @@ try {
       outPath = arg[0];
     } else {
       outPath = arg[1];
-    }
-    
+    } 
     execFile('./ffmpeg-exec.sh', [inPath, outPath], (error, stdout, stderr) => {
+      console.log(`This process is pid ${process.pid}`);
       if (error) {
         dialog.showMessageBox(null, {
           type: 'error',
@@ -164,6 +164,7 @@ try {
             console.log(result.response);
             console.log(result.checkboxChecked);
           }).catch(err => {console.log(err)});
+          console.log(`Error: ${error}`); 
       } else if (stderr) {
         dialog.showMessageBox(null, {
           type: 'warning',
@@ -174,8 +175,7 @@ try {
             console.log(result.response);
             console.log(result.checkboxChecked);
           }).catch(err => {console.log(err)});
-        // event.sender.send('convert-message', stderr);
-        console.log(`Stdout: ${stderr}`);
+        console.log(`Stderr: ${stderr}`);
       } else {
         dialog.showMessageBox(null, {
           type: 'info',
@@ -186,11 +186,65 @@ try {
             console.log(result.response);
             console.log(result.checkboxChecked);
           }).catch(err => {console.log(err)});
-        // event.sender.send('convert-message', 'Your files have been converted sucessfully');
         console.log(`Stdout: ${stdout}`);
       }
     });
   })
+
+// Stop conversion process when button onclick
+  ipcMain.on('stop-convert', (event) => {
+    //get ffmpeg-exec.sh PID and run command to kill it then kill ffmpeg
+    let child = spawn('pgrep', ['-f','ffmpeg-exec.sh'], {detached: true});
+    child.stdout.on('data', (data) => {
+      let ffmpeg_bash_pid = data.toString().trim();
+      let killcmd = "kill " + ffmpeg_bash_pid + " &&" + " killall" + " ffmpeg"; 
+      exec(killcmd, (error, stdout, stderr) => {
+        if (error) {
+          dialog.showMessageBox(null, {
+            type: 'error',
+            title: 'Error',
+            message: 'Error cancelling conversion',
+            detail: 'None expected errors occured, please try again.',
+          }).then( result => {
+              console.log(result.response);
+              console.log(result.checkboxChecked);
+            }).catch(err => {console.log(err)});
+            console.log(`Error: ${error}`); 
+        } else if (stderr) {
+          dialog.showMessageBox(null, {
+              type: 'error',
+              title: 'Error',
+              message: 'Error cancelling conversion',
+              detail: 'None expected standard errors occured, please try again.',
+          }).then( result => {
+              console.log(result.response);
+              console.log(result.checkboxChecked);
+            }).catch(err => {console.log(err)});
+          console.log(`Stderr: ${stderr}`);
+        } else {
+          dialog.showMessageBox(null, {
+            type: 'info',
+            title: 'Done',
+            message: 'Cancellation',
+            detail: 'Your conversion have been cancelled sucessfully.',
+          }).then( result => {
+              console.log(result.response);
+              console.log(result.checkboxChecked);
+            }).catch(err => {console.log(err)});
+          console.log(`Stdout: ${stdout}`);
+        }
+      });
+    });
+
+    child.stderr.on('data', (data) => {console.log(`stderr: ${data}`)});
+    child.on('error', (error) => {console.log(`error: ${error}`)});
+    child.on('exit', (code, signal) => {
+      if (code) console.log(`Process exit with code: ${code}`)
+      if (signal) console.log(`Process killed with signal: ${signal}`)
+      console.log(`Done ✅`) 
+    });
+  })
+
   
 
   app.on('activate', () => {
