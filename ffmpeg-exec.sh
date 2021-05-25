@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-for f in `find $1 -name '*.mkv'`; do ffmpeg  -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i $f \
+for f in `find $1 -name '*.mkv'`; do ffmpeg -progress ffmpeg-progress.txt -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i $f \
 -filter_complex \
 "[0:v]split=3[v1][v2][v3]; \
 [v1]scale_npp=w=1920:h=1080[v1out]; [v2]scale_npp=w=1280:h=720[v2out]; [v3]scale_npp=w=854:h=480[v3out]" \
@@ -11,6 +11,7 @@ for f in `find $1 -name '*.mkv'`; do ffmpeg  -vsync 0 -hwaccel cuvid -c:v h264_c
 -map a:0 -c:a aac -b:a:2 48k -ac 2 \
 -f hls \
 -hls_time 2 \
+-hls_key_info_file enc.keyinfo \
 -hls_playlist_type vod \
 -hls_flags independent_segments \
 -hls_segment_type mpegts \

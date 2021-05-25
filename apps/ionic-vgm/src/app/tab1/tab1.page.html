@@ -73,7 +73,7 @@
               <ion-grid>
                 <ion-row>
                   <ion-col size="9"><ion-input value={{inputPath}} placeholder="Select input source..." readonly class="path"></ion-input></ion-col>
-                  <ion-col size="3"><ion-button id="open-btn" expand="block" size="small" (click)="OpenDialog()">Browse</ion-button></ion-col>
+                  <ion-col size="3"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="OpenDialog()">Browse</ion-button></ion-col>
                 </ion-row>
               </ion-grid>
             </ion-card-content>
@@ -85,7 +85,7 @@
                   <ion-col size="9">
                     <ion-input value={{outputPath}} placeholder="Select ouput destination (leave blank if same as input)" readonly class="path"></ion-input>
                   </ion-col>
-                  <ion-col size="3"><ion-button expand="block" size="small" (click)="SaveDialog()">Browse</ion-button></ion-col>
+                  <ion-col size="3"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="SaveDialog()">Browse</ion-button></ion-col>
                 </ion-row>
               </ion-grid>
             

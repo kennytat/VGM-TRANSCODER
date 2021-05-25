@@ -140,7 +140,15 @@ try {
   })
 
   ipcMain.on('missing-path', (event, arg) => {
-    dialog.showErrorBox('Oops! Something went wrong!', 'Invalid input path or output path');
+    dialog.showMessageBox(null, {
+      type: 'warning',
+      title: 'Warning',
+      message: 'Invalid input or output path',
+      detail: 'Please select valid input source and output destination.',
+    }).then( result => {
+        console.log(result.response);
+        console.log(result.checkboxChecked);
+      }).catch(err => {console.log(err)});
   })
 
   // Get input and output path from above and execute sh file
@@ -153,7 +161,6 @@ try {
       outPath = arg[1];
     } 
     execFile('./ffmpeg-exec.sh', [inPath, outPath], (error, stdout, stderr) => {
-      console.log(`This process is pid ${process.pid}`);
       if (error) {
         dialog.showMessageBox(null, {
           type: 'error',
@@ -187,7 +194,8 @@ try {
             console.log(result.checkboxChecked);
           }).catch(err => {console.log(err)});
         console.log(`Stdout: ${stdout}`);
-      }
+      };
+      event.sender.send('exec-done');
     });
   })
 

@@ -42,21 +42,31 @@ export class Tab1Page {
   }
 
   convert_button:boolean = true;
-  public Convert() {
-    this.convert_button = false;
+  btn_disable:boolean = false;
+  public Convert() {   
     if(this._electronService.isElectronApp) {
       if (this.inputPath === "") {
         this._electronService.ipcRenderer.send('missing-path'); 
-      } else {
+      } else {     
         this._electronService.ipcRenderer.send('start-convert', [this.inputPath, this.outputPath]);
-      }    
+        this._electronService.ipcRenderer.on('exec-done', (event)  => {
+          this.zone.run(()=>{
+            this.convert_button = true;
+            this.btn_disable = false;
+         });
+        });
+        this.convert_button = false;
+        this.btn_disable = true;
+      };   
+      
     } 
   }
   
   public Cancel() {
     if(this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.send('stop-convert');   
-      this.convert_button = true;   
+      this.convert_button = true;  
+      this.btn_disable = false; 
     } 
   }
 
