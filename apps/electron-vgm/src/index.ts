@@ -195,18 +195,25 @@ try {
       // read ffmpeg-progress.txt 500ms repeatedly, get current converted frames
       let ffmpeg_progress_stat = fs.readFileSync('ffmpeg-progress.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
       
-      // get fps
-      let fps_stat = ffprobe_frame_stat.filter(name => name.includes("avg_frame_rate=")).toString();
-      let fps = parseInt(fps_stat.match(/\d+/g)[0])/parseInt(fps_stat.match(/\d+/g)[1]);
-      // get total duration
-      let duration_stat = ffprobe_frame_stat.filter(name => name.includes("duration=")).toString();
-      let duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
-      // calculate total frames
-      let total_frames = Math.floor(duration*fps);
-      
+      // get total frames
+      let total_frames = 0;
+      if (ffprobe_frame_stat !== undefined) {
+        // get fps
+        let fps_stat = ffprobe_frame_stat.filter(name => name.includes("avg_frame_rate=")).toString();
+        let fps = parseInt(fps_stat.match(/\d+/g)[0])/parseInt(fps_stat.match(/\d+/g)[1]);
+        // get total duration
+        let duration_stat = ffprobe_frame_stat.filter(name => name.includes("duration=")).toString();
+        let duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
+        // calculate total frames
+        total_frames = Math.floor(duration*fps);
+      }
       // get current converted frames
-      let converted_frames = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
-      let converted_frames_num = parseInt(converted_frames.match(/\d+/)[0]);
+      let converted_frames_num = 0;
+      if (ffmpeg_progress_stat !== undefined) { 
+        let converted_frames = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
+        converted_frames_num = parseInt(converted_frames.match(/\d+/)[0]);
+      }
+         
       // get conversion progression in rate
       if (converted_frames_num !== 0 && total_frames !== 0 && totalFiles !== 0) {
         progression_status = (convertedFiles+converted_frames_num/total_frames)/totalFiles;
@@ -300,7 +307,7 @@ try {
             type: 'info',
             title: 'Done',
             message: 'Cancellation',
-            detail: 'Your conversion have been cancelled sucessfully.',
+            detail: 'Your conversion have been cancelled.',
           }).then( result => {
               console.log(result.response);
               console.log(result.checkboxChecked);
