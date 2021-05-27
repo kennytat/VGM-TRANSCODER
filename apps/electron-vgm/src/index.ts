@@ -170,9 +170,10 @@ try {
   // Get input and output path from above and execute sh file
   ipcMain.on('start-convert', (event, args) => {
     // Declare variable for calculate conversion rate
-    let totalFiles:number;
+    let totalFiles:number = 0;
     let convertedFiles:number = 0;
     let progression_status:number;
+    
     // Get input and output path
     let inPath = args[0]; 
     let outPath;
@@ -187,7 +188,7 @@ try {
     test.stdout.on('data', data => {
       totalFiles = parseInt(data);
     })
-
+    
     // Run interval to read progression while ffmpeg is running
     let interval = setInterval(() => {
       // read ffmpeg-progress.txt 500ms repeatedly, get fps and duration
@@ -226,7 +227,6 @@ try {
       console.log(converted_frames_num);
       console.log(progression_status);
       console.log(convertedFiles);
-
     }, 500);
 
     // Run ffmpeg to start convert
