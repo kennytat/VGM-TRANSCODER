@@ -91,7 +91,6 @@
             
             </ion-card-content>
             <hr class="new">
-            <ion-button expand="block" (click)="test()">test</ion-button>
             <ion-card-content *ngIf="convert_button; else stop_convert">
                 <ion-button expand="block" (click)="Convert()">START CONVERSION</ion-button>
             </ion-card-content>
@@ -101,7 +100,7 @@
                   <ion-row>
                     <ion-col size="6">
                       <div class="ion-text-start sub-text">
-                        <ion-label position="stacked">{{converted_files}}/{{total_files}} converted</ion-label>
+                        <ion-label position="stacked">{{converted_files}}/{{total_files}}</ion-label>
                       </div>
                       
                     </ion-col>
@@ -111,9 +110,13 @@
                       </div>  
                     </ion-col>
                   </ion-row>
+                  <ion-row>
+                    <ion-progress-bar color="primary" value={{progression_status}}></ion-progress-bar>
+                  </ion-row>
+                  
                 </ion-grid>
 
-                <ion-progress-bar color="primary" value={{progression_status}}></ion-progress-bar>
+                
               </ion-card-content>
               <ion-card-content>
                 <ion-button expand="block" (click)="Cancel()">STOP</ion-button>
