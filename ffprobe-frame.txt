@@ -1,0 +1,2 @@
+avg_frame_rate=19001/317
+duration=220.926000

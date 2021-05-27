@@ -25,7 +25,6 @@ export class Tab1Page {
         this.zone.run(()=>{
           this.inputPath = inpath[0];
        });
-      
       })    
     }
   }
@@ -43,6 +42,9 @@ export class Tab1Page {
 
   convert_button:boolean = true;
   btn_disable:boolean = false;
+  progression_status:number = 0;
+  converted_files:number = 0;
+  total_files:number = 0;
   public Convert() {   
     if(this._electronService.isElectronApp) {
       if (this.inputPath === "") {
@@ -55,10 +57,26 @@ export class Tab1Page {
             this.btn_disable = false;
          });
         });
+
+        this._electronService.ipcRenderer.on('progression', (event, arg1, arg2, arg3)  => {
+          this.zone.run(()=>{
+            this.progression_status = arg1;
+            this.converted_files = arg2;
+            this.total_files = arg3;
+            console.log(this.progression_status);
+         });
+        }); 
+        
         this.convert_button = false;
         this.btn_disable = true;
       };   
       
+    } 
+  }
+
+  public test() {
+    if(this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.send('test'); 
     } 
   }
   
@@ -69,5 +87,4 @@ export class Tab1Page {
       this.btn_disable = false; 
     } 
   }
-
 }
