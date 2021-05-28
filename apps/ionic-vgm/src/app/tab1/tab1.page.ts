@@ -55,6 +55,8 @@ export class Tab1Page {
           this.zone.run(()=>{
             this.convert_button = true;
             this.btn_disable = false;
+            this.inputPath = "";
+            this.outputPath = "";
          });
         });
 
@@ -73,18 +75,16 @@ export class Tab1Page {
       
     } 
   }
-
-  public test() {
-    if(this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('test'); 
-    } 
-  }
   
   public Cancel() {
     if(this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.send('stop-convert');   
       this.convert_button = true;  
-      this.btn_disable = false; 
+      this.btn_disable = false;
+      this.zone.run(()=>{
+          this.inputPath = "";
+          this.outputPath = "";
+       })
     } 
   }
 }
