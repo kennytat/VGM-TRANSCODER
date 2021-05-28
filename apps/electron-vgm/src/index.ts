@@ -152,21 +152,6 @@ try {
       }).catch(err => {console.log(err)});
   })
 
-
-  ipcMain.on('test', (event, arg) => {
-    let testread;
-    fs.readFile('ffprobe-frame.txt','utf8', (err, data) => {
-      if (err) {console.log(err)}
-      else {
-        testread = data.split("\n");
-        console.log(testread);     
-      }
-    });
-  })
-
-
-
-
   // Get input and output path from above and execute sh file
   ipcMain.on('start-convert', (event, args) => {
     // Declare variable for calculate conversion rate
@@ -184,8 +169,8 @@ try {
     } 
     // Get total input file count 
     let count_files_arg = "find " + inPath + " -name *.mkv -type f | wc -l";
-    const test = spawn('sh', ['-c', count_files_arg]);
-    test.stdout.on('data', data => {
+    const count_files_exec = spawn('sh', ['-c', count_files_arg]);
+    count_files_exec.stdout.on('data', data => {
       totalFiles = parseInt(data);
     })
 
@@ -234,14 +219,16 @@ try {
 // Run interval to read progression while ffmpeg is running
 let interval = setInterval(() => {
   // read ffmpeg-progress.txt 500ms repeatedly, get fps and duration
-  let ffprobe_frame_stat = fs.readFileSync('ffprobe-frame.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
+  let ffprobe_frame_stat = [];
+  ffprobe_frame_stat = fs.readFileSync('ffprobe-frame.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
   // read ffmpeg-progress.txt 500ms repeatedly, get current converted frames
-  let ffmpeg_progress_stat = fs.readFileSync('ffmpeg-progress.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
-  
+  let ffmpeg_progress_stat = [];
+  ffmpeg_progress_stat = fs.readFileSync('ffmpeg-progress.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
   // get total frames
   let total_frames = 0;
   let converted_frames_num = 0;
-  if (ffprobe_frame_stat !== undefined && ffmpeg_progress_stat !== undefined) {
+
+  if (ffprobe_frame_stat !== [] && ffmpeg_progress_stat !== []) {
     // get fps
     let fps_stat = ffprobe_frame_stat.filter(name => name.includes("avg_frame_rate=")).toString();
     let fps = parseInt(fps_stat.match(/\d+/g)[0])/parseInt(fps_stat.match(/\d+/g)[1]);
@@ -249,12 +236,10 @@ let interval = setInterval(() => {
     let duration_stat = ffprobe_frame_stat.filter(name => name.includes("duration=")).toString();
     let duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
     // calculate total frames
-    total_frames = Math.floor(duration*fps);
+    total_frames = Math.round(duration*fps);
     // get current converted frames
-    let converted_frames = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
-    if (converted_frames !== undefined) {
+    let converted_frames = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();  
     converted_frames_num = parseInt(converted_frames.match(/\d+/)[0]);
-    }
   }
    
   // get conversion progression in rate
@@ -269,7 +254,7 @@ let interval = setInterval(() => {
   console.log(converted_frames_num);
   console.log(progression_status);
   console.log(convertedFiles);
-}, 500);
+}, 500.5);
 
   })
 
