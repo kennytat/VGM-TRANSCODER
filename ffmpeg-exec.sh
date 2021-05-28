@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-for f in `find $1 -name '*.mkv'`; do ffmpeg -progress ffmpeg-progress.txt -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i $f \
+for f in `find $1 -name '*.mkv'`; do ffprobe -v quiet -select_streams v:0 -show_entries format=duration,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 $f > ffprobe-frame.txt \
+&& \
+ffmpeg -progress ffmpeg-progress.txt -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i $f \
 -filter_complex \
 "[0:v]split=3[v1][v2][v3]; \
 [v1]scale_npp=w=1920:h=1080[v1out]; [v2]scale_npp=w=1280:h=720[v2out]; [v3]scale_npp=w=854:h=480[v3out]" \
