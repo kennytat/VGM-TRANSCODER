@@ -219,16 +219,14 @@ try {
 // Run interval to read progression while ffmpeg is running
 let interval = setInterval(() => {
   // read ffmpeg-progress.txt 500ms repeatedly, get fps and duration
-  let ffprobe_frame_stat = [];
-  ffprobe_frame_stat = fs.readFileSync('ffprobe-frame.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
+  let ffprobe_frame_stat = fs.readFileSync('ffprobe-frame.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
   // read ffmpeg-progress.txt 500ms repeatedly, get current converted frames
-  let ffmpeg_progress_stat = [];
-  ffmpeg_progress_stat = fs.readFileSync('ffmpeg-progress.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
+  let ffmpeg_progress_stat = fs.readFileSync('ffmpeg-progress.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
+  
   // get total frames
   let total_frames = 0;
   let converted_frames_num = 0;
-
-  if (ffprobe_frame_stat !== [] && ffmpeg_progress_stat !== []) {
+  if (ffprobe_frame_stat !== undefined && ffmpeg_progress_stat !== undefined) {
     // get fps
     let fps_stat = ffprobe_frame_stat.filter(name => name.includes("avg_frame_rate=")).toString();
     let fps = parseInt(fps_stat.match(/\d+/g)[0])/parseInt(fps_stat.match(/\d+/g)[1]);
@@ -238,8 +236,13 @@ let interval = setInterval(() => {
     // calculate total frames
     total_frames = Math.round(duration*fps);
     // get current converted frames
-    let converted_frames = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();  
-    converted_frames_num = parseInt(converted_frames.match(/\d+/)[0]);
+    let converted_frames = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
+    console.log(converted_frames);
+    if (converted_frames === undefined && converted_frames_num > total_frames*0.99) {
+      converted_frames_num = total_frames;
+    } else {
+      converted_frames_num = parseInt(converted_frames.match(/\d+/)[0]);
+    }
   }
    
   // get conversion progression in rate
@@ -254,7 +257,7 @@ let interval = setInterval(() => {
   console.log(converted_frames_num);
   console.log(progression_status);
   console.log(convertedFiles);
-}, 500.5);
+}, 501);
 
   })
 
