@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-for f in `find $1 -name '*.mkv'`; do ffprobe -v quiet -select_streams v:0 -show_entries format=duration,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 $f > ffprobe-frame.txt \
+i=0
+for f in `find $1 -name '*.mkv'`; do echo ${i} > ffprobe-frame.txt 
+ffprobe -v quiet -select_streams v:0 -show_entries format=duration,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 $f >> ffprobe-frame.txt \
 && \
 ffmpeg -progress ffmpeg-progress.txt -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i $f \
 -filter_complex \
@@ -19,4 +21,5 @@ ffmpeg -progress ffmpeg-progress.txt -stats_period 0.5 -v quiet -vsync 0 -hwacce
 -hls_segment_type mpegts \
 -hls_segment_filename ${f//$1/$2}/stream_%v/data%02d.ts \
 -master_pl_name master.m3u8 \
--var_stream_map "v:0,a:0,name:1080p v:1,a:1,name:720p v:2,a:2,name:480p" ${f//$1/$2}/stream_%v.m3u8; done
+-var_stream_map "v:0,a:0,name:1080p v:1,a:1,name:720p v:2,a:2,name:480p" ${f//$1/$2}/stream_%v.m3u8
+((i++)); done
