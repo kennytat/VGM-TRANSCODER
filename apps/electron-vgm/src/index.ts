@@ -157,7 +157,7 @@ try {
     // Declare variable for calculate conversion rate
     let totalFiles:number = 0;
     let convertedFiles:number = 0;
-    let progression_status:number;
+    let progression_status:number = 0;
     let ffprobe_frame_stat = [];
     let ffmpeg_progress_stat = [];
 
@@ -170,95 +170,103 @@ try {
       outPath = args[1];
     } 
     // Get total input file count 
-    let count_files_arg = "find " + inPath + " -name *.mkv -type f | wc -l";
+    let count_files_arg = "find " + inPath + " -name \"*.mkv\" -type f | wc -l";
     const count_files_exec = spawn('sh', ['-c', count_files_arg]);
     count_files_exec.stdout.on('data', data => {
       totalFiles = parseInt(data);
     })
+    count_files_exec.on('close', (code) => {
+      console.log(`count total file exit code ${code}`);
+      if (totalFiles > 0) {
+          // Run ffmpeg to start convert
+          execFile('./ffmpeg-exec.sh', [inPath, outPath], (error, stdout, stderr) => {
+            if (error) {
+              dialog.showMessageBox(null, {
+                type: 'error',
+                title: 'Error',
+                message: 'Error converting files',
+                detail: 'None expected errors occured, please try again.',
+              }).then( result => {
+                  console.log(result.response);
+                  console.log(result.checkboxChecked);
+                }).catch(err => {console.log(err)});
+                clearInterval(interval);
+                console.log(`Error: ${error}`); 
+            } else if (stderr) {
+              dialog.showMessageBox(null, {
+                type: 'warning',
+                title: 'Stderror',
+                message: 'Error converting files',
+                detail: 'None expected standard errors occured, please try again.',
+              }).then( result => {
+                  console.log(result.response);
+                  console.log(result.checkboxChecked);
+                }).catch(err => {console.log(err)});
+                clearInterval(interval);
+              console.log(`Stderr: ${stderr}`);
+            } else {
+              dialog.showMessageBox(null, {
+                type: 'info',
+                title: 'Done',
+                message: 'Congratulations',
+                detail: 'Your files have been converted sucessfully',
+              }).then( result => {
+                  console.log(result.response);
+                  console.log(result.checkboxChecked);
+                }).catch(err => {console.log(err)});
+                clearInterval(interval);
+              console.log(`Stdout123: ${stdout}`);
+            };
+            event.sender.send('exec-done');
+          });
 
-    // Run ffmpeg to start convert
-    execFile('./ffmpeg-exec.sh', [inPath, outPath], (error, stdout, stderr) => {
-      if (error) {
-        dialog.showMessageBox(null, {
-          type: 'error',
-          title: 'Error',
-          message: 'Error converting files',
-          detail: 'None expected errors occured, please try again.',
-        }).then( result => {
-            console.log(result.response);
-            console.log(result.checkboxChecked);
-          }).catch(err => {console.log(err)});
-          clearInterval(interval);
-          console.log(`Error: ${error}`); 
-      } else if (stderr) {
-        dialog.showMessageBox(null, {
-          type: 'warning',
-          title: 'Stderror',
-          message: 'Error converting files',
-          detail: 'None expected standard errors occured, please try again.',
-        }).then( result => {
-            console.log(result.response);
-            console.log(result.checkboxChecked);
-          }).catch(err => {console.log(err)});
-          clearInterval(interval);
-        console.log(`Stderr: ${stderr}`);
+          // Run interval to read progression while ffmpeg is running
+          let interval = setInterval(() => {
+            // read ffmpeg-progress.txt 500ms repeatedly, get fps and duration
+            ffprobe_frame_stat = fs.readFileSync('ffprobe-frame.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
+            // read ffmpeg-progress.txt 500ms repeatedly, get current converted frames
+            ffmpeg_progress_stat = fs.readFileSync('ffmpeg-progress.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
+            
+            // get total frames
+            let total_frames = 0;
+            let converted_frames_num = 0;
+            if (ffprobe_frame_stat !== [] && ffmpeg_progress_stat !== []) {
+              // get fps
+              let fps_stat = ffprobe_frame_stat.filter(name => name.includes("avg_frame_rate=")).toString();
+              let fps = parseInt(fps_stat.match(/\d+/g)[0])/parseInt(fps_stat.match(/\d+/g)[1]);
+              // get total duration
+              let duration_stat = ffprobe_frame_stat.filter(name => name.includes("duration=")).toString();
+              let duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
+              // calculate total frames
+              total_frames = Math.round(duration*fps);
+              // get current progress status, if total converted frames = total frames, then convertedFiles++  
+              convertedFiles = parseInt(ffprobe_frame_stat[0]); 
+              // get current converted frames
+              let converted_frames = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
+              if (converted_frames !== undefined) {converted_frames_num = parseInt(converted_frames.match(/\d+/)[0])};}
+            
+              // get conversion progression in rate
+            if (converted_frames_num !== 0 && total_frames !== 0 && totalFiles !== 0) {
+              progression_status = (convertedFiles+converted_frames_num/total_frames)/totalFiles;
+            }  
+            
+            event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+          }, 500);
       } else {
         dialog.showMessageBox(null, {
-          type: 'info',
-          title: 'Done',
-          message: 'Congratulations',
-          detail: 'Your files have been converted sucessfully',
+          type: 'warning',
+          title: 'Warning',
+          message: 'No video found',
+          detail: 'No valid video files found, please try again.',
         }).then( result => {
             console.log(result.response);
             console.log(result.checkboxChecked);
           }).catch(err => {console.log(err)});
-          clearInterval(interval);
-        console.log(`Stdout: ${stdout}`);
-      };
-      event.sender.send('exec-done');
+        event.sender.send('exec-done');
+      }
     });
-
-// Run interval to read progression while ffmpeg is running
-let interval = setInterval(() => {
-  // read ffmpeg-progress.txt 500ms repeatedly, get fps and duration
-  ffprobe_frame_stat = fs.readFileSync('ffprobe-frame.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
-  // read ffmpeg-progress.txt 500ms repeatedly, get current converted frames
-  ffmpeg_progress_stat = fs.readFileSync('ffmpeg-progress.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
-  
-  // get total frames
-  let total_frames = 0;
-  let converted_frames_num = 0;
-  if (ffprobe_frame_stat !== [] && ffmpeg_progress_stat !== []) {
-    // get fps
-    let fps_stat = ffprobe_frame_stat.filter(name => name.includes("avg_frame_rate=")).toString();
-    let fps = parseInt(fps_stat.match(/\d+/g)[0])/parseInt(fps_stat.match(/\d+/g)[1]);
-    // get total duration
-    let duration_stat = ffprobe_frame_stat.filter(name => name.includes("duration=")).toString();
-    let duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
-    // calculate total frames
-    total_frames = Math.round(duration*fps);
-    // get current progress status, if total converted frames = total frames, then convertedFiles++  
-    convertedFiles = parseInt(ffprobe_frame_stat[0]); 
-    // get current converted frames
-    let converted_frames = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
-    converted_frames_num = parseInt(converted_frames.match(/\d+/)[0]);
-    console.log(converted_frames_num);
-  }
-   
-    // get conversion progression in rate
-  if (converted_frames_num !== 0 && total_frames !== 0 && totalFiles !== 0) {
-    progression_status = (convertedFiles+converted_frames_num/total_frames)/totalFiles;
-  }  
-  
-  event.sender.send('progression', progression_status, convertedFiles, totalFiles);
-
-  console.log(total_frames);
-  console.log(converted_frames_num);
-  console.log(progression_status);
-  console.log(convertedFiles);
-}, 500);
-
-  })
+    
+})
 
 // Stop conversion process when button onclick
   ipcMain.on('stop-convert', (event) => {
