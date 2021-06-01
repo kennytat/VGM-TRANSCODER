@@ -41,6 +41,7 @@ export class Tab1Page {
   }
 
   convert_button:boolean = true;
+  progress_loading:boolean = false;
   btn_disable:boolean = false;
   progression_status:number = 0;
   converted_files:number = 0;
@@ -55,8 +56,9 @@ export class Tab1Page {
           this.zone.run(()=>{
             this.convert_button = true;
             this.btn_disable = false;
+            this.progress_loading = false;
             this.inputPath = "";
-            this.outputPath = "";
+            this.outputPath = "";   
          });
         });
 
@@ -65,7 +67,11 @@ export class Tab1Page {
             this.progression_status = arg1;
             this.converted_files = arg2;
             this.total_files = arg3;
-            console.log(this.progression_status);
+            if (this.progression_status > 0.95) {
+              this.progress_loading = true;
+            } else {
+              this.progress_loading = false;
+            }
          });
         }); 
         

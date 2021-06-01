@@ -92,7 +92,7 @@
             </ion-card-content>
             <hr class="new">
             <ion-card-content *ngIf="convert_button; else stop_convert">
-                <ion-button expand="block" (click)="Convert()">START CONVERSION</ion-button>
+              <ion-button expand="block" (click)="Convert()">START CONVERSION</ion-button>
             </ion-card-content>
             <ng-template #stop_convert>
               <ion-card-content>
@@ -106,13 +106,16 @@
                     </ion-col>
                     <ion-col size="6">
                       <div class="ion-text-end sub-text">
+                        <div class="lds-spinner" *ngIf="progress_loading"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
                         <ion-label position="stacked">{{progression_status*100 | number: '1.0-0'}} %</ion-label>
                       </div>  
                     </ion-col>
                   </ion-row>
                   <ion-row>
                     <ion-progress-bar color="primary" value={{progression_status}}></ion-progress-bar>
+                 
                   </ion-row>
+                  
                   
                 </ion-grid>
 
