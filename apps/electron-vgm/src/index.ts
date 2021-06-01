@@ -223,9 +223,9 @@ try {
           // Run interval to read progression while ffmpeg is running
           let interval = setInterval(() => {
             // read ffmpeg-progress.txt 500ms repeatedly, get fps and duration
-            ffprobe_frame_stat = fs.readFileSync('ffprobe-frame.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
+            ffprobe_frame_stat = fs.readFileSync("".concat(outPath,'/.ffprobe-frame.txt'),{encoding:'utf8', flag:'r'}).toString().split("\n");
             // read ffmpeg-progress.txt 500ms repeatedly, get current converted frames
-            ffmpeg_progress_stat = fs.readFileSync('ffmpeg-progress.txt',{encoding:'utf8', flag:'r'}).toString().split("\n");
+            ffmpeg_progress_stat = fs.readFileSync("".concat(outPath,'/.ffmpeg-progress.txt'),{encoding:'utf8', flag:'r'}).toString().split("\n");
             
             // get total frames
             let total_frames = 0;
@@ -243,14 +243,13 @@ try {
               convertedFiles = parseInt(ffprobe_frame_stat[0]); 
               // get current converted frames
               let converted_frames = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
-              if (converted_frames !== undefined) {converted_frames_num = parseInt(converted_frames.match(/\d+/)[0])};}
-            
+              if (converted_frames !== undefined) {converted_frames_num = parseInt(converted_frames.match(/\d+/)[0])};
               // get conversion progression in rate
-            if (converted_frames_num !== 0 && total_frames !== 0 && totalFiles !== 0) {
-              progression_status = (convertedFiles+converted_frames_num/total_frames)/totalFiles;
-            }  
-            
-            event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+              if (converted_frames_num !== 0 && total_frames !== 0 && totalFiles !== 0) {
+                progression_status = (convertedFiles+converted_frames_num/total_frames)/totalFiles;
+              }  
+              event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+            }   
           }, 500);
       } else {
         dialog.showMessageBox(null, {
