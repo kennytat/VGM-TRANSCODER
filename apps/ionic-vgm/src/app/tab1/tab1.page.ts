@@ -13,10 +13,6 @@ export class Tab1Page {
   // electronService API for ipcMain and ipcRenderer communication, ngZone for immediately reflect data change from ipcMain sender
   constructor(private _electronService: ElectronService, private zone:NgZone)  {}
 
-  currDiv: string = 'A';
-  ShowDiv(divVal: string) {
-    this.currDiv = divVal;
-  }
 
   public OpenDialog() {
     if(this._electronService.isElectronApp) {

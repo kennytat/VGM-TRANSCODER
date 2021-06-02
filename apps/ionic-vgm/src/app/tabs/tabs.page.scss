@@ -1,0 +1,25 @@
+.tabs-left {
+    margin: 75px 0px 75px 20px;
+    width: calc(100vw/3 - 35px); 
+    border-radius: 5px;
+    z-index: 1;
+    height: auto;
+}
+
+.tabs-left-item {
+    min-width: 100%;
+    min-height: 100%;
+    border-radius: 5px;
+    flex-direction: row;
+    justify-content: flex-start;
+    font-size: medium;
+    padding:0 0 0 20px;
+}
+
+.tabs-left-item ion-label {
+    margin-left: 20px;
+}
+
+.tabs-left-item:hover {
+    background-color: #252525;
+}

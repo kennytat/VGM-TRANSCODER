@@ -1,47 +1,13 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-buttons slot="secondary">
-      <ion-button>
-        <ion-icon slot="icon-only" name="person-circle"></ion-icon>
-      </ion-button>
-      <ion-button>
-        <ion-icon slot="icon-only" name="search"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-    <ion-buttons slot="primary">
-      <ion-button color="secondary">
-        <ion-icon slot="icon-only" ios="ellipsis-horizontal" md="ellipsis-vertical"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-    <ion-title size="small">VGM TRANSCODING TOOL</ion-title>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" class="tab-content">
   <ion-grid>
     <ion-row class="row">
         <ion-col size="4" class="col">
           <ion-card class="card">
-            <ion-item href="javascript:void(0)" class="ion-activated" (click)="ShowDiv('A')">
-              
-              <ion-label>Connect Database</ion-label>
-              <ion-icon name="server-outline" slot="start"></ion-icon>
-            </ion-item>
-          
-            <ion-item href="javascript:void(0)" class="ion-activated" (click)="ShowDiv('B')">
-              <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
-              <ion-label>M3U8 Conversion</ion-label>
-              
-            </ion-item>
-
-
-          
           </ion-card>
         </ion-col>
 
-
         <ion-col size="8" class="col">
-          <div *ngIf="currDiv == 'A'">
+       
           <ion-card class="card">
             <ion-item>
               <ion-icon name="git-network-outline" slot="start"></ion-icon>
@@ -52,82 +18,8 @@
                 within an ion-card-content element.
               </ion-card-content>
             </ion-item>
-          
-          
 
           </ion-card>
-        </div>
-
-        <div *ngIf="currDiv == 'B'">
-          <ion-card class="card">
-            <ion-item>
-              <ion-icon name="folder-open-outline" slot="start"></ion-icon>
-              <ion-label>Transporting Stream M3U8 Transcoding</ion-label>
-              <ion-button fill="outline" slot="end">View</ion-button>
-            </ion-item>
-          
-          
-
-            <ion-card-content>
-              <ion-label position="stacked">Browse Input Source</ion-label>
-              <ion-grid>
-                <ion-row>
-                  <ion-col size="9"><ion-input value={{inputPath}} placeholder="Select input source..." readonly class="path"></ion-input></ion-col>
-                  <ion-col size="3"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="OpenDialog()">Browse</ion-button></ion-col>
-                </ion-row>
-              </ion-grid>
-            </ion-card-content>
-            <hr class="new">
-            <ion-card-content>
-              <ion-label position="stacked">Browse Output Destination</ion-label>
-              <ion-grid>
-                <ion-row>
-                  <ion-col size="9">
-                    <ion-input value={{outputPath}} placeholder="Select ouput destination (leave blank if same as input)" readonly class="path"></ion-input>
-                  </ion-col>
-                  <ion-col size="3"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="SaveDialog()">Browse</ion-button></ion-col>
-                </ion-row>
-              </ion-grid>
-            
-            </ion-card-content>
-            <hr class="new">
-            <ion-card-content *ngIf="convert_button; else stop_convert">
-              <ion-button expand="block" (click)="Convert()">START CONVERSION</ion-button>
-            </ion-card-content>
-            <ng-template #stop_convert>
-              <ion-card-content>
-                <ion-grid>
-                  <ion-row>
-                    <ion-col size="6">
-                      <div class="ion-text-start sub-text">
-                        <ion-label position="stacked">{{converted_files}}/{{total_files}}</ion-label>
-                      </div>
-                      
-                    </ion-col>
-                    <ion-col size="6">
-                      <div class="ion-text-end sub-text">
-                        <div class="lds-spinner" *ngIf="progress_loading"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-                        <ion-label position="stacked">{{progression_status*100 | number: '1.0-0'}} %</ion-label>
-                      </div>  
-                    </ion-col>
-                  </ion-row>
-                  <ion-row>
-                    <ion-progress-bar color="primary" value={{progression_status}}></ion-progress-bar>
-                 
-                  </ion-row>
-                  
-                  
-                </ion-grid>
-
-                
-              </ion-card-content>
-              <ion-card-content>
-                <ion-button expand="block" (click)="Cancel()">STOP</ion-button>
-              </ion-card-content>
-            </ng-template>         
-          </ion-card>
-        </div>
-
 
         </ion-col>
     </ion-row>
