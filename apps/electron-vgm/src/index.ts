@@ -3,6 +3,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as url from 'url';
 import { exec, execFile, spawn } from 'child_process';
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from './app.module'
 
 let serve;
 const args = process.argv.slice(1);
@@ -34,22 +36,37 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
   },
 };
 
+// create graphql server function
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule)
+  await app.listen(3000, () => {
+    console.log(`
+🚀 Server ready at: http://localhost:3000/graphql
+⭐️ See sample queries: http://pris.ly/e/ts/graphql-nestjs#using-the-graphql-api
+`)
+  })
+}
 /**
  * Hooks for electron main process
  */
 function initMainListener() {
+
   ipcMain.on('ELECTRON_BRIDGE_HOST', (event, msg) => {
     console.log('msg received', msg);
     if (msg === 'ping') {
       event.sender.send('ELECTRON_BRIDGE_CLIENT', 'pong');
     }
   });
+
 }
 
 /**
  * Create main window presentation
  */
 function createWindow() {
+// get graphql server ready before creating electron window
+  bootstrap();
+// start creating electron window
   const sizes = screen.getPrimaryDisplay().workAreaSize;
 
   if (debugMode) {
@@ -62,6 +79,8 @@ function createWindow() {
   } else {
     mainWindowSettings.width = sizes.width;
     mainWindowSettings.height = sizes.height;
+    mainWindowSettings.minWidth = 800;
+    mainWindowSettings.minHeight = 600; 
     mainWindowSettings.x = 0;
     mainWindowSettings.y = 0;
   }

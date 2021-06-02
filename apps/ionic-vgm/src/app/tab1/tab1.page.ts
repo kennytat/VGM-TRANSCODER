@@ -67,7 +67,7 @@ export class Tab1Page {
             this.progression_status = arg1;
             this.converted_files = arg2;
             this.total_files = arg3;
-            if (this.progression_status > 0.95) {
+            if (this.progression_status > 0.99) {
               this.progress_loading = true;
             } else {
               this.progress_loading = false;
