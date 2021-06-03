@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as url from 'url';
 import { exec, execFile, spawn } from 'child_process';
 import { NestFactory } from '@nestjs/core'
-import { AppModule } from './app.module'
+import { AppModule } from './test/app.module'
 
 let serve;
 const args = process.argv.slice(1);
