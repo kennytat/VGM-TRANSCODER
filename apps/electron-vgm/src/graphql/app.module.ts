@@ -8,8 +8,9 @@ import { join } from 'path'
 @Module({
   imports: [
     GraphQLModule.forRoot({
-      autoSchemaFile: join(process.cwd(), 'apps/electron-vgm/src/schema.gql'),
-      buildSchemaOptions: { dateScalarMode: 'timestamp' },
+      autoSchemaFile: join(process.cwd(), 'apps/electron-vgm/src/graphql/schema.gql'),
+      buildSchemaOptions: { dateScalarMode: 'timestamp' }
+   
     })
   ],
   controllers: [],

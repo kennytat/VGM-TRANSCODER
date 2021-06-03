@@ -1,92 +1,85 @@
-import { Component, NgZone } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import { Component, OnInit} from '@angular/core';
+import { Apollo, gql } from 'apollo-angular';
+import { Subscription } from 'rxjs';
 
+export const LIST_ALL_DATA = gql`
+  query {
+    feed {
+      id
+      title
+      content
+      published
+      author {
+        id
+        name
+        email
+      }
+    }
+}`;
+
+
+ // types for Response
+
+type Post = {
+   id: number;
+   title: string;
+   content: string;
+   published: boolean;
+   viewCount: number;
+   author: User;
+}
+
+type User = {
+  id: number;
+  email: string;
+  name: string;
+  posts: Post[];
+}
+
+type Response = {
+  feed: Post;
+}
 
 @Component({
   selector: 'vgm-converter-tab1',
   templateUrl: 'tab1.page.html',
   styleUrls: ['tab1.page.scss'],
 })
-export class Tab1Page {
-  inputPath: string = "";
-  outputPath: string = "";
-  // electronService API for ipcMain and ipcRenderer communication, ngZone for immediately reflect data change from ipcMain sender
-  constructor(private _electronService: ElectronService, private zone:NgZone)  {}
+
+export class Tab1Page implements OnInit {
+  loading: boolean;
+  gql_res_post: any;
+  private querySubscription: Subscription;
 
 
-  public OpenDialog() {
-    if(this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('open-file-dialog');   
-      this._electronService.ipcRenderer.on('directory-path', (event, inpath)  => { 
-        this.zone.run(()=>{
-          this.inputPath = inpath[0];
-       });
-      })    
-    }
+  constructor(private apollo: Apollo) {}
+
+    ngOnInit() {
+    this.querySubscription = this.apollo.watchQuery<Response>({
+      query: gql`
+              query {
+                feed {
+                  id
+                  title
+                  content
+                  published
+                  author {
+                    id
+                    name
+                    email
+                  }
+                }
+            }`
+    })
+      .valueChanges
+      .subscribe(({ data, loading }) => {
+        this.loading = loading;
+        this.gql_res_post = data.feed;
+      });
   }
 
-  public SaveDialog() {
-    if(this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('save-dialog');   
-      this._electronService.ipcRenderer.on('saved-path', (event, outpath)  => {
-        this.zone.run(()=>{
-          this.outputPath = outpath[0];
-       });
-      })
-    } 
+  ngOnDestroy() {
+    this.querySubscription.unsubscribe();
   }
 
-  convert_button:boolean = true;
-  progress_loading:boolean = false;
-  btn_disable:boolean = false;
-  progression_status:number = 0;
-  converted_files:number = 0;
-  total_files:number = 0;
-  public Convert() {   
-    if(this._electronService.isElectronApp) {
-      if (this.inputPath === "") {
-        this._electronService.ipcRenderer.send('missing-path'); 
-      } else {     
-        this._electronService.ipcRenderer.send('start-convert', [this.inputPath, this.outputPath]);
-        this._electronService.ipcRenderer.on('exec-done', (event)  => {
-          this.zone.run(()=>{
-            this.convert_button = true;
-            this.btn_disable = false;
-            this.progress_loading = false;
-            this.inputPath = "";
-            this.outputPath = "";   
-         });
-        });
-
-        this._electronService.ipcRenderer.on('progression', (event, arg1, arg2, arg3)  => {
-          this.zone.run(()=>{
-            this.progression_status = arg1;
-            this.converted_files = arg2;
-            this.total_files = arg3;
-            if (this.progression_status > 0.99) {
-              this.progress_loading = true;
-            } else {
-              this.progress_loading = false;
-            }
-         });
-        }); 
-        
-        this.convert_button = false;
-        this.btn_disable = true;
-      };   
-      
-    } 
-  }
-  
-  public Cancel() {
-    if(this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('stop-convert');   
-      this.convert_button = true;  
-      this.btn_disable = false;
-      this.zone.run(()=>{
-          this.inputPath = "";
-          this.outputPath = "";
-       })
-    } 
-  }
 }

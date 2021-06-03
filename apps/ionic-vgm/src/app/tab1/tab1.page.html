@@ -1,27 +1,28 @@
 <ion-content [fullscreen]="true" class="tab-content">
   <ion-grid>
     <ion-row class="row">
-        <ion-col size="4" class="col">
-          <ion-card class="card">
-          </ion-card>
-        </ion-col>
+      <ion-col size="4" class="col">
+        <ion-card class="card"> </ion-card>
+      </ion-col>
 
-        <ion-col size="8" class="col">
-       
-          <ion-card class="card">
-            <ion-item>
-              <ion-icon name="git-network-outline" slot="start"></ion-icon>
-              <ion-label>Database Connection</ion-label>
-              <ion-button fill="outline" slot="end">Disconnect</ion-button>
-              <ion-card-content>
-                This is content, without any paragraph or header tags,
-                within an ion-card-content element.
-              </ion-card-content>
-            </ion-item>
+      <ion-col size="8" class="col">
+        <ion-card class="card">
+          <ion-item>
+            <ion-icon name="git-network-outline" slot="start"></ion-icon>
+            <ion-label>Database Connection</ion-label>
+            <ion-button fill="outline" slot="end">Disconnect</ion-button>
+            <ion-card-content> </ion-card-content>
+          </ion-item>
 
-          </ion-card>
+          <div *ngIf="loading">Loading...</div>
 
-        </ion-col>
+          <div>
+            <div *ngFor="let post of gql_res_post">
+              <p>{{ post.id }}: {{ post.content }}</p>
+            </div>
+          </div>
+        </ion-card>
+      </ion-col>
     </ion-row>
   </ion-grid>
 </ion-content>

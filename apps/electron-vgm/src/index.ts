@@ -1,10 +1,10 @@
-import { app, BrowserWindow, ipcMain, screen, dialog } from 'electron';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as url from 'url';
-import { exec, execFile, spawn } from 'child_process';
+import { app, BrowserWindow, ipcMain, screen, dialog } from 'electron'
+import * as path from 'path'
+import * as fs from 'fs'
+import * as url from 'url'
+import { exec, execFile, spawn } from 'child_process'
 import { NestFactory } from '@nestjs/core'
-import { AppModule } from './test/app.module'
+import { AppModule } from './graphql/app.module'
 
 let serve;
 const args = process.argv.slice(1);
@@ -35,6 +35,7 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
     nodeIntegration: debugMode,
   },
 };
+
 
 // create graphql server function
 async function bootstrap() {
