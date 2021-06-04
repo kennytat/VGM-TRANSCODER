@@ -1,5 +1,7 @@
 .tab-content {
   top:55px;
+  left: 275px;
+  width: calc(100vw - 275px);
 }
 hr.new {
     border-top: 1px solid rgb(81, 81, 82);
@@ -7,7 +9,7 @@ hr.new {
 }
 
 .card {
-    height: calc(100vh - 155px);
+    height: calc(100vh - 150px);
   }
 
 .path {

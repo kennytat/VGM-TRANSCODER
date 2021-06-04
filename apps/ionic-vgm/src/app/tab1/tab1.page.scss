@@ -1,8 +1,17 @@
 .tab-content {
   top:55px;
+  left: 275px;
+  width: calc(100vw - 275px);
 }
 
 .card {
-    height: calc(100vh - 155px);}
+    height: calc(100vh - 150px);}
 
+.scroll-content {
+  --background: var(--ion-color-favorite-tint);
+  height: calc(100vh - 200px);
+  --padding-start: 20px;
+  --padding-bottom: 20px;
+  --padding-end: 20px;
+}
 

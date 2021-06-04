@@ -1,15 +1,18 @@
 .tabs-left {
     margin: 75px 0px 75px 20px;
-    width: calc(100vw/3 - 35px); 
-    border-radius: 5px;
+    width: 250px; 
     z-index: 1;
     height: auto;
 }
 
+.tabs-left div {
+    border-radius: 3px;
+    height: calc(100vh - 150px);
+    background: var(--ion-tab-bar-background);
+}
 .tabs-left-item {
     min-width: 100%;
     min-height: 100%;
-    border-radius: 5px;
     flex-direction: row;
     justify-content: flex-start;
     font-size: medium;
@@ -21,5 +24,5 @@
 }
 
 .tabs-left-item:hover {
-    background-color: #252525;
+  background: var(--ion-color-light-tint);
 }

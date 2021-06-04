@@ -13,7 +13,7 @@
         <ion-icon slot="icon-only" ios="ellipsis-horizontal" md="ellipsis-vertical"></ion-icon>
       </ion-button>
     </ion-buttons>
-    <ion-title size="small">VGM TRANSCODING TOOL</ion-title>
+    <ion-title size="small"><strong>VGM TRANSCODING TOOL</strong></ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -23,6 +23,7 @@
 
 
 <ion-tabs class="tabs-left">
+  <div slot="top">
   <ion-tab-bar slot="top">
     
     <ion-tab-button type="icon-start" tab="database" class="tabs-left-item" selected={{tabDatabase}} (click)="tabSelect('database')" >
@@ -48,6 +49,7 @@
 
   
 </ion-tab-bar>
+</div>
 </ion-tabs>
 
 
