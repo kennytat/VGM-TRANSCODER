@@ -519,7 +519,10 @@
               },
               {
                 "input": "apps/ionic-vgm/src/global.scss"
-              }
+              },
+               {
+                 "input": "node_modules/bootstrap/dist/css/bootstrap.min.css"
+                }
             ],
             "scripts": []
           },

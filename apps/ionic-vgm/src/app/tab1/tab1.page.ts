@@ -1,6 +1,9 @@
 import { Component, OnInit} from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
 import { Subscription } from 'rxjs';
+import { TreeviewItem, TreeviewConfig } from 'ngx-treeview';
+
+
 
 export const LIST_ALL_DATA = gql`
   query {
@@ -48,38 +51,84 @@ type Response = {
 
 export class Tab1Page implements OnInit {
   loading: boolean;
-  gql_res_post: any;
-  private querySubscription: Subscription;
+  gqlResPost: any;
 
+  items: TreeviewItem[];
+  config = TreeviewConfig.create({
+    hasFilter: true,
+    hasCollapseExpand: true,
+    hasAllCheckBox: true,
+    decoupleChildFromParent: true,
+    maxHeight: 200,
+  });
+
+  private querySubscription: Subscription;
 
   constructor(private apollo: Apollo) {}
 
     ngOnInit() {
     this.querySubscription = this.apollo.watchQuery<Response>({
-      query: gql`
-              query {
-                feed {
-                  id
-                  title
-                  content
-                  published
-                  author {
-                    id
-                    name
-                    email
-                  }
-                }
-            }`
+      query: LIST_ALL_DATA
     })
       .valueChanges
       .subscribe(({ data, loading }) => {
         this.loading = loading;
-        this.gql_res_post = data.feed;
+        this.gqlResPost = data.feed;
+       
       });
-  }
 
-  ngOnDestroy() {
-    this.querySubscription.unsubscribe();
-  }
+
+    
+
+
+    this.items = [new TreeviewItem(
+       {
+      text: "IT",
+      value: 9,
+      children: [
+        {
+          text: "Programming",
+          value: 91,
+          children: [
+            {
+              text: "Frontend",
+              value: 911,
+              children: [
+                { text: "Angular 1", value: 9111 },
+                { text: "Angular 2", value: 9112 },
+                { text: "ReactJS", value: 9113 },
+              ],
+            },
+            {
+              text: "Backend",
+              value: 912,
+              children: [
+                { text: "C#", value: 9121 },
+                { text: "Java", value: 9122 },
+                { text: "Python", value: 9123, checked: false },
+              ],
+            },
+          ],
+        },
+        {
+          text: "Networking",
+          value: 92,
+          children: [
+            { text: "Internet", value: 921 },
+            { text: "Security", value: 922 },
+          ],
+        },
+      ],
+    }
+    
+    )];
+ }  
+
+
+
+ 
+    ngOnDestroy() {
+      this.querySubscription.unsubscribe();
+    }
 
 }

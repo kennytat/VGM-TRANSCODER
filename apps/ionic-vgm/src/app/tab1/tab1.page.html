@@ -3,35 +3,36 @@
     <ion-row class="row">
       <ion-col class="col">
         <ion-card class="card">
-
-
-
-            <div>
-              <ion-item>
-                <ion-icon name="git-network-outline" slot="start"></ion-icon>
-                <ion-label>Database Connection</ion-label>
-                <ion-button fill="outline" slot="end">Disconnect</ion-button>
-                <ion-card-content> </ion-card-content>
-              </ion-item>
-            </div>
-
+          <div>
+            <ion-item>
+              <ion-icon name="git-network-outline" slot="start"></ion-icon>
+              <ion-label>Database Connection</ion-label>
+              <ion-button fill="outline" slot="end">Disconnect</ion-button>
+              <ion-card-content> </ion-card-content>
+            </ion-item>
+          </div>
 
           <ion-content [scrollEvents]="true" class="scroll-content">
             <div>
-            <div *ngIf="loading">Loading...</div>
-              <div *ngFor="let post of gql_res_post">
+
+
+              <ngx-treeview [items]="items" [config]="config"></ngx-treeview>
+
+              
+              <div *ngIf="loading">Loading...</div>
+              <div *ngFor="let post of gqlResPost">
                 <p>{{ post.id }}:</p>
                 <p>{{ post.title }}</p>
                 <p>{{ post.content }}</p>
                 <p>{{ post.published }}</p>
                 <p>{{ post.author.id }}</p>
               </div>
+              <div>
+                {{ gqlResPost }}
+              </div>
+
             </div>
-            
           </ion-content>
-
-
-          
         </ion-card>
       </ion-col>
     </ion-row>
