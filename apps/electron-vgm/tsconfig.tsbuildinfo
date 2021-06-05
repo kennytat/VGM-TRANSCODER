@@ -4691,7 +4691,7 @@
         "affectsGlobalScope": false
       },
       "./src/index.ts": {
-        "version": "11a7ebed7b0d9a4dd48231414df9d02bd7701d06a126f08cbcdbe626c8284eec",
+        "version": "9ff7b3e5d0e6e4d9f073ab4f5c6751b42930d0ac267df04c95fe55dc56785e92",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },
@@ -4790,7 +4790,7 @@
           "libs/xplat/electron/core/src/index.ts"
         ]
       },
-      "pathsBasePath": "/home/vgm-ubuntu/vgm-converter",
+      "pathsBasePath": "/home/kennytat/VGM-TRANSCODER",
       "types": [
         "node",
         "jest"

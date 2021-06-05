@@ -8,18 +8,30 @@ import { ElectronService } from 'ngx-electron';
   styleUrls: ['tab2.page.scss'],
 })
 export class Tab2Page {
-  inputPath: string = "";
-  outputPath: string = "";
+  inputPath: string = '';
+  inputPathShort: string = '';
+  outputPath: string = '';
+  file_checkbox:boolean;
   // electronService API for ipcMain and ipcRenderer communication, ngZone for immediately reflect data change from ipcMain sender
   constructor(private _electronService: ElectronService, private zone:NgZone)  {}
-
-
+  
+  public CheckBoxChange() {
+    this.inputPathShort = "";
+  }
+  
   public OpenDialog() {
     if(this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('open-file-dialog');   
+      this._electronService.ipcRenderer.send('open-file-dialog', this.file_checkbox);   
       this._electronService.ipcRenderer.on('directory-path', (event, inpath)  => { 
         this.zone.run(()=>{
-          this.inputPath = inpath[0];
+          this.inputPath = inpath;
+          let i = inpath.length;
+          if (i > 1) {
+            this.inputPathShort = inpath[0]+" and "+(i-1)+" more files";
+            
+          } else {
+          this.inputPathShort = inpath[0]
+          }
        });
       })    
     }
@@ -36,6 +48,8 @@ export class Tab2Page {
     } 
   }
 
+  
+
   convert_button:boolean = true;
   progress_loading:boolean = false;
   btn_disable:boolean = false;
@@ -44,17 +58,19 @@ export class Tab2Page {
   total_files:number = 0;
   public Convert() {   
     if(this._electronService.isElectronApp) {
-      if (this.inputPath === "") {
+      if (this.inputPathShort === "" || this.outputPath === "") {
         this._electronService.ipcRenderer.send('missing-path'); 
       } else {     
-        this._electronService.ipcRenderer.send('start-convert', [this.inputPath, this.outputPath]);
+        this._electronService.ipcRenderer.send('start-convert', this.inputPath, this.outputPath, this.file_checkbox);
+        
         this._electronService.ipcRenderer.on('exec-done', (event)  => {
           this.zone.run(()=>{
             this.convert_button = true;
             this.btn_disable = false;
             this.progress_loading = false;
+            this.inputPathShort = "";
+            this.outputPath = "";
             this.inputPath = "";
-            this.outputPath = "";   
          });
         });
 

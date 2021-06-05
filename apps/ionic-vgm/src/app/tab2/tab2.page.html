@@ -13,21 +13,24 @@
           
 
             <ion-card-content>
-              <ion-label position="stacked">Browse Input Source</ion-label>
+                <ion-label position="stacked">Browse Input Source</ion-label>
               <ion-grid>
                 <ion-row>
-                  <ion-col size="9"><ion-input value={{inputPath}} placeholder="Select input source..." readonly class="path"></ion-input></ion-col>
-                  <ion-col size="3"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="OpenDialog()">Browse</ion-button></ion-col>
+                  <ion-col size="9"><ion-input value={{inputPathShort}} placeholder="Select input source..." readonly class="path"></ion-input></ion-col>
+                  <ion-col size="3" class="no-vertical-padding"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="OpenDialog()">Browse</ion-button>
+                  
+               <div><ion-checkbox slot="end" class="check-box" disabled={{btn_disable}} [(ngModel)]="file_checkbox" (ionChange)="CheckBoxChange()"></ion-checkbox><ion-label>Files only</ion-label></div>
+                  </ion-col>
                 </ion-row>
               </ion-grid>
             </ion-card-content>
             <hr class="new">
             <ion-card-content>
-              <ion-label position="stacked">Browse Output Destination</ion-label>
+              <div><ion-label position="stacked">Browse Output Destination</ion-label></div>
               <ion-grid>
                 <ion-row>
                   <ion-col size="9">
-                    <ion-input value={{outputPath}} placeholder="Select ouput destination (leave blank if same as input)" readonly class="path"></ion-input>
+                    <ion-input value={{outputPath}} placeholder="Select ouput destination" readonly class="path"></ion-input>
                   </ion-col>
                   <ion-col size="3"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="SaveDialog()">Browse</ion-button></ion-col>
                 </ion-row>
