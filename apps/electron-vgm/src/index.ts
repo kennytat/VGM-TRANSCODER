@@ -267,22 +267,23 @@ try {
         // Run interval to read progression while ffmpeg is running
         let interval = setInterval(() => {
           // read ffmpeg-progress.txt 500ms repeatedly, get fps and duration
-          ffprobe_frame_stat = fs.readFileSync("".concat(outPath,'/.ffprobe-frame.txt'),{encoding:'utf8', flag:'r'}).toString().split("\n");
+          ffprobe_frame_stat = fs.readFileSync("".concat(argOutPath,'/.ffprobe-frame.txt'),{encoding:'utf8', flag:'r'}).toString().split("\n");
           // read ffmpeg-progress.txt 500ms repeatedly, get current converted frames
-          ffmpeg_progress_stat = fs.readFileSync("".concat(outPath,'/.ffmpeg-progress.txt'),{encoding:'utf8', flag:'r'}).toString().split("\n");
+          ffmpeg_progress_stat = fs.readFileSync("".concat(argOutPath,'/.ffmpeg-progress.txt'),{encoding:'utf8', flag:'r'}).toString().split("\n");
           
           // get total frames
           let total_frames = 0;
           let converted_frames_num = 0;
           if (ffprobe_frame_stat !== [] && ffmpeg_progress_stat !== []) {
-            // get fps
+            // get fps and total duration
             let fps_stat = ffprobe_frame_stat.filter(name => name.includes("avg_frame_rate=")).toString();
-            let fps = parseInt(fps_stat.match(/\d+/g)[0])/parseInt(fps_stat.match(/\d+/g)[1]);
-            // get total duration
             let duration_stat = ffprobe_frame_stat.filter(name => name.includes("duration=")).toString();
+            if (fps_stat !== null && duration_stat !== null) {
+            let fps = parseInt(fps_stat.match(/\d+/g)[0])/parseInt(fps_stat.match(/\d+/g)[1]);
             let duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
             // calculate total frames
             total_frames = Math.round(duration*fps);
+            }
             // get current progress status, if total converted frames = total frames, then convertedFiles++  
             convertedFiles = parseInt(ffprobe_frame_stat[0]); 
             // get current converted frames
