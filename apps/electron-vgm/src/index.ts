@@ -143,20 +143,20 @@ try {
 
 // Listen to renderer process and open dialog for input and output path
   ipcMain.on('open-file-dialog', (event, isfile) => {
-    let openDialogProperties;
-    let openDialogFilters;
+    let options = {};
     if (isfile === true) {
-      openDialogProperties = ['openFile','multiSelections'];
-      openDialogFilters = [{ name: 'Movies', extensions: ['mkv', 'avi', 'mp4'] }];
+      options = {
+        title: 'Browse Video Folder',
+        filters: [{ name: 'Movies', extensions: ['mkv', 'avi', 'mp4'] }],
+        properties: ['openFile','multiSelections']
+      }
     } else {
-      openDialogProperties = ['openDirectory']
-      openDialogFilters = [];
+      options = {
+        title: 'Browse Video Folder',
+        properties: ['openDirectory']
+      }
     }
-    dialog.showOpenDialog({
-      title: 'Browse Video Folder',
-      filters: openDialogFilters,
-      properties: openDialogProperties
-  }).then(result => {
+    dialog.showOpenDialog(options).then(result => {
     event.sender.send('directory-path', result.filePaths)
   }).catch(err => {console.log(err)});
   })

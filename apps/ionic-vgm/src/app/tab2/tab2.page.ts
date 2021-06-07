@@ -8,47 +8,46 @@ import { ElectronService } from 'ngx-electron';
   styleUrls: ['tab2.page.scss'],
 })
 export class Tab2Page {
-  inputPath: string = '';
-  inputPathShort: string = '';
-  outputPath: string = '';
-  file_checkbox:boolean;
+  inputPath = '';
+  inputPathShort = '';
+  outputPath = '';
+  fileCheckbox:boolean;
   // electronService API for ipcMain and ipcRenderer communication, ngZone for immediately reflect data change from ipcMain sender
   constructor(private _electronService: ElectronService, private zone:NgZone)  {}
-  
   public CheckBoxChange() {
-    this.inputPathShort = "";
+    this.inputPathShort = '';
+    this.inputPath = '';
   }
-  
   public OpenDialog() {
     if(this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('open-file-dialog', this.file_checkbox);   
-      this._electronService.ipcRenderer.on('directory-path', (event, inpath)  => { 
+      this._electronService.ipcRenderer.send('open-file-dialog', this.fileCheckbox);
+      this._electronService.ipcRenderer.on('directory-path', (event, inpath)  => {
         this.zone.run(()=>{
           this.inputPath = inpath;
-          let i = inpath.length;
+          console.log(this.inputPath);
+          const i = inpath.length;
           if (i > 1) {
-            this.inputPathShort = inpath[0]+" and "+(i-1)+" more files";
-            
+            this.inputPathShort = inpath[0]+' and '+(i-1)+' more files';
+
           } else {
           this.inputPathShort = inpath[0]
           }
        });
-      })    
+      })
     }
   }
 
   public SaveDialog() {
     if(this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('save-dialog');   
+      this._electronService.ipcRenderer.send('save-dialog');
       this._electronService.ipcRenderer.on('saved-path', (event, outpath)  => {
         this.zone.run(()=>{
           this.outputPath = outpath[0];
        });
       })
-    } 
+    }
   }
 
-  
 
   convert_button:boolean = true;
   progress_loading:boolean = false;
@@ -56,21 +55,20 @@ export class Tab2Page {
   progression_status:number = 0;
   converted_files:number = 0;
   total_files:number = 0;
-  public Convert() {   
+  public Convert() {
     if(this._electronService.isElectronApp) {
-      if (this.inputPathShort === "" || this.outputPath === "") {
-        this._electronService.ipcRenderer.send('missing-path'); 
-      } else {     
-        this._electronService.ipcRenderer.send('start-convert', this.inputPath, this.outputPath, this.file_checkbox);
-        
+      if (this.inputPathShort === '' || this.outputPath === '') {
+        this._electronService.ipcRenderer.send('missing-path');
+      } else {
+        this._electronService.ipcRenderer.send('start-convert', this.inputPath, this.outputPath, this.fileCheckbox);
         this._electronService.ipcRenderer.on('exec-done', (event)  => {
           this.zone.run(()=>{
             this.convert_button = true;
             this.btn_disable = false;
             this.progress_loading = false;
-            this.inputPathShort = "";
-            this.outputPath = "";
-            this.inputPath = "";
+            this.inputPathShort = '';
+            this.outputPath = '';
+            this.inputPath = '';
          });
         });
 
@@ -85,24 +83,22 @@ export class Tab2Page {
               this.progress_loading = false;
             }
          });
-        }); 
-        
+        });
         this.convert_button = false;
         this.btn_disable = true;
-      };   
-      
-    } 
+      };
+    }
   }
-  
+
   public Cancel() {
     if(this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('stop-convert');   
-      this.convert_button = true;  
+      this._electronService.ipcRenderer.send('stop-convert');
+      this.convert_button = true;
       this.btn_disable = false;
       this.zone.run(()=>{
-          this.inputPath = "";
-          this.outputPath = "";
+          this.inputPath = '';
+          this.outputPath = '';
        })
-    } 
+    }
   }
 }

@@ -9,13 +9,16 @@ inPath="`find $1 -regextype posix-extended -regex '.*.(mkv|mp4)'`"
 
 fi
 for f in $inPath; do
-file="${f%.*}"
+rpws="${f// /_}"
+filepath="${rpws%.*}"
+
 if [ "$3" == "isFile" ]; then 
-filename=${f##*/}
+filename="${rpws##*/}"
 out="$2/${filename%.*}"
 else
-out="${file//$1/$2}"
+out="${filepath//$1/$2}"
 fi
+
 echo ${i} > $2/.ffprobe-frame.txt && \
 ffprobe -v quiet -select_streams v:0 -show_entries format=duration,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 $f >> $2/.ffprobe-frame.txt && \
 ffmpeg -progress $2/.ffmpeg-progress.txt -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i $f \

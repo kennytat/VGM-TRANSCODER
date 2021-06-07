@@ -19,7 +19,7 @@
                   <ion-col size="9"><ion-input value={{inputPathShort}} placeholder="Select input source..." readonly class="path"></ion-input></ion-col>
                   <ion-col size="3" class="no-vertical-padding"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="OpenDialog()">Browse</ion-button>
                   
-               <div><ion-checkbox slot="end" class="check-box" disabled={{btn_disable}} [(ngModel)]="file_checkbox" (ionChange)="CheckBoxChange()"></ion-checkbox><ion-label>Files only</ion-label></div>
+               <div><ion-checkbox slot="end" class="check-box" disabled={{btn_disable}} [(ngModel)]="fileCheckbox" (ionChange)="CheckBoxChange()"></ion-checkbox><ion-label>Files only</ion-label></div>
                   </ion-col>
                 </ion-row>
               </ion-grid>
