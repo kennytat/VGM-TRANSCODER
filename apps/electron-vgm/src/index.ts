@@ -34,6 +34,7 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
     devTools: debugMode,
     nodeIntegration: debugMode,
   },
+  
 };
 
 
@@ -120,6 +121,8 @@ function createWindow() {
     win.webContents.openDevTools();
     // client.create(applicationRef);
   }
+
+  
 }
 
 try {
@@ -156,13 +159,13 @@ try {
         properties: ['openDirectory']
       }
     }
-    dialog.showOpenDialog(options).then(result => {
+    dialog.showOpenDialog(win,options).then(result => {
     event.sender.send('directory-path', result.filePaths)
   }).catch(err => {console.log(err)});
   })
 
   ipcMain.on('save-dialog', (event) => {
-    dialog.showOpenDialog({
+    dialog.showOpenDialog(win,{
       title: 'Browse Output Folder',
       properties: ['openDirectory']
   }).then(result => {
