@@ -24,7 +24,6 @@ export class Tab2Page {
       this._electronService.ipcRenderer.on('directory-path', (event, inpath)  => {
         this.zone.run(()=>{
           this.inputPath = inpath;
-          console.log(this.inputPath);
           const i = inpath.length;
           if (i > 1) {
             this.inputPathShort = inpath[0]+' and '+(i-1)+' more files';
@@ -66,6 +65,7 @@ export class Tab2Page {
             this.convert_button = true;
             this.btn_disable = false;
             this.progress_loading = false;
+            this.progression_status = 0;
             this.inputPathShort = '';
             this.outputPath = '';
             this.inputPath = '';

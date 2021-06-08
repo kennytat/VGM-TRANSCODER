@@ -193,35 +193,21 @@ try {
     let progression_status:number = 0;
     let ffprobe_frame_stat = [];
     let ffmpeg_progress_stat = [];
-
+    let isFile = '';
     // Get input and output path
-    let inPath:string = '';
-    let outPath = argOutPath;
-    let isFile:string = '';
+    let inPath = '\"'+argInPath.join()+'\"';
+    let outPath = '\"'+argOutPath+'\"';
     // Get total input file count 
     if (fileOnly === true) {
-      if (argInPath.length > 1) {
-        for (let i=0; i<argInPath.length;i++) {
-            inPath = inPath.concat(" ",argInPath[i]).trim();
-        }
-      } else {
-        inPath = argInPath[0];
-      }
-      isFile = "isFile";
       totalFiles = argInPath.length;
+      isFile = "isFile";
       startConvert();
     } else {
-    inPath = argInPath[0];
-    let count_files_arg = "find " + inPath + " -regextype posix-extended -regex '.*.(mkv|mp4)' | wc -l";
-    const count_files_exec = spawn('sh', ['-c', count_files_arg]);
-    count_files_exec.stdout.on('data', data => {
-      totalFiles = parseInt(data);
-    })
-    count_files_exec.on('close', (code) => {
-      console.log(`count total file exit code ${code}`);
-      startConvert();
-
-    });
+      isFile = "isFolder";
+      let count_files_arg = "find " + inPath + " -regextype posix-extended -regex '.*.(mkv|mp4)' | wc -l";
+      const count_files_exec = spawn('sh', ['-c', count_files_arg]);
+      count_files_exec.stdout.on('data', data => {totalFiles = parseInt(data);})
+      count_files_exec.on('close', (code) => {startConvert();});
     }
     function startConvert() {
       if (totalFiles > 0) {
