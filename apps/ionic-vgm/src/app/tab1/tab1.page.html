@@ -12,12 +12,14 @@
             </ion-item>
           </div>
 
-          <ion-content [scrollEvents]="true" class="scroll-content">
-            <div>
+    
+            <div class="data-content">
 
 
               <ngx-treeview [items]="items" [config]="config"></ngx-treeview>
-
+              <div>
+                this is new: {{ gqlResPost[1].content}}
+              </div>
               
               <div *ngIf="loading">Loading...</div>
               <div *ngFor="let post of gqlResPost">
@@ -32,7 +34,7 @@
               </div>
 
             </div>
-          </ion-content>
+         
         </ion-card>
       </ion-col>
     </ion-row>

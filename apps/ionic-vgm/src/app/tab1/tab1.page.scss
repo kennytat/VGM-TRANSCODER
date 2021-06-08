@@ -9,27 +9,30 @@
 .card {
     height: calc(100vh - 150px);}
 
-.scroll-content {
-  --background: var(--ion-color-favorite-tint);
-  height: calc(100vh - 200px);
-  --padding-top: 20px;
-  --padding-start: 20px;
-  --padding-bottom: 20px;
-  --padding-end: 20px;
+.data-content {
+  padding: 20px;
 }
 
 :host ::ng-deep {
 
   ngx-treeview {
-    color: rgb(72, 255, 0);
-  }
-
   .form-control {
     width: 100%;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid;
+    border-color:  var(--ion-color-light-shade);
     border-radius: 4px;
     resize: vertical;
   }
-
+  .col-12 {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 10px;
+  }
+  .dropdown-divider {
+    border-top: 1px solid;
+    border-color: var(--ion-color-light-tint);
+    padding-bottom: 10px;
+  }
+  }
 }

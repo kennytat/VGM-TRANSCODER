@@ -59,7 +59,7 @@ export class Tab1Page implements OnInit {
     hasCollapseExpand: true,
     hasAllCheckBox: true,
     decoupleChildFromParent: true,
-    maxHeight: 200,
+    maxHeight: 300,
   });
 
   private querySubscription: Subscription;
@@ -74,13 +74,9 @@ export class Tab1Page implements OnInit {
       .subscribe(({ data, loading }) => {
         this.loading = loading;
         this.gqlResPost = data.feed;
-       
       });
 
-
     
-
-
     this.items = [new TreeviewItem(
        {
       text: "IT",
@@ -92,7 +88,7 @@ export class Tab1Page implements OnInit {
           children: [
             {
               text: "Frontend",
-              value: 911,
+              value: 913,
               children: [
                 { text: "Angular 1", value: 9111 },
                 { text: "Angular 2", value: 9112 },
@@ -122,11 +118,11 @@ export class Tab1Page implements OnInit {
     }
     
     )];
+
+
+
  }  
 
-
-
- 
     ngOnDestroy() {
       this.querySubscription.unsubscribe();
     }
