@@ -17,9 +17,7 @@
 
 
               <ngx-treeview [items]="items" [config]="config"></ngx-treeview>
-              <div>
-                this is new: {{ gqlResPost[1].content}}
-              </div>
+          
               
               <div *ngIf="loading">Loading...</div>
               <div *ngFor="let post of gqlResPost">
