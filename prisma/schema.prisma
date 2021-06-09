@@ -7,20 +7,20 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model Root {
+model Media {
   id          String      @id @default(uuid())
   pid         String      @default("none")
   name        String  
-  qm          String      @unique
+  qm          String?      @unique
   categories  Category[]
 }
 
 model Category {
   id            String    @id @default(uuid())
-  parent        Root      @relation(fields: [pid], references:[id])
+  parent        Media      @relation(fields: [pid], references:[id])
   pid           String     
   name          String  
-  qm            String    @unique
+  qm            String?   @unique
   classify      Classification[]
   @@unique([pid,name])
 }
@@ -30,7 +30,7 @@ model Classification {
   parent        Category  @relation(fields: [pid], references:[id])
   pid           String     
   name          String  
-  qm            String    @unique
+  qm            String?    @unique
   topic         Topic[]
   @@unique([pid,name])
 }
@@ -40,7 +40,7 @@ model Topic {
   parent        Classification    @relation(fields: [pid], references:[id])
   pid           String     
   name          String  
-  qm            String             @unique
+  qm            String?             @unique
   content       Content[]
   @@unique([pid,name])
 }
@@ -50,7 +50,7 @@ model Content {
   parent        Topic   @relation(fields: [pid], references:[id])
   pid           String     
   name          String  
-  qm            String  @unique
+  qm            String?  @unique
   duration      Int?
   size          Int?
   thumb         String

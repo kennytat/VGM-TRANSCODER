@@ -1,8 +1,13 @@
 import { Module } from '@nestjs/common'
 import { GraphQLModule } from '@nestjs/graphql'
 import { PrismaService } from './prisma.service'
-import { PostResolver } from './resolvers.post'
-import { UserResolver } from './resolvers.user'
+
+import { MediaResolver } from './media.resolvers'
+import { CategoryResolver } from './category.resolvers'
+import { ClassificationResolver } from './classification.resolvers'
+import { TopicResolver } from './topic.resolvers'
+import { ContentResolver } from './content.resolvers'
+
 import { join } from 'path'
 
 @Module({
@@ -14,6 +19,13 @@ import { join } from 'path'
     })
   ],
   controllers: [],
-  providers: [PrismaService, UserResolver, PostResolver],
+  providers: [
+    PrismaService, 
+    MediaResolver, 
+    CategoryResolver,
+    ClassificationResolver,
+    TopicResolver,
+    ContentResolver
+  ],
 })
 export class AppModule { }

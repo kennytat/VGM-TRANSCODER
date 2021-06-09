@@ -2,7 +2,7 @@ import { PrismaClient, Prisma } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-const rootData: Prisma.RootCreateInput[] = [
+const mediaData: Prisma.MediaCreateInput[] = [
   {
     name: 'root',
     qm: 'Qm00',
@@ -95,11 +95,11 @@ const rootData: Prisma.RootCreateInput[] = [
 
 async function main() {
   console.log(`Start seeding ...`)
-  for (const u of rootData) {
-    const root = await prisma.root.create({
+  for (const u of mediaData) {
+    const media = await prisma.media.create({
       data: u,
     })
-    console.log(`Created user with id: ${root.id}`)
+    console.log(`Created user with id: ${media.id}`)
   }
   console.log(`Seeding finished.`)
 }
