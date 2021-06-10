@@ -11,9 +11,9 @@ import {
   Field,
 } from '@nestjs/graphql'
 import { Inject } from '@nestjs/common'
-import { Topic } from './topic.model'
-// import { Media } from './media.model'
-import { PrismaService } from './prisma.service'
+import { Classification } from '../models/classification.model'
+import { Topic } from '../models/topic.model'
+import { PrismaService } from '../prisma.service'
 // import { PostCreateInput } from './resolvers.post'
 
 // @InputType()
@@ -37,9 +37,30 @@ import { PrismaService } from './prisma.service'
 //   posts: [PostCreateInput]
 // }
 
-@Resolver(Topic)
-export class TopicResolver {
+@Resolver(Classification)
+export class ClassificationResolver {
   constructor(@Inject(PrismaService) private prismaService: PrismaService) { }
+
+  @ResolveField('topics', () => [Topic])
+  async getTopics(@Root() classes: Classification) {
+    return this.prismaService.topic.findMany({
+      where: {
+        pid: classes.id
+      }
+    });
+  }
+
+  @Query(() => Classification, { name: 'classes' })
+  async getClasses(@Args('id', { type: () => String }) id: string) {
+    return this.prismaService.classification.findMany(
+      {
+        where: {
+          id: id
+        }
+      }
+    );
+  }
+
 
   // @ResolveField()
   // async posts(@Root() user: User, @Context() ctx): Promise<Post[]> {

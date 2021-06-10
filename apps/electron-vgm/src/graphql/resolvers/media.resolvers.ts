@@ -11,10 +11,10 @@ import {
   Field,
 } from '@nestjs/graphql'
 import { Inject } from '@nestjs/common'
-import { Media } from './media.model'
-import { Category } from './category.model'
+import { Media } from '../models/media.model'
+import { Category } from '../models/category.model'
 // import { CategoryCreateInput } from './content.resolvers'
-import { PrismaService } from './prisma.service'
+import { PrismaService } from '../prisma.service'
 
 @InputType()
 class MediaUniqueInput {
@@ -41,19 +41,16 @@ class MediaUniqueInput {
 export class MediaResolver {
   constructor(@Inject(PrismaService) private prismaService: PrismaService) { }
 
-
-  @ResolveField('categories', returns => [Category])
-  async categories(@Root() media: Media) {
-    const { id } = media;
-    return this.prismaService.media.findUnique({
+  @ResolveField('categories', () => [Category])
+  async getCategories(@Root() media: Media) {
+    return this.prismaService.category.findMany({
       where: {
-        id: id
+        pid: media.id
       } 
     });
   }
 
-
-  @Query(returns => Media, { name: 'media' })
+  @Query(() => Media, { name: 'media' })
   async getMedia(@Args('id', { type: () => String }) id: string) {
     return this.prismaService.media.findUnique(
       {

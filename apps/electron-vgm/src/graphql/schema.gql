@@ -20,7 +20,7 @@ type Topic {
   pid: String!
   name: String!
   qm: String
-  content: [Content!]!
+  contents: [Content!]!
 }
 
 type Classification {
@@ -29,7 +29,7 @@ type Classification {
   pid: String!
   name: String!
   qm: String
-  topic: [Topic!]!
+  topics: [Topic!]!
 }
 
 type Category {
@@ -38,7 +38,7 @@ type Category {
   pid: String!
   name: String!
   qm: String
-  classify: [Classification!]
+  classes: [Classification!]!
 }
 
 type Media {
@@ -46,9 +46,12 @@ type Media {
   pid: String!
   name: String!
   qm: String
-  categories: [Category!]
+  categories: [Category!]!
 }
 
 type Query {
   media(id: String!): Media!
+  categories(id: String!): Category!
+  classes(id: String!): Classification!
+  topics(id: String!): Topic!
 }

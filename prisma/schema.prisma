@@ -21,7 +21,7 @@ model Category {
   pid           String     
   name          String  
   qm            String?   @unique
-  classify      Classification[]
+  classes    Classification[]
   @@unique([pid,name])
 }
 
@@ -31,7 +31,7 @@ model Classification {
   pid           String     
   name          String  
   qm            String?    @unique
-  topic         Topic[]
+  topics         Topic[]
   @@unique([pid,name])
 }
 
@@ -41,7 +41,7 @@ model Topic {
   pid           String     
   name          String  
   qm            String?             @unique
-  content       Content[]
+  contents       Content[]
   @@unique([pid,name])
 }
 

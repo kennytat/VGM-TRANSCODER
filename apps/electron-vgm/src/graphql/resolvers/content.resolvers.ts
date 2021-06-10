@@ -13,9 +13,9 @@ import {
   registerEnumType,
 } from '@nestjs/graphql'
 import { Inject } from '@nestjs/common'
-import { Content } from './content.model'
+import { Content } from '../models/content.model'
 
-import { PrismaService } from './prisma.service'
+import { PrismaService } from '../prisma.service'
 
 // @InputType()
 // export class ContentCreateInput {

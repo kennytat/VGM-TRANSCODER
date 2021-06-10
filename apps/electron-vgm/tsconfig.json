@@ -3,7 +3,9 @@
   "compilerOptions": {
     "target": "es2017",
     "module": "commonjs",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
   "include": ["src/index.ts"]
 }

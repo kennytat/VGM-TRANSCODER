@@ -11,17 +11,17 @@ const mediaData: Prisma.MediaCreateInput[] = [
         {
           name: 'videoCategory',
           qm: 'Qm1',
-          classify: {
+          classes: {
             create: [
               {
                 name: 'videoClassification',
                 qm: 'Qm11',
-                topic: {
+                topics: {
                   create: [
                     {
                       name: 'videoTopic',
                       qm: 'Qm111',
-                      content: {
+                      contents: {
                         create: [
                           {
                             name: 'video1',
@@ -51,17 +51,17 @@ const mediaData: Prisma.MediaCreateInput[] = [
         {
           name: 'audioCategory',
           qm: 'Qm2',
-          classify: {
+          classes: {
             create: [
               {
                 name: 'audioClassification',
                 qm: 'Qm21',
-                topic: {
+                topics: {
                   create: [
                     {
                       name: 'audioTopic',
                       qm: 'Qm211',
-                      content: {
+                      contents: {
                         create: [
                           {
                             name: 'audio1',

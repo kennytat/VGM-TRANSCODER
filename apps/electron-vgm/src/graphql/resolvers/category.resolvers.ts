@@ -11,38 +11,83 @@ import {
   Field,
 } from '@nestjs/graphql'
 import { Inject } from '@nestjs/common'
-import { Classification } from './classification.model'
-// import { Media } from './media.model'
-import { PrismaService } from './prisma.service'
-// import { PostCreateInput } from './resolvers.post'
+import { Category } from '../models/category.model'
+import { Classification } from '../models/classification.model'
+import { PrismaService } from '../prisma.service'
+// import { ClassificationCreateInput } from './classification.resolvers'
+// import { ClassificationResolver } from './classification.resolvers'
+
 
 // @InputType()
-// class UserUniqueInput {
+// class CategoryUniqueInput {
 //   @Field({ nullable: true })
-//   id: number
-
-//   @Field({ nullable: true })
-//   email: string
-// }
-
-// @InputType()
-// class UserCreateInput {
-//   @Field()
-//   email: string
+//   id: string
 
 //   @Field({ nullable: true })
 //   name: string
-
-//   @Field((type) => [PostCreateInput], { nullable: true })
-//   posts: [PostCreateInput]
 // }
 
-@Resolver(Classification)
-export class ClassificationResolver {
+// @InputType()
+// class CategoryCreateInput {
+//   @Field()
+//   name: string
+
+//   @Field({ nullable: true })
+//   qm: string
+
+//   @Field({ nullable: true })
+//   qm: string
+
+//   @Field({ nullable: true })
+//   duration: number
+
+//   @Field({ nullable: true })
+//   size: number
+
+//   @Field()
+//   thumb: string
+
+//   @Field()
+//   isvideo: boolean
+// }
+
+@Resolver(Category)
+export class CategoryResolver {
   constructor(@Inject(PrismaService) private prismaService: PrismaService) { }
 
+    @ResolveField('classes', () => [Classification])
+  async getClasses(@Root() categories: Category) {
+    return this.prismaService.classification.findMany({
+      where: {
+        pid: categories.id
+      } 
+    });
+  }
+
+  @Query(() => Category, { name: 'categories' })
+  async getCategories(@Args('id', { type: () => String }) id: string) {
+    return this.prismaService.category.findMany(
+      {
+        where: {
+          id: id
+        }
+      }
+      );
+  }
+
+  // @ResolveField('classification', returns => [Classfication])
+  // async categories(@Root() media: Media) {
+  //   const { id } = media;
+  //   return this.prismaService.media.findUnique({
+  //     where: {
+  //       id: id
+  //     }
+  //   });
+  // }
+
+
   // @ResolveField()
-  // async posts(@Root() user: User, @Context() ctx): Promise<Post[]> {
+  // async posts(@Root() content: Content, @Context() ctx): Promise<Post[]> {
   //   return this.prismaService.user
   //     .findUnique({
   //       where: {

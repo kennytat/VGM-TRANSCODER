@@ -1,15 +1,15 @@
 import 'reflect-metadata'
 import { ObjectType, Field } from '@nestjs/graphql'
-import { Classification } from './classification.model'
-import { Content } from './content.model'
+import { Category } from './category.model'
+import { Topic } from './topic.model'
 
 @ObjectType()
-export class Topic {
+export class Classification {
   @Field((type) => String)
   id: string
 
-  @Field((type) => [Classification])
-  parent: Classification
+  @Field((type) => [Category])
+  parent: Category
 
   @Field((type) => String)
   pid: string
@@ -20,7 +20,7 @@ export class Topic {
   @Field((type) => String, { nullable: true })
   qm: string | null
  
-  @Field((type) => [Content])
-  content: [Content]
+  @Field((type) => [Topic])
+  topics: [Topic]
   
 }

@@ -21,6 +21,6 @@ export class Category {
   qm?: string | null
  
   @Field((type) => [Classification], {nullable: true})
-  classify?: [Classification]
+  classes?: [Classification]
 }
  
