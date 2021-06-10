@@ -10,6 +10,9 @@ export class Content {
   @Field((type) => [Topic])
   parent: Topic
 
+  @Field((type) => Int)
+  dblevel: number
+
   @Field((type) => String)
   pid: string
 
@@ -17,13 +20,13 @@ export class Content {
   name: string
 
   @Field((type) => String, { nullable: true })
-  qm: string | null
+  qm?: string | null
   
   @Field((type) => Int, { nullable: true })
-  duration: string | null
+  duration?: string | null
 
   @Field((type) => Int, { nullable: true })
-  size: string | null
+  size?: string | null
   
   @Field((type) => String)
   thumb: string

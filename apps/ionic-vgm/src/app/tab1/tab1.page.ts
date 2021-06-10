@@ -1,4 +1,4 @@
-import { Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
 import { Subscription } from 'rxjs';
 import { TreeviewItem, TreeviewConfig } from 'ngx-treeview';
@@ -7,40 +7,74 @@ import { TreeviewItem, TreeviewConfig } from 'ngx-treeview';
 
 export const LIST_ALL_DATA = gql`
   query {
-    feed {
-      id
-      title
-      content
-      published
-      author {
-        id
-        name
-        email
+  media (id: "6c8c1189-8cf7-4bd8-9c1d-cd072a6a12df") {
+    value:id
+    text:name
+    children:categories {
+      value:id
+    	text:name
+      children:classes {
+        value:id
+    		text:name
+        children:topics {
+          value:id
+    			text:name
+          children:contents {
+            value:id
+    				text:name
+          }
+        }
       }
     }
+  }
 }`;
 
 
- // types for Response
-
-type Post = {
-   id: number;
-   title: string;
-   content: string;
-   published: boolean;
-   viewCount: number;
-   author: User;
-}
-
-type User = {
-  id: number;
-  email: string;
+// types for Response
+type Media = {
+  id: string;
+  pid: string;
   name: string;
-  posts: Post[];
+  qm: string;
+  categories: Category[];
 }
 
+type Category = {
+  id: string;
+  pid: string;
+  name: string;
+  qm: string;
+  classes: Classification[];
+}
+
+type Classification = {
+  id: string;
+  pid: string;
+  name: string;
+  qm: string;
+  topics: Topic[];
+}
+
+type Topic = {
+  id: string;
+  pid: string;
+  name: string;
+  qm: string;
+  contents: Content[]; 
+}
+
+type Content = {
+  id: string;
+  pid: string;
+  name: string;
+  qm: string;
+  duration: number;
+  size: number;
+  thumb: string;
+  isvideo: boolean;
+}
 type Response = {
-  feed: Post;
+  media: Media;
 }
 
 @Component({
@@ -50,81 +84,58 @@ type Response = {
 })
 
 export class Tab1Page implements OnInit {
-  loading: boolean;
-  gqlResPost: any;
+  constructor(private apollo: Apollo) { }
 
+  private querySubscription: Subscription;
+  h = window.innerHeight-200;
+  loading: boolean;
+  itemList;
   items: TreeviewItem[];
   config = TreeviewConfig.create({
     hasFilter: true,
     hasCollapseExpand: true,
     hasAllCheckBox: true,
-    decoupleChildFromParent: true,
-    maxHeight: 300,
+    decoupleChildFromParent: false,
+    maxHeight: this.h
   });
+  videoBtnColor = 'primary';
+  audioBtnColor = 'light';
+  video = true;
+  showDiv(divVal: string) {
+    if (divVal === 'V') {
+      this.video = true;
+      this.videoBtnColor = 'primary';
+      this.audioBtnColor = 'light';
+    } else {
+      this.video = false;
+      this.videoBtnColor = 'light';
+      this.audioBtnColor = 'primary';
+    }
+  }
 
-  private querySubscription: Subscription;
-
-  constructor(private apollo: Apollo) {}
-
-    ngOnInit() {
+  ngOnInit() {
     this.querySubscription = this.apollo.watchQuery<Response>({
       query: LIST_ALL_DATA
     })
       .valueChanges
       .subscribe(({ data, loading }) => {
         this.loading = loading;
-        this.gqlResPost = data.feed;
+        this.itemList = data.media;
+        this.items = [new TreeviewItem(this.itemList)];
+       // this.items.getCorrectChecked()
       });
 
-    
-    this.items = [new TreeviewItem(
-       {
-      text: "IT",
-      value: 9,
-      children: [
-        {
-          text: "Programming",
-          value: 91,
-          children: [
-            {
-              text: "Frontend",
-              value: 913,
-              children: [
-                { text: "Angular 1", value: 9111 },
-                { text: "Angular 2", value: 9112 },
-                { text: "ReactJS", value: 9113 },
-              ],
-            },
-            {
-              text: "Backend",
-              value: 912,
-              children: [
-                { text: "C#", value: 9121 },
-                { text: "Java", value: 9122 },
-                { text: "Python", value: 9123, checked: false },
-              ],
-            },
-          ],
-        },
-        {
-          text: "Networking",
-          value: 92,
-          children: [
-            { text: "Internet", value: 921 },
-            { text: "Security", value: 922 },
-          ],
-        },
-      ],
-    }
-    
-    )];
+  }
 
+  treeVSelectedChange(event) {
+    console.log(event);
+  }
 
-
- }  
-
-    ngOnDestroy() {
-      this.querySubscription.unsubscribe();
-    }
+  treeVFilterChange(event:string){
+    console.log('filter:', event);
+  }
+  ngOnDestroy() {
+    this.querySubscription.unsubscribe();
+  }
 
 }

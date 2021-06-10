@@ -1,11 +1,14 @@
 import 'reflect-metadata'
-import { ObjectType, Field } from '@nestjs/graphql'
+import { ObjectType, Field, Int } from '@nestjs/graphql'
 import { Category } from './category.model'
 
 @ObjectType()
 export class Media {
   @Field((type) => String)
   id: string
+
+  @Field((type) => Int)
+  dblevel: number
 
   @Field((type) => String)
   pid: string

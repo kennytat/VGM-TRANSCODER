@@ -14,17 +14,17 @@ const mediaData: Prisma.MediaCreateInput[] = [
           classes: {
             create: [
               {
-                name: 'videoClassification',
+                name: '01-Bài Giảng',
                 qm: 'Qm11',
                 topics: {
                   create: [
                     {
-                      name: 'videoTopic',
+                      name: 'Các Diễn Giả',
                       qm: 'Qm111',
                       contents: {
                         create: [
                           {
-                            name: 'video1',
+                            name: 'MSTPT_Bài Giảng Thứ Nhất',
                             qm: 'Qm1111',
                             duration: 520,
                             size: 123,
@@ -32,7 +32,7 @@ const mediaData: Prisma.MediaCreateInput[] = [
                             isvideo: true
                           },
                           {
-                            name: 'video2',
+                            name: 'MSTPT_Bài Giảng Thứ Hai ',
                             qm: 'Qm1112',
                             duration: 123123,
                             size: 123312313,
@@ -54,17 +54,17 @@ const mediaData: Prisma.MediaCreateInput[] = [
           classes: {
             create: [
               {
-                name: 'audioClassification',
+                name: 'Bài Giảng Theo Diễn Giả',
                 qm: 'Qm21',
                 topics: {
                   create: [
                     {
-                      name: 'audioTopic',
+                      name: 'MS. Nguyễn Hữu Bình',
                       qm: 'Qm211',
                       contents: {
                         create: [
                           {
-                            name: 'audio1',
+                            name: 'MSTPT Bài Giảng Thứ Nhất',
                             qm: 'Qm2111',
                             duration: 520,
                             size: 123,
@@ -72,7 +72,7 @@ const mediaData: Prisma.MediaCreateInput[] = [
                             isvideo: true
                           },
                           {
-                            name: 'audio2',
+                            name: 'MSTPT Bài Giảng Thứ Hai',
                             qm: 'Qm2112',
                             duration: 520,
                             size: 123,

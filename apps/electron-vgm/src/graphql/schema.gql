@@ -5,6 +5,7 @@
 type Content {
   id: String!
   parent: [Topic!]!
+  dblevel: Int!
   pid: String!
   name: String!
   qm: String
@@ -16,6 +17,7 @@ type Content {
 
 type Topic {
   id: String!
+  dblevel: Int!
   parent: [Classification!]!
   pid: String!
   name: String!
@@ -26,6 +28,7 @@ type Topic {
 type Classification {
   id: String!
   parent: [Category!]!
+  dblevel: Int!
   pid: String!
   name: String!
   qm: String
@@ -35,6 +38,7 @@ type Classification {
 type Category {
   id: String!
   parent: Media!
+  dblevel: Int!
   pid: String!
   name: String!
   qm: String
@@ -43,6 +47,7 @@ type Category {
 
 type Media {
   id: String!
+  dblevel: Int!
   pid: String!
   name: String!
   qm: String

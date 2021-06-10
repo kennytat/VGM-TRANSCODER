@@ -10,44 +10,49 @@ datasource db {
 model Media {
   id          String      @id @default(uuid())
   pid         String      @default("none")
+  dblevel     Int         @default(0)
   name        String  
-  qm          String?      @unique
+  qm          String?     @unique
   categories  Category[]
 }
 
 model Category {
   id            String    @id @default(uuid())
-  parent        Media      @relation(fields: [pid], references:[id])
+  parent        Media     @relation(fields: [pid], references:[id])
+  dblevel       Int       @default(1)
   pid           String     
   name          String  
   qm            String?   @unique
-  classes    Classification[]
+  classes       Classification[]
   @@unique([pid,name])
 }
 
 model Classification {
   id            String    @id @default(uuid())
   parent        Category  @relation(fields: [pid], references:[id])
+  dblevel       Int       @default(2)
   pid           String     
   name          String  
   qm            String?    @unique
-  topics         Topic[]
+  topics        Topic[]
   @@unique([pid,name])
 }
 
 model Topic {
   id            String    @id @default(uuid())
   parent        Classification    @relation(fields: [pid], references:[id])
+  dblevel       Int       @default(3)
   pid           String     
   name          String  
   qm            String?             @unique
-  contents       Content[]
+  contents      Content[]
   @@unique([pid,name])
 }
 
 model Content {
   id            String    @id @default(uuid())
   parent        Topic   @relation(fields: [pid], references:[id])
+  dblevel       Int       @default(4)
   pid           String     
   name          String  
   qm            String?  @unique
