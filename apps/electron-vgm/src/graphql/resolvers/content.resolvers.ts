@@ -14,7 +14,7 @@ import {
 } from '@nestjs/graphql'
 import { Inject } from '@nestjs/common'
 import { Content } from '../models/content.model'
-
+import { Topic } from '../models/topic.model'
 import { PrismaService } from '../prisma.service'
 
 // @InputType()
@@ -27,20 +27,20 @@ import { PrismaService } from '../prisma.service'
 
 // }
 
-// @InputType()
-// class PostOrderByUpdatedAtInput {
-//   @Field((type) => SortOrder)
-//   updatedAt: SortOrder
-// }
+@InputType()
+class PostOrderByUpdatedAtInput {
+  @Field((type) => SortOrder)
+  updatedAt: SortOrder
+}
 
-// enum SortOrder {
-//   asc = 'asc',
-//   desc = 'desc'
-// }
+enum SortOrder {
+  asc = 'asc',
+  desc = 'desc'
+}
 
-// registerEnumType(SortOrder, {
-//   name: 'SortOrder'
-// })
+registerEnumType(SortOrder, {
+  name: 'SortOrder'
+})
 
 
 
@@ -48,16 +48,16 @@ import { PrismaService } from '../prisma.service'
 export class ContentResolver {
   constructor(@Inject(PrismaService) private prismaService: PrismaService) { }
 
-  // @ResolveField()
-  // author(@Root() post: Post): Promise<User | null> {
-  //   return this.prismaService.post
-  //     .findUnique({
-  //       where: {
-  //         id: post.id,
-  //       },
-  //     })
-  //     .author()
-  // }
+  @ResolveField('topic', () => [Topic])
+  async getParent(@Root() content: Content){
+    return this.prismaService.topic
+      .findMany({
+        where: {
+          id: content.pid,
+        },
+      })
+  }
+
 
   // @Query((returns) => Post, { nullable: true })
   // postById(@Args('id') id: number) {
@@ -66,34 +66,60 @@ export class ContentResolver {
   //   })
   // }
 
-  // @Query((returns) => [Post])
-  // feed(
-  //   @Args('searchString', { nullable: true }) searchString: string,
-  //   @Args('skip', { nullable: true }) skip: number,
-  //   @Args('take', { nullable: true }) take: number,
-  //   @Args('orderBy', { nullable: true }) orderBy: PostOrderByUpdatedAtInput,
-  //   @Context() ctx) {
+  @Query((returns) => [Content])
+  video(
+    @Args('searchVideo', { nullable: true }) searchVideo: string,
+    @Args('skip', { nullable: true }) skip: number,
+    @Args('take', { nullable: true }) take: number,
+    @Args('orderBy', { nullable: true }) orderBy: PostOrderByUpdatedAtInput,
+    @Context() ctx) {
 
-  //   const or = searchString
-  //     ? {
-  //       OR: [
-  //         { title: { contains: searchString } },
-  //         { content: { contains: searchString } },
-  //       ],
-  //     }
-  //     : {}
+    const or = searchVideo
+      ? {
+        OR: [
+          { name: { contains: searchVideo } }
+        ],
+      }
+      : {}
 
-  //   return this.prismaService.post.findMany({
-  //     where: {
-  //       published: true,
-  //       ...or,
-  //     },
-  //     take: take || undefined,
-  //     skip: skip || undefined,
-  //     orderBy: orderBy || undefined,
-  //   })
-  // }
+    return this.prismaService.content.findMany({
+      where: {
+         filetype: { contains: 'video' },
+        ...or,
+      },
+      take: take || undefined,
+      skip: skip || undefined,
+      orderBy: orderBy || undefined,
+    })
+  }
 
+
+  @Query((returns) => [Content])
+  audio(
+    @Args('searchAudio', { nullable: true }) searchAudio: string,
+    @Args('skip', { nullable: true }) skip: number,
+    @Args('take', { nullable: true }) take: number,
+    @Args('orderBy', { nullable: true }) orderBy: PostOrderByUpdatedAtInput,
+    @Context() ctx) {
+
+    const or = searchAudio
+      ? {
+        OR: [
+          { name: { contains: searchAudio } }
+        ],
+      }
+      : {}
+
+    return this.prismaService.content.findMany({
+      where: {
+        filetype: { contains: 'audio' } ,
+        ...or,
+      },
+      take: take || undefined,
+      skip: skip || undefined,
+      orderBy: orderBy || undefined,
+    })
+  }
   // @Mutation((returns) => Post)
   // createDraft(
   //   @Args('data') data: PostCreateInput,

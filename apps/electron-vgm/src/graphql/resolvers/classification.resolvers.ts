@@ -13,6 +13,7 @@ import {
 import { Inject } from '@nestjs/common'
 import { Classification } from '../models/classification.model'
 import { Topic } from '../models/topic.model'
+import { Category } from '../models/category.model'
 import { PrismaService } from '../prisma.service'
 // import { PostCreateInput } from './resolvers.post'
 
@@ -48,6 +49,16 @@ export class ClassificationResolver {
         pid: classes.id
       }
     });
+  }
+
+  @ResolveField('categories', () => [Category])
+  async getParent(@Root() classes: Classification){
+    return this.prismaService.category
+      .findMany({
+        where: {
+          id: classes.pid,
+        },
+      })
   }
 
   @Query(() => Classification, { name: 'classes' })

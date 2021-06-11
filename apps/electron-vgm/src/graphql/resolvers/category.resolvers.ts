@@ -13,6 +13,7 @@ import {
 import { Inject } from '@nestjs/common'
 import { Category } from '../models/category.model'
 import { Classification } from '../models/classification.model'
+import { Media } from '../models/media.model'
 import { PrismaService } from '../prisma.service'
 // import { ClassificationCreateInput } from './classification.resolvers'
 // import { ClassificationResolver } from './classification.resolvers'
@@ -64,16 +65,26 @@ export class CategoryResolver {
     });
   }
 
-  @Query(() => Category, { name: 'categories' })
-  async getCategories(@Args('id', { type: () => String }) id: string) {
-    return this.prismaService.category.findMany(
-      {
+  @ResolveField('media', () => [Media])
+  async getParent(@Root() categories: Category){
+    return this.prismaService.media
+      .findMany({
         where: {
-          id: id
-        }
-      }
-      );
+          id: categories.pid,
+        },
+      })
   }
+
+  // @Query(() => Category, { name: 'categories' })
+  // async getCategories(@Args('id', { type: () => String }) id: string) {
+  //   return this.prismaService.category.findMany(
+  //     {
+  //       where: {
+  //         id: id
+  //       }
+  //     }
+  //     );
+  // }
   
   @Query(() => Category, { name: 'categories' })
   async getCategory(@Args('id', { type: () => String }) id: string) {

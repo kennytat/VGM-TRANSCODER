@@ -13,6 +13,7 @@ import {
 import { Inject } from '@nestjs/common'
 import { Topic } from '../models/topic.model'
 import { Content } from '../models/content.model'
+import { Classification } from '../models/classification.model'
 import { PrismaService } from '../prisma.service'
 // import { PostCreateInput } from './resolvers.post'
 
@@ -50,6 +51,17 @@ export class TopicResolver {
       }
     });
   }
+
+  @ResolveField('classes', () => [Classification])
+  async getParent(@Root() topic: Topic){
+    return this.prismaService.classification
+      .findMany({
+        where: {
+          id: topic.pid,
+        },
+      })
+  }
+
 
   @Query(() => Topic, { name: 'topics' })
   async getTopics(@Args('id', { type: () => String }) id: string) {

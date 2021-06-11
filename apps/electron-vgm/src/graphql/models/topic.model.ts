@@ -12,7 +12,7 @@ export class Topic {
   dblevel: number
   
   @Field((type) => [Classification])
-  parent: Classification
+  classes: [Classification]
 
   @Field((type) => String)
   pid: string

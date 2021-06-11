@@ -8,8 +8,8 @@ export class Category {
   @Field((type) => String)
   id: string
 
-  @Field((type) => Media)
-  parent: Media
+  @Field((type) => [Media])
+  media: [Media]
 
   @Field((type) => Int)
   dblevel: number

@@ -51,15 +51,17 @@ model Topic {
 
 model Content {
   id            String    @id @default(uuid())
-  parent        Topic   @relation(fields: [pid], references:[id])
+  parent        Topic     @relation(fields: [pid], references:[id])
   dblevel       Int       @default(4)
   pid           String     
   name          String  
-  qm            String?  @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  qm            String?   @unique
   duration      Int?
   size          Int?
   thumb         String
-  isvideo       Boolean?
+  filetype      String
 }
 
 // model User {

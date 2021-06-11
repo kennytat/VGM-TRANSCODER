@@ -9,7 +9,7 @@ export class Classification {
   id: string
 
   @Field((type) => [Category])
-  parent: Category
+  categories: [Category]
 
   @Field((type) => Int)
   dblevel: number

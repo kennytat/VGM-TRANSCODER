@@ -8,7 +8,7 @@ export class Content {
   id: string
 
   @Field((type) => [Topic])
-  parent: Topic
+  topic: [Topic]
 
   @Field((type) => Int)
   dblevel: number
@@ -19,6 +19,12 @@ export class Content {
   @Field((type) => String)
   name: string
 
+  @Field((type) => Date)
+  createdAt: Date
+  
+  @Field((type) => Date)
+  updatedAt: Date
+  
   @Field((type) => String, { nullable: true })
   qm?: string | null
   
@@ -31,6 +37,6 @@ export class Content {
   @Field((type) => String)
   thumb: string
   
-  @Field((type) => Boolean)
-  isvideo: Boolean
+  @Field((type) => String)
+  filetype: string
 }

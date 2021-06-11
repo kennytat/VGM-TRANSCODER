@@ -35,9 +35,11 @@ export type Content = {
   id: string;
   pid: string;
   name: string;
+  createdAt: number;
+  updatedAt: number;
   qm: string;
   duration: number;
   size: number;
   thumb: string;
-  isvideo: boolean;
+  filetype: string;
 }

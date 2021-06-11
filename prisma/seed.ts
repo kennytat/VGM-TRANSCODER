@@ -25,11 +25,10 @@ const mediaData: Prisma.MediaCreateInput[] = [
                         create: [
                           {
                             name: 'MSTPT_Bài Giảng Thứ Nhất',
-                            qm: 'Qm1111',
                             duration: 520,
                             size: 123,
                             thumb: '/this is video1 thumbnail url',
-                            isvideo: true
+                            filetype: 'video'
                           },
                           {
                             name: 'MSTPT_Bài Giảng Thứ Hai ',
@@ -37,7 +36,7 @@ const mediaData: Prisma.MediaCreateInput[] = [
                             duration: 123123,
                             size: 123312313,
                             thumb: '/this is video2 thumbnail url',
-                            isvideo: true
+                            filetype: 'video'
                           } 
                         ]
                       }
@@ -69,15 +68,14 @@ const mediaData: Prisma.MediaCreateInput[] = [
                             duration: 520,
                             size: 123,
                             thumb: '/this is audio thumbnail url',
-                            isvideo: true
+                            filetype: 'audio'
                           },
                           {
                             name: 'MSTPT Bài Giảng Thứ Hai',
-                            qm: 'Qm2112',
                             duration: 520,
                             size: 123,
                             thumb: '/this is audio thumbnail url',
-                            isvideo: true
+                            filetype: 'audio'
                           }
                         ]
                       }

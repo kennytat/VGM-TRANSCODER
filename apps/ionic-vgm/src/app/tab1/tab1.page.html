@@ -3,19 +3,28 @@
     <ion-row class="row">
       <ion-col class="col">
         <ion-card class="card">
-        
-            <ion-item>
-              <ion-icon name="git-network-outline" slot="start"></ion-icon>
-              <ion-label>Database Connection</ion-label>
-              <ion-button fill="outline" slot="end" (click)="ngOnDestroy()">Disconnect</ion-button>
-              <ion-card-content> </ion-card-content>
-            </ion-item>
-        
-
+          <ion-item>
+            <ion-icon name="git-network-outline" slot="start"></ion-icon>
+            <ion-label>Database Connection</ion-label>
+            <ion-button fill="outline" slot="end" (click)="ngOnDestroy()"
+              >Disconnect</ion-button
+            >
+            <ion-card-content> </ion-card-content>
+          </ion-item>
 
           <ion-item>
-            <ion-button color={{videoBtnColor}} class="data-btn" (click)="showDiv('V')">Video</ion-button>
-            <ion-button color={{audioBtnColor}} class="data-btn" (click)="showDiv('A')">Audio</ion-button>
+            <ion-button
+              color="{{videoBtnColor}}"
+              class="data-btn"
+              (click)="showDiv('V')"
+              >Video</ion-button
+            >
+            <ion-button
+              color="{{audioBtnColor}}"
+              class="data-btn"
+              (click)="showDiv('A')"
+              >Audio</ion-button
+            >
           </ion-item>
 
           <div *ngIf="video; else audio" class="data-content">
@@ -26,22 +35,59 @@
               (filterChange)="treeFilterChange($event)"
             >
             </ngx-treeview>
+            <div class="data-info">
+              <ion-item>
+                <ion-label position="floating">DATA INFO</ion-label>
+
+                <ion-grid>
+                  <ion-row>
+       
+                      <div style="padding:0 20px 0 0px">
+                      Name: <br />
+                      Type: <br />
+                      Folder:<br />
+                      Publish:<br />
+                      Updated At: <br />
+                      Duration:<br />
+                      Size:<br />
+                      </div>
+                      
+                
+
+       
+                      <div>
+                        {{filename}} <br />
+                        {{filetype}}<br />
+                        {{folder}}<br />
+                        <div [ngSwitch]="publish">
+                          <div *ngSwitchCase="'unpublished'" style="color: red">
+                            {{qm}}<br />
+                          </div>
+                          <div *ngSwitchDefault>{{qm}}</div>
+                        </div>
+
+                        {{updatedAt}}<br />
+                        {{duration}}<br />
+                        {{size}}<br />
+                      </div>
+               
+                  </ion-row>
+                </ion-grid>
+              </ion-item>
+            </div>
           </div>
 
-          <ng-template #audio >
+          <ng-template #audio>
             <div class="data-content">
-                <ngx-treeview
-              [items]="audioTree"
-              [config]="config"
-              (selectedChange)="treeSelectedChange($event)"
-              (filterChange)="treeFilterChange($event)"
-            >
-            </ngx-treeview>
-            </div>  
+              <ngx-treeview
+                [items]="audioTree"
+                [config]="config"
+                (selectedChange)="treeSelectedChange($event)"
+                (filterChange)="treeFilterChange($event)"
+              >
+              </ngx-treeview>
+            </div>
           </ng-template>
-
-
-
         </ion-card>
       </ion-col>
     </ion-row>

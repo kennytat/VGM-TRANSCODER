@@ -4,21 +4,28 @@
 
 type Content {
   id: String!
-  parent: [Topic!]!
+  topic: [Topic!]!
   dblevel: Int!
   pid: String!
   name: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
   qm: String
   duration: Int
   size: Int
   thumb: String!
-  isvideo: Boolean!
+  filetype: String!
 }
+
+"""
+`Date` type as integer. Type represents date and time as number of milliseconds from start of UNIX epoch.
+"""
+scalar Timestamp
 
 type Topic {
   id: String!
   dblevel: Int!
-  parent: [Classification!]!
+  classes: [Classification!]!
   pid: String!
   name: String!
   qm: String
@@ -27,7 +34,7 @@ type Topic {
 
 type Classification {
   id: String!
-  parent: [Category!]!
+  categories: [Category!]!
   dblevel: Int!
   pid: String!
   name: String!
@@ -37,7 +44,7 @@ type Classification {
 
 type Category {
   id: String!
-  parent: Media!
+  media: [Media!]!
   dblevel: Int!
   pid: String!
   name: String!
@@ -59,4 +66,15 @@ type Query {
   categories(id: String!): Category!
   classes(id: String!): Classification!
   topics(id: String!): Topic!
+  video(orderBy: PostOrderByUpdatedAtInput, take: Float, skip: Float, searchVideo: String): [Content!]!
+  audio(orderBy: PostOrderByUpdatedAtInput, take: Float, skip: Float, searchAudio: String): [Content!]!
+}
+
+input PostOrderByUpdatedAtInput {
+  updatedAt: SortOrder!
+}
+
+enum SortOrder {
+  asc
+  desc
 }
