@@ -74,6 +74,17 @@ export class CategoryResolver {
       }
       );
   }
+  
+  @Query(() => Category, { name: 'categories' })
+  async getCategory(@Args('id', { type: () => String }) id: string) {
+    return this.prismaService.category.findUnique(
+      {
+        where: {
+          id: id
+        }
+      }
+      );
+  }
 
   // @ResolveField('classification', returns => [Classfication])
   // async categories(@Root() media: Media) {

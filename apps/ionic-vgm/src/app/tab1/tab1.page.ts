@@ -2,79 +2,39 @@ import { Component, OnInit } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
 import { Subscription } from 'rxjs';
 import { TreeviewItem, TreeviewConfig } from 'ngx-treeview';
-
-
+import { Media, Category, Classification, Topic, Content } from './db.types'
 
 export const LIST_ALL_DATA = gql`
-  query {
-  media (id: "6c8c1189-8cf7-4bd8-9c1d-cd072a6a12df") {
+ query {
+  media (id: "856ca230-205f-40e0-9aaf-e776843a548f") {
     value:id
     text:name
     children:categories {
-      value:id
-    	text:name
-      children:classes {
-        value:id
-    		text:name
-        children:topics {
           value:id
-    			text:name
-          children:contents {
+          text:name
+          children:classes {
             value:id
-    				text:name
+            text:name
+            children:topics {
+              value:id
+              text:name
+              children:contents {
+                value:id
+                text:name
+            }
           }
         }
       }
-    }
   }
 }`;
 
-
-// types for Response
-type Media = {
-  id: string;
-  pid: string;
-  name: string;
-  qm: string;
-  categories: Category[];
-}
-
-type Category = {
-  id: string;
-  pid: string;
-  name: string;
-  qm: string;
-  classes: Classification[];
-}
-
-type Classification = {
-  id: string;
-  pid: string;
-  name: string;
-  qm: string;
-  topics: Topic[];
-}
-
-type Topic = {
-  id: string;
-  pid: string;
-  name: string;
-  qm: string;
-  contents: Content[]; 
-}
-
-type Content = {
-  id: string;
-  pid: string;
-  name: string;
-  qm: string;
-  duration: number;
-  size: number;
-  thumb: string;
-  isvideo: boolean;
-}
 type Response = {
   media: Media;
+  categories: Category;
+  adad: Category;
+  classes: Classification;
+  topics: Topic;
+  contents: Content;
 }
 
 @Component({
@@ -86,18 +46,24 @@ type Response = {
 export class Tab1Page implements OnInit {
   constructor(private apollo: Apollo) { }
 
+  // GQL client subscription for connecting GQL server
   private querySubscription: Subscription;
-  h = window.innerHeight-200;
+  // Declare variable and setting for mapping GQL data to ngx-Tree
   loading: boolean;
-  itemList;
-  items: TreeviewItem[];
+  allDB;
+  videoDB;
+  videoTree: TreeviewItem[];
+  audioDB;
+  audioTree: TreeviewItem[];
+  treeHeight = window.innerHeight - 400;
   config = TreeviewConfig.create({
     hasFilter: true,
     hasCollapseExpand: true,
     hasAllCheckBox: true,
     decoupleChildFromParent: false,
-    maxHeight: this.h
+    maxHeight: this.treeHeight
   });
+  // Declare variable for videoDB and audioDB seperately
   videoBtnColor = 'primary';
   audioBtnColor = 'light';
   video = true;
@@ -112,7 +78,7 @@ export class Tab1Page implements OnInit {
       this.audioBtnColor = 'primary';
     }
   }
-
+  // Run function OnInit
   ngOnInit() {
     this.querySubscription = this.apollo.watchQuery<Response>({
       query: LIST_ALL_DATA
@@ -120,20 +86,28 @@ export class Tab1Page implements OnInit {
       .valueChanges
       .subscribe(({ data, loading }) => {
         this.loading = loading;
-        this.itemList = data.media;
-        this.items = [new TreeviewItem(this.itemList)];
-       // this.items.getCorrectChecked()
+        this.allDB = data.media;
+        if (this.allDB.children[1].text === 'videoDB') {
+          this.videoDB = this.allDB.children[1];
+          this.audioDB = this.allDB.children[0];
+        } else {
+          this.videoDB = this.allDB.children[0];
+          this.audioDB = this.allDB.children[1];
+        }
+        this.videoTree = [new TreeviewItem(this.videoDB)];
+        this.audioTree = [new TreeviewItem(this.audioDB)];
       });
 
   }
 
-  treeVSelectedChange(event) {
+  treeSelectedChange(event) {
     console.log(event);
   }
 
-  treeVFilterChange(event:string){
+  treeFilterChange(event: string) {
     console.log('filter:', event);
   }
+
   ngOnDestroy() {
     this.querySubscription.unsubscribe();
   }

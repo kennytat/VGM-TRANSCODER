@@ -9,7 +9,7 @@ const mediaData: Prisma.MediaCreateInput[] = [
     categories: {
       create: [
         {
-          name: 'videoCategory',
+          name: 'videoDB',
           qm: 'Qm1',
           classes: {
             create: [
@@ -49,7 +49,7 @@ const mediaData: Prisma.MediaCreateInput[] = [
           }
         },
         {
-          name: 'audioCategory',
+          name: 'audioDB',
           qm: 'Qm2',
           classes: {
             create: [
