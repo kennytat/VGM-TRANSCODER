@@ -8,8 +8,8 @@ type Content {
   dblevel: Int!
   pid: String!
   name: String!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: DateTime!
+  updatedAt: DateTime!
   qm: String
   duration: Int
   size: Int
@@ -18,9 +18,9 @@ type Content {
 }
 
 """
-`Date` type as integer. Type represents date and time as number of milliseconds from start of UNIX epoch.
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
-scalar Timestamp
+scalar DateTime
 
 type Topic {
   id: String!

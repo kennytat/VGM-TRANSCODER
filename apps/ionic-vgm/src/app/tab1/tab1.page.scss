@@ -21,29 +21,45 @@
 .data-content {
   padding: 20px;
   position: relative;
-  z-index: 2;
 }
 
 .data-btn {
   width: 100%;
 }
 
+.info-btn {
+  position: absolute; 
+  width: calc(50% - 40px);
+  left: 50%;
+  top: 72px;
+  display: flex; 
+  justify-content: space-between;
+}
+
+.info-btn ion-label {
+  line-height: 30px;
+  margin-left: 20px;
+  color: var(--ion-color-dark);
+}
+
+.info-btn ion-label span {
+  color: var(--ion-color-warning);
+}
+
+.info-btn ion-button {
+  padding: 0 2px 0 2px;
+}
+
 .data-info {
+  position: absolute;
   width: 50%;
   float: right;
-  position: absolute;
-  right: 0;
-  top: 0;
+  left:50%;
+  top: 110px;
   z-index: 1;
 }
 
-.data-info ion-grid {
-  width: 100%;
-  padding-top: 20px;
-}
 .data-info ion-item {
-  top: 110px;
-  right: 20px;
   --border-style: none;
   --color: var(--ion-color-dark-shade);
   font-size: small;
@@ -53,6 +69,15 @@
 
 :host ::ng-deep {
   ngx-treeview {
+    treeview-container {
+      width: 50%;
+    }
+    ngx-treeview-item {
+      width: 50%;
+    }
+    .row-item {
+      display: flex;
+    }
     .form-control {
       width: 100%;
       padding: 10px;
@@ -73,18 +98,26 @@
     }
     input[type=checkbox] {
       display: none;
+      border-radius: 50px;
+    }
+    input[type=checkbox]:checked {
+      display:inline-block;
+     
     }
     .form-check-label {
-      padding: 1px 5px 1px 5px;
+      padding:2px;
       border-radius: 2px;
-      color: var(--ion-color-dark)
+      color: var(--ion-color-dark);
+      cursor: pointer;
     }
     .form-check-label:hover {
       background-color: rgba(var(--ion-color-warning-rgb),0.5);
     }
-    input[type='checkbox']:checked ~.form-check-label {
-      background-color: rgba(var(--ion-color-warning-rgb),0.8);
-      color: var(--ion-color-light)
+    input[type=checkbox]:checked ~.form-check-label {
+      color: var(--ion-color-warning);
+      margin-left: 5px;
+      padding: 1px 5px 1px 1px;
+      font-weight: bold;
     }
   }
 }

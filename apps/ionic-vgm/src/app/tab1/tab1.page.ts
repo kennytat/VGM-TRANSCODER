@@ -1,76 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { Apollo, gql } from 'apollo-angular';
+import { Apollo } from 'apollo-angular';
 import { Subscription } from 'rxjs';
 import { TreeviewItem, TreeviewConfig } from 'ngx-treeview';
-import { Media, Content } from './db.types'
-
-export const LIST_ALL_DATA = gql`
- query {
-  media (id: "effbc45f-bed4-4d8a-ac91-c4430139ade2") {
-    value:id
-    text:name
-    children:categories {
-          value:id
-          text:name
-          children:classes {
-            value:id
-            text:name
-            children:topics {
-              value:id
-              text:name
-              children:contents {
-                value:id
-                text:name
-            }
-          }
-        }
-      }
-  }
-}`;
-
-export const VIDEO_DATA = gql`
-  query {
-  video {
-    id
-    pid
-    name
-    qm
-    updatedAt
-    createdAt
-    thumb
-    size
-    duration
-    filetype
-    topic {
-      name
-      classes {
-        name
-      }
-    }
-  }
-}`;
-
-export const AUDIO_DATA = gql`
-  query {
-  audio {
-    id
-    pid
-    name
-    qm
-    updatedAt
-    createdAt
-    thumb
-    size
-    duration
-    filetype
-    topic {
-      name
-      classes {
-        name
-      }
-    }
-  }
-}`;
+import { Media, Content, LIST_ALL_QUERY, VIDEO_QUERY, AUDIO_QUERY } from './db.types'
 
 type AllDataResponse = {
   media: Media;
@@ -92,7 +24,7 @@ export class Tab1Page implements OnInit {
   constructor(private apollo: Apollo) { }
 
   // GQL client subscription for connecting GQL server
-  private allDataSubcription: Subscription;
+  private allDataSubscription: Subscription;
   private allVideoSubscription: Subscription;
   private allAudioSubscription: Subscription;
   // Declare variable and setting for mapping GQL data to ngx-Tree
@@ -104,6 +36,7 @@ export class Tab1Page implements OnInit {
   audioTree: TreeviewItem[];
   audioFiles;
   selectedFileInfo;
+  selectedFileCount;
   treeHeight = window.innerHeight - 400;
   config = TreeviewConfig.create({
     hasFilter: true,
@@ -129,6 +62,8 @@ export class Tab1Page implements OnInit {
   }
 
   // Declare file info variable on selected
+  dataInfo = false;
+  infoBtn = false;
   filename: string;
   filetype: string;
   folder: string;
@@ -141,9 +76,13 @@ export class Tab1Page implements OnInit {
 
   // Run function OnInit
   ngOnInit() {
-    // Connect to GQL Server and get all Data
-    this.allDataSubcription = this.apollo.watchQuery<AllDataResponse>({
-      query: LIST_ALL_DATA
+   this.connectGQL();
+  }
+
+  connectGQL() {
+ // Connect to GQL Server and get all Data
+    this.allDataSubscription = this.apollo.watchQuery<AllDataResponse>({
+      query: LIST_ALL_QUERY
     })
       .valueChanges
       .subscribe(({ data }) => {
@@ -159,20 +98,18 @@ export class Tab1Page implements OnInit {
         this.audioTree = [new TreeviewItem(this.audioDB)];
       });
     // Get all video files data
-    this.allVideoSubscription = this.apollo.watchQuery<AllVideoResponse>({ query: VIDEO_DATA })
+    this.allVideoSubscription = this.apollo.watchQuery<AllVideoResponse>({ query: VIDEO_QUERY })
       .valueChanges
       .subscribe(({ data }) => { this.videoFiles = data.video; });
     //Get all audio files data
-    this.allAudioSubscription = this.apollo.watchQuery<AllAudioResponse>({ query: AUDIO_DATA })
+    this.allAudioSubscription = this.apollo.watchQuery<AllAudioResponse>({ query: AUDIO_QUERY })
       .valueChanges
       .subscribe(({ data }) => { this.audioFiles = data.audio; });
-
-
   }
 
   treeSelectedChange(event) {
-    // console.log(event);
-    if (event.length == 1) {
+    this.selectedFileCount = event.length;
+    if (this.selectedFileCount == 1) {
       let v = this.videoFiles.filter(data => data.id.includes(event[0]));
       let a = this.audioFiles.filter(data => data.id.includes(event[0]));
       if (v[0] !== undefined) {
@@ -194,8 +131,9 @@ export class Tab1Page implements OnInit {
         this.publish = "published";
         
       }
-      console.log(this.selectedFileInfo)
+      this.dataInfo = true;  
     } else {
+      this.dataInfo = false;
       this.selectedFileInfo = "";
       this.filename = "";
       this.filetype = "";
@@ -204,11 +142,14 @@ export class Tab1Page implements OnInit {
       this.size = null;
       this.folder = "";
       this.qm = "";
-      this.publish = "";
-    }
-
-
-
+      this.publish = "";  
+    };
+     if (this.selectedFileCount >= 1) {
+        this.infoBtn = true;
+      } else {
+        this.infoBtn = false;
+      }  
+    console.log(event)
   }
 
   treeFilterChange(event: string) {
@@ -216,7 +157,9 @@ export class Tab1Page implements OnInit {
   }
 
   ngOnDestroy() {
-    this.allDataSubcription.unsubscribe();
+    this.allDataSubscription.unsubscribe();
+    this.allVideoSubscription.unsubscribe();
+    this.allAudioSubscription.unsubscribe();
   }
 
 }
