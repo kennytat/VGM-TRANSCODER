@@ -173,8 +173,13 @@ export class Tab1Page implements OnInit {
   treeSelectedChange(event) {
     // console.log(event);
     if (event.length == 1) {
-      let i = this.videoFiles.filter(data => data.id.includes(event[0]));
-      this.selectedFileInfo = i[0];
+      let v = this.videoFiles.filter(data => data.id.includes(event[0]));
+      let a = this.audioFiles.filter(data => data.id.includes(event[0]));
+      if (v[0] !== undefined) {
+        this.selectedFileInfo = v[0];
+      } else {
+        this.selectedFileInfo = a[0]; 
+      }
       this.filename = this.selectedFileInfo.name;
       this.filetype = this.selectedFileInfo.filetype;
       this.updatedAt = this.selectedFileInfo.updatedAt;
@@ -190,7 +195,6 @@ export class Tab1Page implements OnInit {
         
       }
       console.log(this.selectedFileInfo)
-      console.log(this.selectedFileInfo.qm)
     } else {
       this.selectedFileInfo = "";
       this.filename = "";
