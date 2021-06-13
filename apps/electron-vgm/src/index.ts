@@ -76,13 +76,13 @@ function createWindow() {
 
     mainWindowSettings.width = 800;
     mainWindowSettings.height = 600;
-    mainWindowSettings.minWidth = 800;
-    mainWindowSettings.minHeight = 600;
+    // mainWindowSettings.minWidth = 800;
+    // mainWindowSettings.minHeight = 600;
   } else {
     mainWindowSettings.width = sizes.width;
     mainWindowSettings.height = sizes.height;
-    mainWindowSettings.minWidth = 800;
-    mainWindowSettings.minHeight = 600; 
+    // mainWindowSettings.minWidth = 800;
+    // mainWindowSettings.minHeight = 600; 
     mainWindowSettings.x = 0;
     mainWindowSettings.y = 0;
   }

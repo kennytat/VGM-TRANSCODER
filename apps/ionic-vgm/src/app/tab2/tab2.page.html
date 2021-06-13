@@ -1,81 +1,91 @@
+
 <ion-content [fullscreen]="true" class="tab-content">
   <ion-grid>
     <ion-row class="row">
-        <ion-col class="col">
-        
-          <ion-card class="card">
-            <ion-item>
-              <ion-icon name="folder-open-outline" slot="start"></ion-icon>
-              <ion-label>Transporting Stream M3U8 Transcoding</ion-label>
-              <ion-button fill="outline" slot="end">View</ion-button>
-            </ion-item>
-          
-          
+      <ion-col class="col">
+        <ion-card class="card">
+          <ion-item>
+            <ion-icon name="git-network-outline" slot="start"></ion-icon>
+            <ion-label>Database Connection</ion-label>
+            <ion-button fill="outline" slot="end" (click)="connectGQL()">Refresh</ion-button>
+            <ion-card-content> </ion-card-content>
+          </ion-item>
 
-            <ion-card-content>
-                <ion-label position="stacked">Browse Input Source</ion-label>
-              <ion-grid>
-                <ion-row>
-                  <ion-col size="9"><ion-input value={{inputPathShort}} placeholder="Select input source..." readonly class="path"></ion-input></ion-col>
-                  <ion-col size="3" class="no-vertical-padding"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="OpenDialog()">Browse</ion-button>
-                  
-               <div><ion-checkbox slot="end" class="check-box" disabled={{btn_disable}} [(ngModel)]="fileCheckbox" (ionChange)="CheckBoxChange()"></ion-checkbox><ion-label>Files only</ion-label></div>
-                  </ion-col>
-                </ion-row>
-              </ion-grid>
-            </ion-card-content>
-            <hr class="new">
-            <ion-card-content>
-              <div><ion-label position="stacked">Browse Output Destination</ion-label></div>
-              <ion-grid>
-                <ion-row>
-                  <ion-col size="9">
-                    <ion-input value={{outputPath}} placeholder="Select ouput destination" readonly class="path"></ion-input>
-                  </ion-col>
-                  <ion-col size="3"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="SaveDialog()">Browse</ion-button></ion-col>
-                </ion-row>
-              </ion-grid>
-            
-            </ion-card-content>
-            <hr class="new">
-            <ion-card-content *ngIf="convert_button; else stop_convert">
-              <ion-button expand="block" (click)="Convert()">START CONVERSION</ion-button>
-            </ion-card-content>
-            <ng-template #stop_convert>
-              <ion-card-content>
-                <ion-grid>
-                  <ion-row>
-                    <ion-col size="6">
-                      <div class="ion-text-start sub-text">
-                        <ion-label position="stacked">{{converted_files}}/{{total_files}}</ion-label>
-                      </div>
-                      
-                    </ion-col>
-                    <ion-col size="6">
-                      <div class="ion-text-end sub-text">
-                        <div class="lds-spinner" *ngIf="progress_loading"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-                        <ion-label position="stacked">{{progression_status*100 | number: '1.0-0'}} %</ion-label>
-                      </div>  
-                    </ion-col>
-                  </ion-row>
-                  <ion-row>
-                    <ion-progress-bar color="primary" value={{progression_status}}></ion-progress-bar>
-                 
-                  </ion-row>
-                  
-                  
-                </ion-grid>
+          <ion-item>
+            <ion-button color="{{videoBtnColor}}" class="data-btn" (click)="showDiv('V')">Video</ion-button>
+            <ion-button color="{{audioBtnColor}}" class="data-btn" (click)="showDiv('A')">Audio</ion-button>
+          </ion-item>
+          <div style="position: relative;">
+            <div *ngIf="video; else audio" class="data-content">
+              <ngx-treeview 
+                [items]="videoTree" 
+                [config]="config" 
+                (selectedChange)="treeSelectedChange($event)"
+                (filterChange)="treeFilterChange($event)">
+              </ngx-treeview>
+            </div>
 
+            <ng-template #audio>
+              <div class="data-content">
+                <ngx-treeview [items]="audioTree" [config]="config" (selectedChange)="treeSelectedChange($event)"
+                  (filterChange)="treeFilterChange($event)">
+                </ngx-treeview>
+              </div>
+            </ng-template>
+
+            <div *ngIf="infoBtn" class="info-btn"> 
+              <div>
+                <ion-label>FILE INFO (<span>{{ selectedFileCount }}</span> selected)</ion-label>
+              </div>
+              <div>
+                <ion-button size="small" color="primary" shape="round" style="font-size:xx-small;">publish</ion-button>
+                <ion-button size="small" color="warning" shape="round" style="font-size:xx-small;">unpublish</ion-button>
+              </div>
+            </div>
+            <div class="data-info">
+              <ion-item>
                 
-              </ion-card-content>
-              <ion-card-content>
-                <ion-button expand="block" (click)="Cancel()">STOP</ion-button>
-              </ion-card-content>
-            </ng-template>         
-          </ion-card>
+                <ion-grid>
+              
+                  <ion-row *ngIf="dataInfo">
+                    <div style="padding-right: 20px">
+                      Name: <br />
+                      Type: <br />
+                      Folder:<br />
+                      Publish:<br />
+                      Updated: <br />
+                      Duration:<br />
+                      Size:<br />
+                    </div>
 
 
-        </ion-col>
+
+
+                    <div>
+                      {{filename}} <br />
+                      {{filetype}}<br />
+                      {{folder}}<br />
+                      <div [ngSwitch]="publish">
+                        <div *ngSwitchCase="'unpublished'" style="color: red">
+                          {{qm}}<br />
+                        </div>
+                        <div *ngSwitchDefault>{{qm}}</div>
+                      </div>
+
+                      {{updatedAt}}<br />
+                      {{duration}}<br />
+                      {{size}}<br />
+                    </div>
+
+                  </ion-row>
+                </ion-grid>
+              </ion-item>
+            </div>
+          </div>
+        </ion-card>
+      </ion-col>
     </ion-row>
   </ion-grid>
 </ion-content>
+
+

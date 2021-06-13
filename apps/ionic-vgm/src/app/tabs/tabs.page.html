@@ -24,27 +24,25 @@
 
 <ion-tabs class="tabs-left">
   <div slot="top">
-  <ion-tab-bar slot="top">
-    
-    <ion-tab-button type="icon-start" tab="database" class="tabs-left-item" selected={{tabDatabase}} (click)="tabSelect('database')" >
-      <ion-icon name="server-outline"></ion-icon>
-      <ion-label>Connect Database</ion-label>
- 
-    </ion-tab-button>
+  
 
-  </ion-tab-bar>
   <ion-tab-bar slot="top">
     <ion-tab-button type="icon-start" tab="converter" class="tabs-left-item" selected={{tabConverter}} (click)="tabSelect('converter')" >
       <ion-icon name="sync-outline"></ion-icon>
       <ion-label>M3U8 Converter</ion-label>
     </ion-tab-button>
 </ion-tab-bar>
-
+<ion-tab-bar slot="top"> 
+    <ion-tab-button type="icon-start" tab="database" class="tabs-left-item" selected={{tabDatabase}} (click)="tabSelect('database')" >
+      <ion-icon name="server-outline"></ion-icon>
+      <ion-label>Database Connection</ion-label>
+    </ion-tab-button>
+  </ion-tab-bar>
 
   <ion-tab-bar slot="top">
-    <ion-tab-button type="icon-start" tab="tab3" class="tabs-left-item" selected={{tab3}} (click)="tabSelect('tab3')" >
-      <ion-icon name="square"></ion-icon>
-      <ion-label>Feature 3</ion-label>
+    <ion-tab-button type="icon-start" tab="ipfs" class="tabs-left-item" selected={{tabIPFS}} (click)="tabSelect('ipfs')" >
+      <ion-icon name="cube-outline"></ion-icon>
+      <ion-label>IPFS Connection</ion-label>
     </ion-tab-button>
 
   
@@ -55,19 +53,20 @@
 
 <ion-tabs>
   <ion-tab-bar slot="bottom">
+    <ion-tab-button tab="converter" (click)="tabSelect('converter')">
+      <ion-icon name="sync-outline"></ion-icon>
+      <ion-label>Converter</ion-label>
+    </ion-tab-button>
     <ion-tab-button tab="database" (click)="tabSelect('database')">
       <ion-icon name="server-outline"></ion-icon>
       <ion-label>Database</ion-label>
     </ion-tab-button>
 
-    <ion-tab-button tab="converter" (click)="tabSelect('converter')">
-      <ion-icon name="sync-outline"></ion-icon>
-      <ion-label>Converter</ion-label>
-    </ion-tab-button>
+    
 
-    <ion-tab-button tab="tab3" (click)="tabSelect('tab3')">
-      <ion-icon name="square"></ion-icon>
-      <ion-label>Feature 3</ion-label>
+    <ion-tab-button tab="ipfs" (click)="tabSelect('ipfs')">
+      <ion-icon name="cube-outline"></ion-icon>
+      <ion-label>IPFS</ion-label>
     </ion-tab-button>
   </ion-tab-bar>
 </ion-tabs>
