@@ -74,7 +74,7 @@ function createWindow() {
   if (debugMode) {
     process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
-    mainWindowSettings.width = 800;
+    mainWindowSettings.width = 1050;
     mainWindowSettings.height = 600;
     // mainWindowSettings.minWidth = 800;
     // mainWindowSettings.minHeight = 600;

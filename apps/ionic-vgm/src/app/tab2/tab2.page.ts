@@ -35,7 +35,8 @@ export class Tab2Page implements OnInit {
   audioDB;
   audioTree: TreeviewItem[];
   audioFiles;
-  selectedFileInfo;
+  displayDB;
+  selectedFileInfo = [];
   selectedFileCount;
   config = TreeviewConfig.create({
     hasFilter: true,
@@ -43,23 +44,10 @@ export class Tab2Page implements OnInit {
     hasAllCheckBox: true,
     decoupleChildFromParent: false
   });
-  // Declare variable for videoDB and audioDB seperately
-  videoBtnColor = 'primary';
-  audioBtnColor = 'light';
-  video = true;
-  showDiv(divVal: string) {
-    if (divVal === 'V') {
-      this.video = true;
-      this.videoBtnColor = 'primary';
-      this.audioBtnColor = 'light';
-    } else {
-      this.video = false;
-      this.videoBtnColor = 'light';
-      this.audioBtnColor = 'primary';
-    }
-  }
 
-  // Declare file info variable on selected
+// Declare file info variable on selected
+  disable = true;
+  editDBBtn = true;
   dataInfo = false;
   infoBtn = false;
   filename: string;
@@ -71,7 +59,23 @@ export class Tab2Page implements OnInit {
   duration: number;
   size: number;
 
-
+  // Declare variable for videoDB and audioDB seperately
+  videoBtnColor = 'primary';
+  audioBtnColor = 'light';
+  video = true;
+  showDiv(divVal: string) {
+    if (divVal === 'V') {
+      this.video = true;
+      this.videoBtnColor = 'primary';
+      this.audioBtnColor = 'light';
+      this.displayDB = this.videoDB;
+    } else {
+      this.video = false;
+      this.videoBtnColor = 'light';
+      this.audioBtnColor = 'primary';
+      this.displayDB = this.audioDB;
+    }
+  }
   // Run function OnInit
   ngOnInit() {
    this.connectGQL();
@@ -94,12 +98,13 @@ export class Tab2Page implements OnInit {
         }
         this.videoTree = [new TreeviewItem(this.videoDB)];
         this.audioTree = [new TreeviewItem(this.audioDB)];
+        this.displayDB = this.videoDB;
       });
     // Get all video files data
     this.allVideoSubscription = this.apollo.watchQuery<AllVideoResponse>({ query: VIDEO_QUERY })
       .valueChanges
       .subscribe(({ data }) => { this.videoFiles = data.video; });
-    //Get all audio files data
+    // Get all audio files data
     this.allAudioSubscription = this.apollo.watchQuery<AllAudioResponse>({ query: AUDIO_QUERY })
       .valueChanges
       .subscribe(({ data }) => { this.audioFiles = data.audio; });
@@ -107,51 +112,42 @@ export class Tab2Page implements OnInit {
 
   treeSelectedChange(event) {
     this.selectedFileCount = event.length;
-    if (this.selectedFileCount == 1) {
-      let v = this.videoFiles.filter(data => data.id.includes(event[0]));
-      let a = this.audioFiles.filter(data => data.id.includes(event[0]));
+    if (this.selectedFileCount >= 1) {
+      const v = this.videoFiles.filter(data => event.includes(data.id));
+      const a = this.audioFiles.filter(data => event.includes(data.id));
       if (v[0] !== undefined) {
-        this.selectedFileInfo = v[0];
+        this.selectedFileInfo = v;
       } else {
-        this.selectedFileInfo = a[0]; 
+        this.selectedFileInfo = a;
       }
-      this.filename = this.selectedFileInfo.name;
-      this.filetype = this.selectedFileInfo.filetype;
-      this.updatedAt = this.selectedFileInfo.updatedAt;
-      this.duration = this.selectedFileInfo.duration;
-      this.size = this.selectedFileInfo.size;
-      this.folder = ''.concat(this.selectedFileInfo.topic[0].classes[0].name, '/', this.selectedFileInfo.topic[0].name);
-      if (this.selectedFileInfo.qm == null) {
-        this.qm = "unpublished";
-        this.publish = "unpublished"
-      } else {
-        this.qm = this.selectedFileInfo.qm
-        this.publish = "published";
-        
-      }
-      this.dataInfo = true;  
+      this.dataInfo = true;
+      this.infoBtn = true;
     } else {
+      this.selectedFileInfo = [];
       this.dataInfo = false;
-      this.selectedFileInfo = "";
-      this.filename = "";
-      this.filetype = "";
-      this.updatedAt = null;
-      this.duration = null;
-      this.size = null;
-      this.folder = "";
-      this.qm = "";
-      this.publish = "";  
+      this.infoBtn = false;
     };
-     if (this.selectedFileCount >= 1) {
-        this.infoBtn = true;
-      } else {
-        this.infoBtn = false;
-      }  
+    console.log(this.selectedFileInfo);
     console.log(event)
   }
 
   treeFilterChange(event: string) {
     console.log('filter:', event);
+  }
+
+  editDB() {
+    this.disable = false;
+    this.editDBBtn = false;
+  }
+
+  updateDB() {
+    this.disable = true;
+    this.editDBBtn = true;
+  }
+
+  deleteDB() {
+    this.disable = true;
+    this.editDBBtn = true;
   }
 
   ngOnDestroy() {

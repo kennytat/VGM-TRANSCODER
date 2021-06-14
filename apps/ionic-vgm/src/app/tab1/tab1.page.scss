@@ -2,12 +2,12 @@
   top: 55px;
   left: 275px;
 }
-@media only screen and (max-width: 1000px) {
+@media only screen and (max-width: 1050px) {
   .tab-content {
-    width: 725px;
+    width: 775px;
   }
 }
-@media only screen and (min-width: 1001px) {
+@media only screen and (min-width: 1051px) {
   .tab-content {
     width: calc(100vw - 275px);
   }
