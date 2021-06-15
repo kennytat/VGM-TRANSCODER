@@ -11,33 +11,40 @@ const mediaData: Prisma.MediaCreateInput[] = [
         {
           name: 'videoDB',
           qm: 'Qm1',
+          foldertype: 'video',
           classes: {
             create: [
               {
                 name: '01-Bài Giảng',
                 qm: 'Qm11',
+                foldertype: 'video',
                 topics: {
                   create: [
                     {
                       name: 'Các Diễn Giả',
                       qm: 'Qm111',
+                      foldertype: 'video',
                       contents: {
                         create: [
                           {
                             name: 'MSTPT_Bài Giảng Thứ Nhất',
-                            duration: 520,
-                            size: 123,
+                            duration: '520s',
+                            size: '123mb',
                             thumb: '/this is video1 thumbnail url',
+                            folder: '/home/user/Desktop/abc',
+                            verse: 'psalms 20:10',
                             filetype: 'video'
                           },
                           {
                             name: 'MSTPT_Bài Giảng Thứ Hai ',
                             qm: 'Qm1112',
-                            duration: 123123,
-                            size: 123312313,
+                            duration: '520s',
+                            size: '123mb',
                             thumb: '/this is video2 thumbnail url',
+                            folder: '/home/user/Desktop/abc',
+                            verse: 'psalms 20:10',
                             filetype: 'video'
-                          } 
+                          }
                         ]
                       }
                     }
@@ -50,31 +57,38 @@ const mediaData: Prisma.MediaCreateInput[] = [
         {
           name: 'audioDB',
           qm: 'Qm2',
+          foldertype: 'audio',
           classes: {
             create: [
               {
                 name: 'Bài Giảng Theo Diễn Giả',
                 qm: 'Qm21',
+                foldertype: 'audio',
                 topics: {
                   create: [
                     {
                       name: 'MS. Nguyễn Hữu Bình',
                       qm: 'Qm211',
+                      foldertype: 'audio',
                       contents: {
                         create: [
                           {
                             name: 'MSTPT Bài Giảng Thứ Nhất',
                             qm: 'Qm2111',
-                            duration: 520,
-                            size: 123,
+                            duration: '520s',
+                            size: '123mb',
                             thumb: '/this is audio thumbnail url',
+                            folder: '/home/user/Desktop/abc',
+                            verse: 'psalms 20:10',
                             filetype: 'audio'
                           },
                           {
                             name: 'MSTPT Bài Giảng Thứ Hai',
-                            duration: 520,
-                            size: 123,
+                            duration: '520s',
+                            size: '123mb',
                             thumb: '/this is audio thumbnail url',
+                            folder: '/home/user/Desktop/abc',
+                            verse: 'psalms 20:10',
                             filetype: 'audio'
                           }
                         ]

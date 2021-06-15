@@ -11,6 +11,7 @@ export type Media = {
 export type Category = {
   id: string;
   pid: string;
+  media: Media[];
   name: string;
   qm: string;
   classes: Classification[];
@@ -19,6 +20,7 @@ export type Category = {
 export type Classification = {
   id: string;
   pid: string;
+  categories: Category[];
   name: string;
   qm: string;
   topics: Topic[];
@@ -27,20 +29,24 @@ export type Classification = {
 export type Topic = {
   id: string;
   pid: string;
+  classes: Classification[];
   name: string;
   qm: string;
-  contents: Content[]; 
+  contents: Content[];
 }
 
 export type Content = {
   id: string;
   pid: string;
+  topics: Topic[];
   name: string;
   createdAt: number;
   updatedAt: number;
   qm: string;
-  duration: number;
-  size: number;
+  duration: string;
+  size: string;
+  folder: string;
+  verse: string;
   thumb: string;
   filetype: string;
 }
@@ -48,7 +54,7 @@ export type Content = {
 
 export const LIST_ALL_QUERY = gql`
  query {
-  media (id: "effbc45f-bed4-4d8a-ac91-c4430139ade2") {
+  media (id: "2f80967a-8d4d-4d72-b934-68308d47ade7") {
     value:id
     text:name
     children:categories {
@@ -70,6 +76,30 @@ export const LIST_ALL_QUERY = gql`
   }
 }`;
 
+export const VIDEO_CLASS_QUERY = gql`
+  query {
+  getVideoClasses {
+    id
+    dblevel
+    pid
+    name
+    qm
+  }
+}`;
+
+export const VIDEO_TOPIC_QUERY = gql`
+   query {
+  getVideoTopics {
+    id
+    pid
+    name
+    classes {
+      id
+      name
+    }
+  }
+}`;
+
 export const VIDEO_QUERY = gql`
   query {
   video {
@@ -79,6 +109,8 @@ export const VIDEO_QUERY = gql`
     qm
     updatedAt
     createdAt
+    folder
+    verse
     thumb
     size
     duration
@@ -101,6 +133,8 @@ export const AUDIO_QUERY = gql`
     qm
     updatedAt
     createdAt
+    folder
+    verse
     thumb
     size
     duration

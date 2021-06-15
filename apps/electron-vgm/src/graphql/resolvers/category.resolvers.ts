@@ -56,17 +56,17 @@ import { PrismaService } from '../prisma.service'
 export class CategoryResolver {
   constructor(@Inject(PrismaService) private prismaService: PrismaService) { }
 
-    @ResolveField('classes', () => [Classification])
+  @ResolveField('classes', () => [Classification])
   async getClasses(@Root() categories: Category) {
     return this.prismaService.classification.findMany({
       where: {
         pid: categories.id
-      } 
+      }
     });
   }
 
   @ResolveField('media', () => [Media])
-  async getParent(@Root() categories: Category){
+  async getParent(@Root() categories: Category) {
     return this.prismaService.media
       .findMany({
         where: {
@@ -85,7 +85,7 @@ export class CategoryResolver {
   //     }
   //     );
   // }
-  
+
   @Query(() => Category, { name: 'categories' })
   async getCategory(@Args('id', { type: () => String }) id: string) {
     return this.prismaService.category.findUnique(
@@ -94,8 +94,10 @@ export class CategoryResolver {
           id: id
         }
       }
-      );
+    );
   }
+
+
 
   // @ResolveField('classification', returns => [Classfication])
   // async categories(@Root() media: Media) {

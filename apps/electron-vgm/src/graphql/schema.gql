@@ -11,8 +11,10 @@ type Content {
   createdAt: DateTime!
   updatedAt: DateTime!
   qm: String
-  duration: Int
-  size: Int
+  duration: String!
+  size: String!
+  folder: String!
+  verse: String!
   thumb: String!
   filetype: String!
 }
@@ -29,6 +31,7 @@ type Topic {
   pid: String!
   name: String!
   qm: String
+  foldertype: String!
   contents: [Content!]!
 }
 
@@ -39,6 +42,7 @@ type Classification {
   pid: String!
   name: String!
   qm: String
+  foldertype: String!
   topics: [Topic!]!
 }
 
@@ -49,6 +53,7 @@ type Category {
   pid: String!
   name: String!
   qm: String
+  foldertype: String!
   classes: [Classification!]!
 }
 
@@ -65,7 +70,9 @@ type Query {
   media(id: String!): Media!
   categories(id: String!): Category!
   classes(id: String!): Classification!
+  getVideoClasses(take: Float, skip: Float, searchVideoClasses: String): [Classification!]!
   topics(id: String!): Topic!
+  getVideoTopics(take: Float, skip: Float, searchVideoTopics: String): [Topic!]!
   video(orderBy: PostOrderByUpdatedAtInput, take: Float, skip: Float, searchVideo: String): [Content!]!
   audio(orderBy: PostOrderByUpdatedAtInput, take: Float, skip: Float, searchAudio: String): [Content!]!
 }

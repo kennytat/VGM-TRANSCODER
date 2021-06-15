@@ -10,7 +10,7 @@ export class Topic {
 
   @Field((type) => Int)
   dblevel: number
-  
+
   @Field((type) => [Classification])
   classes: [Classification]
 
@@ -22,8 +22,11 @@ export class Topic {
 
   @Field((type) => String, { nullable: true })
   qm?: string | null
- 
-  @Field((type) => [Content], {nullable: true} )
+
+  @Field((type) => String)
+  foldertype: string
+
+  @Field((type) => [Content], { nullable: true })
   contents?: [Content]
-  
+
 }

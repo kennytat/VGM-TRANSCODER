@@ -135,6 +135,8 @@
       border-color: var(--ion-color-light-shade);
       border-radius: 4px;
       resize: vertical;
+      background-color: var(--ion-color-light-tint);
+      color: var(--ion-color-dark);
     }
     .col-12 {
       display: flex;

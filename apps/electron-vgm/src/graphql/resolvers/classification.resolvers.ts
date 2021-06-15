@@ -52,7 +52,7 @@ export class ClassificationResolver {
   }
 
   @ResolveField('categories', () => [Category])
-  async getParent(@Root() classes: Classification){
+  async getParent(@Root() classes: Classification) {
     return this.prismaService.category
       .findMany({
         where: {
@@ -72,6 +72,30 @@ export class ClassificationResolver {
     );
   }
 
+  @Query((returns) => [Classification])
+  getVideoClasses(
+    @Args('searchVideoClasses', { nullable: true }) searchVideoClasses: string,
+    @Args('skip', { nullable: true }) skip: number,
+    @Args('take', { nullable: true }) take: number,
+    @Context() ctx) {
+
+    const or = searchVideoClasses
+      ? {
+        OR: [
+          { name: { contains: searchVideoClasses } }
+        ],
+      }
+      : {}
+
+    return this.prismaService.classification.findMany({
+      where: {
+        foldertype: { contains: 'video' },
+        ...or,
+      },
+      take: take || undefined,
+      skip: skip || undefined,
+    })
+  }
 
   // @ResolveField()
   // async posts(@Root() user: User, @Context() ctx): Promise<Post[]> {

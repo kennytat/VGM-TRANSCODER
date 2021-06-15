@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Subscription } from 'rxjs';
 import { TreeviewItem, TreeviewConfig } from 'ngx-treeview';
-import { Media, Content, LIST_ALL_QUERY, VIDEO_QUERY, AUDIO_QUERY } from './db.types'
+import { Media, Content, LIST_ALL_QUERY, VIDEO_QUERY, AUDIO_QUERY } from '../db.types';
 
 type AllDataResponse = {
   media: Media;
@@ -45,7 +45,7 @@ export class Tab2Page implements OnInit {
     decoupleChildFromParent: false
   });
 
-// Declare file info variable on selected
+  // Declare file info variable on selected
   disable = true;
   editDBBtn = true;
   dataInfo = false;
@@ -54,7 +54,7 @@ export class Tab2Page implements OnInit {
   filetype: string;
   folder: string;
   publish: string;
-  qm:string;
+  qm: string;
   updatedAt: number;
   duration: number;
   size: number;
@@ -78,11 +78,11 @@ export class Tab2Page implements OnInit {
   }
   // Run function OnInit
   ngOnInit() {
-   this.connectGQL();
+    this.connectGQL();
   }
 
   connectGQL() {
- // Connect to GQL Server and get all Data
+    // Connect to GQL Server and get all Data
     this.allDataSubscription = this.apollo.watchQuery<AllDataResponse>({
       query: LIST_ALL_QUERY
     })
@@ -99,6 +99,8 @@ export class Tab2Page implements OnInit {
         this.videoTree = [new TreeviewItem(this.videoDB)];
         this.audioTree = [new TreeviewItem(this.audioDB)];
         this.displayDB = this.videoDB;
+        // console.log(this.videoDB.children.name);
+        // console.log(this.videoDB.children.children.name);
       });
     // Get all video files data
     this.allVideoSubscription = this.apollo.watchQuery<AllVideoResponse>({ query: VIDEO_QUERY })
@@ -108,6 +110,8 @@ export class Tab2Page implements OnInit {
     this.allAudioSubscription = this.apollo.watchQuery<AllAudioResponse>({ query: AUDIO_QUERY })
       .valueChanges
       .subscribe(({ data }) => { this.audioFiles = data.audio; });
+
+
   }
 
   treeSelectedChange(event) {
@@ -127,7 +131,6 @@ export class Tab2Page implements OnInit {
       this.dataInfo = false;
       this.infoBtn = false;
     };
-    console.log(this.selectedFileInfo);
     console.log(event)
   }
 

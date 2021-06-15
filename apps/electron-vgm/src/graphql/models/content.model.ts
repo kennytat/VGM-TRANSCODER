@@ -21,22 +21,28 @@ export class Content {
 
   @Field((type) => Date)
   createdAt: Date
-  
+
   @Field((type) => Date)
   updatedAt: Date
-  
+
   @Field((type) => String, { nullable: true })
   qm?: string | null
-  
-  @Field((type) => Int, { nullable: true })
-  duration?: string | null
 
-  @Field((type) => Int, { nullable: true })
-  size?: string | null
-  
+  @Field((type) => String)
+  duration: string
+
+  @Field((type) => String)
+  size: string
+
+  @Field((type) => String)
+  folder: string
+
+  @Field((type) => String)
+  verse: string
+
   @Field((type) => String)
   thumb: string
-  
+
   @Field((type) => String)
   filetype: string
 }

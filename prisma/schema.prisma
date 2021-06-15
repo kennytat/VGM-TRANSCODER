@@ -1,5 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -8,78 +8,66 @@ datasource db {
 }
 
 model Media {
-  id          String      @id @default(uuid())
-  pid         String      @default("none")
-  dblevel     Int         @default(0)
-  name        String  
-  qm          String?     @unique
-  categories  Category[]
+  id         String     @id @default(uuid())
+  pid        String     @default("none")
+  dblevel    Int        @default(0)
+  name       String
+  qm         String?    @unique
+  categories Category[]
 }
 
 model Category {
-  id            String    @id @default(uuid())
-  parent        Media     @relation(fields: [pid], references:[id])
-  dblevel       Int       @default(1)
-  pid           String     
-  name          String  
-  qm            String?   @unique
-  classes       Classification[]
-  @@unique([pid,name])
+  id         String           @id @default(uuid())
+  parent     Media            @relation(fields: [pid], references: [id])
+  dblevel    Int              @default(1)
+  pid        String
+  name       String
+  qm         String?          @unique
+  foldertype String
+  classes    Classification[]
+
+  @@unique([pid, name])
 }
 
 model Classification {
-  id            String    @id @default(uuid())
-  parent        Category  @relation(fields: [pid], references:[id])
-  dblevel       Int       @default(2)
-  pid           String     
-  name          String  
-  qm            String?    @unique
-  topics        Topic[]
-  @@unique([pid,name])
+  id         String   @id @default(uuid())
+  parent     Category @relation(fields: [pid], references: [id])
+  dblevel    Int      @default(2)
+  pid        String
+  name       String
+  qm         String?  @unique
+  foldertype String
+  topics     Topic[]
+
+  @@unique([pid, name])
 }
 
 model Topic {
-  id            String    @id @default(uuid())
-  parent        Classification    @relation(fields: [pid], references:[id])
-  dblevel       Int       @default(3)
-  pid           String     
-  name          String  
-  qm            String?             @unique
-  contents      Content[]
-  @@unique([pid,name])
+  id         String         @id @default(uuid())
+  parent     Classification @relation(fields: [pid], references: [id])
+  dblevel    Int            @default(3)
+  pid        String
+  name       String
+  qm         String?        @unique
+  foldertype String
+  contents   Content[]
+
+  @@unique([pid, name])
 }
 
 model Content {
-  id            String    @id @default(uuid())
-  parent        Topic     @relation(fields: [pid], references:[id])
-  dblevel       Int       @default(4)
-  pid           String     
-  name          String  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  qm            String?   @unique
-  duration      Int?
-  size          Int?
-  thumb         String
-  filetype      String
+  id        String   @id @default(uuid())
+  parent    Topic    @relation(fields: [pid], references: [id])
+  dblevel   Int      @default(4)
+  pid       String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  qm        String?  @unique
+  duration  String
+  size      String
+  folder    String
+  verse     String
+  thumb     String
+  filetype  String
 }
-
-// model User {
-//   id    Int     @id @default(autoincrement())
-//   email String  @unique
-//   name  String?
-//   posts Post[]
-// }
-
-// model Post {
-//   id        Int      @id @default(autoincrement())
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-//   title     String
-//   content   String?
-//   published Boolean  @default(false)
-//   viewCount Int      @default(0)
-//   author    User?    @relation(fields: [authorId], references: [id])
-//   authorId  Int?
-// }
-

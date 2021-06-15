@@ -22,8 +22,11 @@ export class Classification {
 
   @Field((type) => String, { nullable: true })
   qm?: string | null
- 
-  @Field((type) => [Topic], {nullable: true })
+
+  @Field((type) => String)
+  foldertype: string
+
+  @Field((type) => [Topic], { nullable: true })
   topics?: [Topic] | null
-  
+
 }

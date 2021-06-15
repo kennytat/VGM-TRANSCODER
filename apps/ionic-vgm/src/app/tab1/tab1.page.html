@@ -1,81 +1,161 @@
 <ion-content [fullscreen]="true" class="tab-content">
   <ion-grid>
     <ion-row class="row">
-        <ion-col class="col">
-        
-          <ion-card class="card">
-            <ion-item>
-              <ion-icon name="folder-open-outline" slot="start"></ion-icon>
-              <ion-label>M3U8 Streaming Transcoder</ion-label>
-              <ion-button fill="outline" slot="end">View</ion-button>
-            </ion-item>
-          
-          
+      <ion-col class="col">
+        <ion-card class="card">
+          <ion-item>
+            <ion-icon name="folder-open-outline" slot="start"></ion-icon>
+            <ion-label>M3U8 Streaming Transcoder</ion-label>
+            <ion-button fill="outline" slot="end">View</ion-button>
+          </ion-item>
 
+          <ion-card-content>
+            <ion-label position="stacked">Browse Input Source</ion-label>
+            <ion-grid>
+              <ion-row>
+                <ion-col size="8"
+                  ><ion-input
+                    value="{{inputPathShort}}"
+                    placeholder="Select input source..."
+                    readonly
+                    class="path"
+                  ></ion-input
+                ></ion-col>
+                <ion-col size="4" class="no-vertical-padding"
+                  ><ion-button
+                    disabled="{{btnDisable}}"
+                    expand="block"
+                    size="small"
+                    (click)="OpenDialog()"
+                    >Browse</ion-button
+                  >
+
+                  <div>
+                    <ion-checkbox
+                      slot="end"
+                      class="check-box"
+                      disabled="{{btnDisable}}"
+                      [(ngModel)]="fileCheckbox"
+                      (ionChange)="CheckBoxChange()"
+                    ></ion-checkbox
+                    ><ion-label>Files only</ion-label>
+                  </div>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+
+          <hr class="new" />
+
+          <ion-card-content>
+            <div>
+              <ion-label position="stacked"
+                >Browse Output Destination</ion-label
+              >
+            </div>
+            <ion-grid>
+              <ion-row>
+                <ion-col size="8">
+                  <ion-input
+                    value="{{outputPath}}"
+                    placeholder="Select ouput destination"
+                    readonly
+                    class="path"
+                  ></ion-input>
+                </ion-col>
+                <ion-col size="4" class="no-vertical-padding"
+                  ><ion-button
+                    disabled="{{btnDisable}}"
+                    expand="block"
+                    size="small"
+                    (click)="SaveDialog()"
+                    >Browse</ion-button
+                  >
+                  <div>
+                    <select
+                      #selectCategory
+                      (change)="categoryChange(selectCategory.value)"
+                    >
+                      <option [value]="0" selected>Categories...</option>
+                      <option
+                        *ngFor="let class of videoClasses"
+                        [value]="class.id"
+                      >
+                        {{class.name}}
+                      </option>
+                    </select>
+                    <select
+                      #selectTopic
+                      (change)="topicChange(selectTopic.value)"
+                    >
+                      <option [value]="0" selected>Topics...</option>
+                      <option
+                        *ngFor="let topic of selectedTopics"
+                        [value]="topic.id"
+                      >
+                        {{topic.name}}
+                      </option>
+                    </select>
+                  </div>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+          <hr class="new" />
+          <ion-card-content *ngIf="convertButton; else stop_convert">
+            <ion-button expand="block" (click)="Convert()"
+              >START CONVERSION</ion-button
+            >
+            <ion-button expand="block" (click)="test()">test</ion-button>
+          </ion-card-content>
+          <ng-template #stop_convert>
             <ion-card-content>
-                <ion-label position="stacked">Browse Input Source</ion-label>
               <ion-grid>
                 <ion-row>
-                  <ion-col size="9"><ion-input value={{inputPathShort}} placeholder="Select input source..." readonly class="path"></ion-input></ion-col>
-                  <ion-col size="3" class="no-vertical-padding"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="OpenDialog()">Browse</ion-button>
-                  
-               <div><ion-checkbox slot="end" class="check-box" disabled={{btn_disable}} [(ngModel)]="fileCheckbox" (ionChange)="CheckBoxChange()"></ion-checkbox><ion-label>Files only</ion-label></div>
+                  <ion-col size="6">
+                    <div class="ion-text-start sub-text">
+                      <ion-label position="stacked"
+                        >{{convertedFiles}}/{{totalFiles}}</ion-label
+                      >
+                    </div>
                   </ion-col>
-                </ion-row>
-              </ion-grid>
-            </ion-card-content>
-            <hr class="new">
-            <ion-card-content>
-              <div><ion-label position="stacked">Browse Output Destination</ion-label></div>
-              <ion-grid>
-                <ion-row>
-                  <ion-col size="9">
-                    <ion-input value={{outputPath}} placeholder="Select ouput destination" readonly class="path"></ion-input>
-                  </ion-col>
-                  <ion-col size="3"><ion-button disabled={{btn_disable}} expand="block" size="small" (click)="SaveDialog()">Browse</ion-button></ion-col>
-                </ion-row>
-              </ion-grid>
-            
-            </ion-card-content>
-            <hr class="new">
-            <ion-card-content *ngIf="convert_button; else stop_convert">
-              <ion-button expand="block" (click)="Convert()">START CONVERSION</ion-button>
-            </ion-card-content>
-            <ng-template #stop_convert>
-              <ion-card-content>
-                <ion-grid>
-                  <ion-row>
-                    <ion-col size="6">
-                      <div class="ion-text-start sub-text">
-                        <ion-label position="stacked">{{converted_files}}/{{total_files}}</ion-label>
+                  <ion-col size="6">
+                    <div class="ion-text-end sub-text">
+                      <div class="lds-spinner" *ngIf="progressLoading">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
                       </div>
-                      
-                    </ion-col>
-                    <ion-col size="6">
-                      <div class="ion-text-end sub-text">
-                        <div class="lds-spinner" *ngIf="progress_loading"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-                        <ion-label position="stacked">{{progression_status*100 | number: '1.0-0'}} %</ion-label>
-                      </div>  
-                    </ion-col>
-                  </ion-row>
-                  <ion-row>
-                    <ion-progress-bar color="primary" value={{progression_status}}></ion-progress-bar>
-                 
-                  </ion-row>
-                  
-                  
-                </ion-grid>
-
-                
-              </ion-card-content>
-              <ion-card-content>
-                <ion-button expand="block" (click)="Cancel()">STOP</ion-button>
-              </ion-card-content>
-            </ng-template>         
-          </ion-card>
-
-
-        </ion-col>
+                      <ion-label position="stacked"
+                        >{{progressionStatus*100 | number: '1.0-0'}}
+                        %</ion-label
+                      >
+                    </div>
+                  </ion-col>
+                </ion-row>
+                <ion-row>
+                  <ion-progress-bar
+                    color="primary"
+                    value="{{progressionStatus}}"
+                  ></ion-progress-bar>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+            <ion-card-content>
+              <ion-button expand="block" (click)="Cancel()">STOP</ion-button>
+            </ion-card-content>
+          </ng-template>
+        </ion-card>
+      </ion-col>
     </ion-row>
   </ion-grid>
 </ion-content>

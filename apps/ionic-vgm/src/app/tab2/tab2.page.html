@@ -78,40 +78,101 @@
                 <ion-grid>
                   <ion-row *ngIf="dataInfo">
                     <ion-col>
-                      <div *ngFor="let file of selectedFileInfo" class="file-info" >
+                      <div
+                        *ngFor="let file of selectedFileInfo"
+                        class="file-info"
+                      >
                         <div>
                           <ion-label>Category</ion-label>
                           <select [disabled]="disable">
-                              <option value="{{file.topic[0].classes[0].id}}" selected disabled>{{file.topic[0].classes[0].name}}</option>
-                              <option *ngFor="let class of displayDB.children" value="{{class.value}}">{{class.text}}</option>
-                        </select>
+                            <option
+                              value="{{file.topic[0].classes[0].id}}"
+                              selected
+                              disabled
+                            >
+                              {{file.topic[0].classes[0].name}}
+                            </option>
+                            <option
+                              *ngFor="let class of displayDB.children"
+                              value="{{class.value}}"
+                            >
+                              {{class.text}}
+                            </option>
+                          </select>
                         </div>
                         <div>
                           <ion-label>Topic</ion-label>
-                           <select [disabled]="disable">
-                              <option value="{{file.topic[0].id}}" selected disabled> {{file.topic[0].name}}</option>
-                              <option *ngFor="let topic of displayDB.children[0].children" value="{{topic.value}}">{{topic.text}}</option>
-                        </select>
+                          <select [disabled]="disable">
+                            <option
+                              value="{{file.topic[0].id}}"
+                              selected
+                              disabled
+                            >
+                              {{file.topic[0].name}}
+                            </option>
+                            <option
+                              *ngFor="let topic of displayDB.children[0].children"
+                              value="{{topic.value}}"
+                            >
+                              {{topic.text}}
+                            </option>
+                          </select>
                         </div>
                         <div>
                           <ion-label>Name</ion-label>
-                          <input placeholder="{{file.name}}" value="" [disabled]="disable"/>
+                          <input
+                            placeholder="{{file.name}}"
+                            value=""
+                            [disabled]="disable"
+                          />
                         </div>
                         <div>
                           <ion-label>Publish</ion-label>
-                          <input placeholder="{{ file.qm !== null ? file.qm : 'unpublished' }}" value="" disabled/>
+                          <input
+                            placeholder="{{ file.qm !== null ? file.qm : 'unpublished' }}"
+                            value=""
+                            disabled
+                          />
                         </div>
                         <div>
                           <ion-label>Updated</ion-label>
-                          <input placeholder="{{file.updatedAt | date }}" value="" disabled/>
+                          <input
+                            placeholder="{{file.updatedAt | date }}"
+                            value=""
+                            disabled
+                          />
+                        </div>
+                        <div>
+                          <ion-label>Local</ion-label>
+                          <input
+                            placeholder="{{file.folder}}"
+                            value=""
+                            disabled
+                          />
+                        </div>
+                        <div>
+                          <ion-label>Verse</ion-label>
+                          <input
+                            placeholder="{{file.verse}}"
+                            value=""
+                            [disabled]="disable"
+                          />
                         </div>
                         <div>
                           <ion-label>Duration</ion-label>
-                          <input placeholder="{{file.duration}}" value="" disabled/>
+                          <input
+                            placeholder="{{file.duration}}"
+                            value=""
+                            disabled
+                          />
                         </div>
                         <div>
                           <ion-label>Size</ion-label>
-                          <input placeholder="{{file.size}}" value="" disabled/>
+                          <input
+                            placeholder="{{file.size}}"
+                            value=""
+                            disabled
+                          />
                         </div>
                       </div>
                     </ion-col>
@@ -127,25 +188,25 @@
                         >edit</ion-button
                       >
                       <ng-template #updateDBBtn>
-                       <ion-button
-                        size="small"
-                        color="success"
-                        shape="round"
-                        style="font-size: xx-small"
-                        expand="block"
-                        (click)="updateDB()"
-                        >update</ion-button
-                      >
-                      <ion-button
-                        size="small"
-                        color="danger"
-                        shape="round"
-                        style="font-size: xx-small"
-                        expand="block"
-                        (click)="deleteDB()"
-                        >delete</ion-button
-                      >
-                    </ng-template>
+                        <ion-button
+                          size="small"
+                          color="success"
+                          shape="round"
+                          style="font-size: xx-small"
+                          expand="block"
+                          (click)="updateDB()"
+                          >update</ion-button
+                        >
+                        <ion-button
+                          size="small"
+                          color="danger"
+                          shape="round"
+                          style="font-size: xx-small"
+                          expand="block"
+                          (click)="deleteDB()"
+                          >delete</ion-button
+                        >
+                      </ng-template>
                     </ion-col>
                   </ion-row>
                 </ion-grid>
