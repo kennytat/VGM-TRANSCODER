@@ -42,7 +42,7 @@ ffmpeg -progress $outPath/.ffmpeg-progress.txt -stats_period 0.5 -v quiet -vsync
 -hls_segment_type mpegts \
 -hls_segment_filename $out/stream_%v/data%02d.ts \
 -master_pl_name master.m3u8 \
--var_stream_map "v:0,a:0,name:1080p v:1,a:1,name:720p v:2,a:2,name:480p" $out/stream_%v.m3u8 && \
+-var_stream_map "v:0,a:0,name:1080p v:1,a:1,name:720p v:2,a:2,name:480p" $out/stream_%v/segment.m3u8 && \
 mkdir -p $out/thumb_{1080p,720p,480p} && \
 ffmpeg -v quiet -y -ss 00:00:10 -hwaccel cuda -hwaccel_output_format cuda -i "${f}" \
 -vf select='eq(pict_type\,I)',scale_npp=1920:1080,hwdownload,format=nv12,fps=1/7 -frames:v 7 -vsync vfr -q:v 2 -f image2 $out/thumb_1080p/thumb_%02d.png \
