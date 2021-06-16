@@ -65,7 +65,9 @@ export class Tab2Page implements OnInit {
   selectedTopicID;
   // Declare file info variable on selected
   disable = true;
-  editDBBtn = true;
+  mainFn = true;
+  editFn = false;
+  newFn = false;
   dataInfo = false;
   infoBtn = false;
   filename: string;
@@ -155,19 +157,38 @@ export class Tab2Page implements OnInit {
     console.log('filter:', event);
   }
 
-  editDB() {
-    this.disable = false;
-    this.editDBBtn = false;
+  modifyDB(value) {
+    if (value === 'edit') {
+      this.editFn = true;
+      this.disable = false;
+    } else {
+      this.newFn = true;
+    }
+    this.mainFn = false;
   }
 
   updateDB() {
+    this.editFn = false;
+    this.mainFn = true;
     this.disable = true;
-    this.editDBBtn = true;
   }
 
   deleteDB() {
+    this.editFn = false;
+    this.mainFn = true;
     this.disable = true;
-    this.editDBBtn = true;
+  }
+  saveDB() {
+    this.newFn = false;
+    this.mainFn = true;
+    this.disable = true;
+  }
+
+  cancelDB() {
+    this.mainFn = true;
+    this.editFn = false;
+    this.newFn = false;
+    this.disable = true;
   }
 
   checkFilter(value, check) {

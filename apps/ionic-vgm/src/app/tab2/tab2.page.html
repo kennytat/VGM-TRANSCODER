@@ -62,21 +62,70 @@
                   color="success"
                   shape="round"
                   style="font-size: xx-small"
-                  >publish</ion-button
+                  *ngIf="mainFn"
+                  (click)="modifyDB('new')"
+                  >New</ion-button
+                >
+                <ion-button
+                  size="small"
+                  color="warning"
+                  shape="round"
+                  style="font-size: xx-small"
+                  *ngIf="mainFn"
+                  (click)="modifyDB('edit')"
+                  >Edit</ion-button
+                >
+                <ion-button
+                  size="small"
+                  color="success"
+                  shape="round"
+                  style="font-size: xx-small"
+                  *ngIf="editFn"
+                  (click)="updateDB()"
+                  >Update</ion-button
                 >
                 <ion-button
                   size="small"
                   color="danger"
                   shape="round"
                   style="font-size: xx-small"
-                  >unpublish</ion-button
+                  *ngIf="editFn"
+                  (click)="deleteDB()"
+                  >Delete</ion-button
+                >
+                <ion-button
+                  size="small"
+                  color="success"
+                  shape="round"
+                  style="font-size: xx-small"
+                  (click)="saveDB()"
+                  *ngIf="newFn"
+                  >Save</ion-button
+                >
+                <ion-button
+                  size="small"
+                  color="warning"
+                  shape="round"
+                  style="font-size: xx-small"
+                  *ngIf="editFn"
+                  (click)="cancelDB()"
+                  >Cancel</ion-button
+                >
+                <ion-button
+                  size="small"
+                  color="warning"
+                  shape="round"
+                  style="font-size: xx-small"
+                  *ngIf="newFn"
+                  (click)="cancelDB()"
+                  >Cancel</ion-button
                 >
               </div>
             </div>
             <div class="data-info">
               <ion-item>
                 <ion-grid *ngIf="dataInfo">
-                  <ion-row class="data-info-filter">
+                  <ion-row>
                     <label>
                       <input
                         type="checkbox"
@@ -125,159 +174,136 @@
                   <ion-row>
                     <ion-col>
                       <div
-                        *ngFor="let file of selectedFileInfo"
                         class="file-info"
+                        *ngFor="let file of selectedFileInfo"
                       >
-                        <div class="file-info-segment" *ngIf="basicFilter">
-                          <div>
-                            <ion-label>Category</ion-label>
-                            <select
-                              [disabled]="disable"
-                              #selectCategory
-                              (change)="categoryChange(selectCategory.value)"
-                            >
-                              <option
-                                [value]="file.topic[0].classes[0].id"
-                                selected
-                                disabled
+                        <div class="file-info-container">
+                          <div class="file-info-segment" *ngIf="basicFilter">
+                            <div>
+                              <ion-label>Category</ion-label>
+                              <select
+                                [disabled]="disable"
+                                #selectCategory
+                                (change)="categoryChange(selectCategory.value)"
                               >
-                                {{file.topic[0].classes[0].name}}
-                              </option>
-                              <option
-                                *ngFor="let class of displayDB.children"
-                                [value]="class.value"
-                              >
-                                {{class.text}}
-                              </option>
-                            </select>
-                          </div>
-                          <div>
-                            <ion-label>Topic</ion-label>
+                                <option
+                                  [value]="file.topic[0].classes[0].id"
+                                  selected
+                                  disabled
+                                >
+                                  {{file.topic[0].classes[0].name}}
+                                </option>
+                                <option
+                                  *ngFor="let class of displayDB.children"
+                                  [value]="class.value"
+                                >
+                                  {{class.text}}
+                                </option>
+                              </select>
+                            </div>
+                            <div>
+                              <ion-label>Topic</ion-label>
 
-                            <select
-                              [disabled]="disable"
-                              #selectTopic
-                              (change)="topicChange(selectTopic.value)"
-                            >
-                              <option
-                                [value]="file.topic[0].id"
-                                selected
+                              <select
+                                [disabled]="disable"
+                                #selectTopic
+                                (change)="topicChange(selectTopic.value)"
+                              >
+                                <option
+                                  [value]="file.topic[0].id"
+                                  selected
+                                  disabled
+                                >
+                                  {{file.topic[0].name}}
+                                </option>
+                                <option
+                                  *ngFor="let topic of selectedTopics"
+                                  [value]="topic.id"
+                                >
+                                  {{topic.name}}
+                                </option>
+                              </select>
+                            </div>
+                            <div>
+                              <ion-label>Name</ion-label>
+                              <input
+                                type="text"
+                                placeholder="{{file.name}}"
+                                value=""
+                                [disabled]="disable"
+                              />
+                            </div>
+                            <div>
+                              <ion-label>Verse</ion-label>
+                              <input
+                                type="text"
+                                placeholder="{{file.verse}}"
+                                value=""
+                                [disabled]="disable"
+                              />
+                            </div>
+                          </div>
+                          <div class="file-info-segment" *ngIf="publishFilter">
+                            <div>
+                              <ion-label>Publish</ion-label>
+                              <input
+                                type="text"
+                                placeholder="{{ file.qm !== null ? file.qm : 'unpublished' }}"
+                                value=""
                                 disabled
-                              >
-                                {{file.topic[0].name}}
-                              </option>
-                              <option
-                                *ngFor="let topic of selectedTopics"
-                                [value]="topic.id"
-                              >
-                                {{topic.name}}
-                              </option>
-                            </select>
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <ion-label>Name</ion-label>
-                            <input
-                              type="text"
-                              placeholder="{{file.name}}"
-                              value=""
-                              [disabled]="disable"
-                            />
+                          <div class="file-info-segment" *ngIf="pathFilter">
+                            <div>
+                              <ion-label>Local</ion-label>
+                              <input
+                                type="text"
+                                placeholder="{{file.folder}}"
+                                value=""
+                                disabled
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <ion-label>Verse</ion-label>
-                            <input
-                              type="text"
-                              placeholder="{{file.verse}}"
-                              value=""
-                              [disabled]="disable"
-                            />
-                          </div>
-                        </div>
-                        <div class="file-info-segment" *ngIf="publishFilter">
-                          <div>
-                            <ion-label>Publish</ion-label>
-                            <input
-                              type="text"
-                              placeholder="{{ file.qm !== null ? file.qm : 'unpublished' }}"
-                              value=""
-                              disabled
-                            />
-                          </div>
-                        </div>
-                        <div class="file-info-segment" *ngIf="pathFilter">
-                          <div>
-                            <ion-label>Local</ion-label>
-                            <input
-                              type="text"
-                              placeholder="{{file.folder}}"
-                              value=""
-                              disabled
-                            />
-                          </div>
-                        </div>
-                        <div class="file-info-segment" *ngIf="metaFilter">
-                          <div>
-                            <ion-label>Updated</ion-label>
-                            <input
-                              type="text"
-                              placeholder="{{file.updatedAt | date }}"
-                              value=""
-                              disabled
-                            />
-                          </div>
+                          <div class="file-info-segment" *ngIf="metaFilter">
+                            <div>
+                              <ion-label>Updated</ion-label>
+                              <input
+                                type="text"
+                                placeholder="{{file.updatedAt | date }}"
+                                value=""
+                                disabled
+                              />
+                            </div>
 
-                          <div>
-                            <ion-label>Duration</ion-label>
-                            <input
-                              type="text"
-                              placeholder="{{file.duration}}"
-                              value=""
-                              disabled
-                            />
+                            <div>
+                              <ion-label>Duration</ion-label>
+                              <input
+                                type="text"
+                                placeholder="{{file.duration}}"
+                                value=""
+                                disabled
+                              />
+                            </div>
+                            <div>
+                              <ion-label>Size</ion-label>
+                              <input
+                                type="text"
+                                placeholder="{{file.size}}"
+                                value=""
+                                disabled
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <ion-label>Size</ion-label>
-                            <input
-                              type="text"
-                              placeholder="{{file.size}}"
-                              value=""
-                              disabled
+                        </div>
+                        <div>
+                          <ion-thumbnail>
+                            <img
+                              src="https://gravatar.com/avatar/dba6bae8c566f9d4041fb9cd9ada7741?d=identicon&f=y"
                             />
-                          </div>
+                          </ion-thumbnail>
                         </div>
                       </div>
-                    </ion-col>
-                    <ion-col size="auto">
-                      <ion-button
-                        size="small"
-                        color="warning"
-                        shape="round"
-                        style="font-size: xx-small"
-                        expand="block"
-                        (click)="editDB()"
-                        *ngIf="editDBBtn; else updateDBBtn"
-                        >edit</ion-button
-                      >
-                      <ng-template #updateDBBtn>
-                        <ion-button
-                          size="small"
-                          color="success"
-                          shape="round"
-                          style="font-size: xx-small"
-                          expand="block"
-                          (click)="updateDB()"
-                          >update</ion-button
-                        >
-                        <ion-button
-                          size="small"
-                          color="danger"
-                          shape="round"
-                          style="font-size: xx-small"
-                          expand="block"
-                          (click)="deleteDB()"
-                          >delete</ion-button
-                        >
-                      </ng-template>
                     </ion-col>
                   </ion-row>
                 </ion-grid>
