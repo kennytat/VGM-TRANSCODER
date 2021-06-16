@@ -1,21 +1,3 @@
-.tab-content {
-  top: 55px;
-  left: 275px;
-}
-@media only screen and (max-width: 1050px) {
-  .tab-content {
-    width: 775px;
-  }
-}
-@media only screen and (min-width: 1051px) {
-  .tab-content {
-    width: calc(100vw - 275px);
-  }
-}
-.card {
-  height: calc(100vh - 150px);
-}
-
 .data-content {
   padding: 20px;
   position: relative;
@@ -23,6 +5,11 @@
 
 .data-btn {
   width: 100%;
+}
+
+.check-box {
+  margin: 0 10px 0 5px;
+  --size: 13px;
 }
 
 .info-btn {
@@ -63,6 +50,7 @@
   ion-col {
     height: calc(100vh - 385px);
     min-width: 80px;
+    padding: 0;
     overflow: scroll;
     &::-webkit-scrollbar {
       display: none;
@@ -77,6 +65,9 @@
     }
     .file-info {
       padding-bottom: 10px;
+      .file-info-segment {
+        flex-direction: column;
+      }
       div {
         display: flex;
         ion-label {
@@ -93,14 +84,14 @@
             background-color: var(--ion-color-light);
           }
         }
-        input {
+        input[type='text'] {
           width: 100%;
           background-color: transparent;
           border: none;
           outline: none;
         }
 
-        input:focus {
+        input[type='text']:focus {
           border-bottom: 1px solid var(--ion-color-primary);
           &::placeholder {
             color: var(--ion-color-primary);
@@ -108,6 +99,9 @@
         }
       }
     }
+  }
+  .data-info-filter label {
+    padding-right: 10px;
   }
 }
 

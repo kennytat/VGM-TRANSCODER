@@ -1,25 +1,5 @@
-.tab-content {
-  top: 55px;
-  left: 275px;
-}
-@media only screen and (max-width: 1050px) {
-  .tab-content {
-    width: 775px;
-  }
-}
-@media only screen and (min-width: 1051px) {
-  .tab-content {
-    width: calc(100vw - 275px);
-  }
-}
-
 hr.new {
-  border-top: 1px solid rgb(81, 81, 82);
   margin: 0 25px 0 25px;
-}
-
-.card {
-  height: calc(100vh - 150px);
 }
 
 .path {

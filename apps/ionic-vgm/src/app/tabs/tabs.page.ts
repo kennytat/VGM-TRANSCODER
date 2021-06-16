@@ -6,33 +6,33 @@ import { Component } from '@angular/core';
   styleUrls: ['tabs.page.scss'],
 })
 export class TabsPage {
-  constructor() {}
-  tabConverter = true;
-  tabDatabase = false;
+  constructor() { }
+  tabDatabase = true;
+  tabConverter = false;
   tabIPFS = false;
 
-  tabSelect(tab:string) {
-    switch(tab) {
-        case "converter":
-          this.tabConverter = true; 
-          this.tabDatabase = false;
-          this.tabIPFS = false;
-        break; 
-        case "database":
-          this.tabConverter = false;
-          this.tabDatabase = true;
-          this.tabIPFS = false;
+  tabSelect(tab: string) {
+    switch (tab) {
+      case 'database':
+        this.tabConverter = false;
+        this.tabDatabase = true;
+        this.tabIPFS = false;
         break;
-        case "ipfs":
-          this.tabConverter = false;
-          this.tabDatabase = false;
-          this.tabIPFS = true;
+      case 'converter':
+        this.tabDatabase = false;
+        this.tabConverter = true;
+        this.tabIPFS = false;
         break;
-        default:
-          this.tabConverter = true;
-          this.tabDatabase = false;
-          this.tabIPFS = false;
-     }
+      case 'ipfs':
+        this.tabDatabase = false;
+        this.tabConverter = false;
+        this.tabIPFS = true;
+        break;
+      default:
+        this.tabDatabase = true;
+        this.tabConverter = false;
+        this.tabIPFS = false;
+    }
   }
 
 }

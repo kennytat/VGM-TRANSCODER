@@ -75,104 +75,175 @@
             </div>
             <div class="data-info">
               <ion-item>
-                <ion-grid>
-                  <ion-row *ngIf="dataInfo">
+                <ion-grid *ngIf="dataInfo">
+                  <ion-row class="data-info-filter">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked
+                        value="basicFilter"
+                        #basic
+                        (change)="checkFilter(basic.value, basic.checked)"
+                      />
+                      Basic
+                    </label>
+
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked="checked"
+                        value="publishFilter"
+                        #publish
+                        (change)="checkFilter(publish.value, publish.checked)"
+                      />
+                      Publish</label
+                    >
+
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked="checked"
+                        value="pathFilter"
+                        #path
+                        (change)="checkFilter(path.value, path.checked)"
+                      />
+                      Path
+                    </label>
+
+                    <label
+                      ><input
+                        type="checkbox"
+                        checked="checked"
+                        value="metaFilter"
+                        #meta
+                        (change)="checkFilter(meta.value, meta.checked)"
+                      />
+                      Metadata
+                    </label>
+                  </ion-row>
+                  <hr class="new" />
+                  <ion-row>
                     <ion-col>
                       <div
                         *ngFor="let file of selectedFileInfo"
                         class="file-info"
                       >
-                        <div>
-                          <ion-label>Category</ion-label>
-                          <select [disabled]="disable">
-                            <option
-                              value="{{file.topic[0].classes[0].id}}"
-                              selected
+                        <div class="file-info-segment" *ngIf="basicFilter">
+                          <div>
+                            <ion-label>Category</ion-label>
+                            <select
+                              [disabled]="disable"
+                              #selectCategory
+                              (change)="categoryChange(selectCategory.value)"
+                            >
+                              <option
+                                [value]="file.topic[0].classes[0].id"
+                                selected
+                                disabled
+                              >
+                                {{file.topic[0].classes[0].name}}
+                              </option>
+                              <option
+                                *ngFor="let class of displayDB.children"
+                                [value]="class.value"
+                              >
+                                {{class.text}}
+                              </option>
+                            </select>
+                          </div>
+                          <div>
+                            <ion-label>Topic</ion-label>
+
+                            <select
+                              [disabled]="disable"
+                              #selectTopic
+                              (change)="topicChange(selectTopic.value)"
+                            >
+                              <option
+                                [value]="file.topic[0].id"
+                                selected
+                                disabled
+                              >
+                                {{file.topic[0].name}}
+                              </option>
+                              <option
+                                *ngFor="let topic of selectedTopics"
+                                [value]="topic.id"
+                              >
+                                {{topic.name}}
+                              </option>
+                            </select>
+                          </div>
+                          <div>
+                            <ion-label>Name</ion-label>
+                            <input
+                              type="text"
+                              placeholder="{{file.name}}"
+                              value=""
+                              [disabled]="disable"
+                            />
+                          </div>
+                          <div>
+                            <ion-label>Verse</ion-label>
+                            <input
+                              type="text"
+                              placeholder="{{file.verse}}"
+                              value=""
+                              [disabled]="disable"
+                            />
+                          </div>
+                        </div>
+                        <div class="file-info-segment" *ngIf="publishFilter">
+                          <div>
+                            <ion-label>Publish</ion-label>
+                            <input
+                              type="text"
+                              placeholder="{{ file.qm !== null ? file.qm : 'unpublished' }}"
+                              value=""
                               disabled
-                            >
-                              {{file.topic[0].classes[0].name}}
-                            </option>
-                            <option
-                              *ngFor="let class of displayDB.children"
-                              value="{{class.value}}"
-                            >
-                              {{class.text}}
-                            </option>
-                          </select>
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <ion-label>Topic</ion-label>
-                          <select [disabled]="disable">
-                            <option
-                              value="{{file.topic[0].id}}"
-                              selected
+                        <div class="file-info-segment" *ngIf="pathFilter">
+                          <div>
+                            <ion-label>Local</ion-label>
+                            <input
+                              type="text"
+                              placeholder="{{file.folder}}"
+                              value=""
                               disabled
-                            >
-                              {{file.topic[0].name}}
-                            </option>
-                            <option
-                              *ngFor="let topic of displayDB.children[0].children"
-                              value="{{topic.value}}"
-                            >
-                              {{topic.text}}
-                            </option>
-                          </select>
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <ion-label>Name</ion-label>
-                          <input
-                            placeholder="{{file.name}}"
-                            value=""
-                            [disabled]="disable"
-                          />
-                        </div>
-                        <div>
-                          <ion-label>Publish</ion-label>
-                          <input
-                            placeholder="{{ file.qm !== null ? file.qm : 'unpublished' }}"
-                            value=""
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <ion-label>Updated</ion-label>
-                          <input
-                            placeholder="{{file.updatedAt | date }}"
-                            value=""
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <ion-label>Local</ion-label>
-                          <input
-                            placeholder="{{file.folder}}"
-                            value=""
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <ion-label>Verse</ion-label>
-                          <input
-                            placeholder="{{file.verse}}"
-                            value=""
-                            [disabled]="disable"
-                          />
-                        </div>
-                        <div>
-                          <ion-label>Duration</ion-label>
-                          <input
-                            placeholder="{{file.duration}}"
-                            value=""
-                            disabled
-                          />
-                        </div>
-                        <div>
-                          <ion-label>Size</ion-label>
-                          <input
-                            placeholder="{{file.size}}"
-                            value=""
-                            disabled
-                          />
+                        <div class="file-info-segment" *ngIf="metaFilter">
+                          <div>
+                            <ion-label>Updated</ion-label>
+                            <input
+                              type="text"
+                              placeholder="{{file.updatedAt | date }}"
+                              value=""
+                              disabled
+                            />
+                          </div>
+
+                          <div>
+                            <ion-label>Duration</ion-label>
+                            <input
+                              type="text"
+                              placeholder="{{file.duration}}"
+                              value=""
+                              disabled
+                            />
+                          </div>
+                          <div>
+                            <ion-label>Size</ion-label>
+                            <input
+                              type="text"
+                              placeholder="{{file.size}}"
+                              value=""
+                              disabled
+                            />
+                          </div>
                         </div>
                       </div>
                     </ion-col>

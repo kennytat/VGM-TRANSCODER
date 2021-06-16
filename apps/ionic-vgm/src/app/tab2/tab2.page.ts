@@ -2,18 +2,25 @@ import { Component, OnInit } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Subscription } from 'rxjs';
 import { TreeviewItem, TreeviewConfig } from 'ngx-treeview';
-import { Media, Content, LIST_ALL_QUERY, VIDEO_QUERY, AUDIO_QUERY } from '../db.types';
+import * as type from './db.types';
 
 type AllDataResponse = {
-  media: Media;
+  media: type.Media;
 }
 type AllVideoResponse = {
-  video: Content;
+  video: type.Content;
 }
 type AllAudioResponse = {
-  audio: Content;
+  audio: type.Content;
 }
-
+type VideoClassResponse = {
+  getVideoClasses: type.Classification;
+}
+type VideoTopicResponse = {
+  getVideoTopics: type.Topic;
+}
+export let videoClasses: any;
+export let videoTopics: any;
 @Component({
   selector: 'vgm-converter-tab2',
   templateUrl: 'tab2.page.html',
@@ -22,11 +29,16 @@ type AllAudioResponse = {
 
 export class Tab2Page implements OnInit {
   constructor(private apollo: Apollo) { }
-
   // GQL client subscription for connecting GQL server
   private allDataSubscription: Subscription;
   private allVideoSubscription: Subscription;
   private allAudioSubscription: Subscription;
+  private videoClassSubscription: Subscription;
+  private videoTopicSubscription: Subscription;
+  // Declare variable for videoDB and audioDB seperately
+  videoBtnColor = 'primary';
+  audioBtnColor = 'light';
+  video = true;
   // Declare variable and setting for mapping GQL data to ngx-Tree
   allDB;
   videoDB;
@@ -45,6 +57,12 @@ export class Tab2Page implements OnInit {
     decoupleChildFromParent: false
   });
 
+  // Declare DB mutation value
+  videoClasses;
+  videoTopics;
+  selectedTopics;
+  selectedClassID;
+  selectedTopicID;
   // Declare file info variable on selected
   disable = true;
   editDBBtn = true;
@@ -58,11 +76,12 @@ export class Tab2Page implements OnInit {
   updatedAt: number;
   duration: number;
   size: number;
+  // Declare output filter
+  basicFilter = true;
+  publishFilter = true;
+  pathFilter = true;
+  metaFilter = true;
 
-  // Declare variable for videoDB and audioDB seperately
-  videoBtnColor = 'primary';
-  audioBtnColor = 'light';
-  video = true;
   showDiv(divVal: string) {
     if (divVal === 'V') {
       this.video = true;
@@ -84,7 +103,7 @@ export class Tab2Page implements OnInit {
   connectGQL() {
     // Connect to GQL Server and get all Data
     this.allDataSubscription = this.apollo.watchQuery<AllDataResponse>({
-      query: LIST_ALL_QUERY
+      query: type.LIST_ALL_QUERY
     })
       .valueChanges
       .subscribe(({ data }) => {
@@ -99,19 +118,17 @@ export class Tab2Page implements OnInit {
         this.videoTree = [new TreeviewItem(this.videoDB)];
         this.audioTree = [new TreeviewItem(this.audioDB)];
         this.displayDB = this.videoDB;
-        // console.log(this.videoDB.children.name);
-        // console.log(this.videoDB.children.children.name);
       });
     // Get all video files data
-    this.allVideoSubscription = this.apollo.watchQuery<AllVideoResponse>({ query: VIDEO_QUERY })
-      .valueChanges
-      .subscribe(({ data }) => { this.videoFiles = data.video; });
+    this.allVideoSubscription = this.apollo.watchQuery<AllVideoResponse>({ query: type.VIDEO_QUERY })
+      .valueChanges.subscribe(({ data }) => { this.videoFiles = data.video; });
     // Get all audio files data
-    this.allAudioSubscription = this.apollo.watchQuery<AllAudioResponse>({ query: AUDIO_QUERY })
-      .valueChanges
-      .subscribe(({ data }) => { this.audioFiles = data.audio; });
-
-
+    this.allAudioSubscription = this.apollo.watchQuery<AllAudioResponse>({ query: type.AUDIO_QUERY })
+      .valueChanges.subscribe(({ data }) => { this.audioFiles = data.audio; });
+    this.videoClassSubscription = this.apollo.watchQuery<VideoClassResponse>({ query: type.VIDEO_CLASS_QUERY })
+      .valueChanges.subscribe(({ data }) => { this.videoClasses = data.getVideoClasses; videoClasses = this.videoClasses });
+    this.videoTopicSubscription = this.apollo.watchQuery<VideoTopicResponse>({ query: type.VIDEO_TOPIC_QUERY })
+      .valueChanges.subscribe(({ data }) => { this.videoTopics = data.getVideoTopics; videoTopics = this.videoTopics; });
   }
 
   treeSelectedChange(event) {
@@ -153,10 +170,44 @@ export class Tab2Page implements OnInit {
     this.editDBBtn = true;
   }
 
+  checkFilter(value, check) {
+    switch (value) {
+      case 'basicFilter':
+        this.basicFilter = check;
+        break;
+      case 'publishFilter':
+        this.publishFilter = check;
+        break;
+      case 'pathFilter':
+        this.pathFilter = check;
+        break;
+      case 'metaFilter':
+        this.metaFilter = check;
+        break;
+      default:
+        this.basicFilter = true;
+        this.publishFilter = true;
+        this.pathFilter = true;
+        this.metaFilter = true;
+    }
+  }
+
+  categoryChange(value) {
+    this.selectedTopics = this.videoTopics.filter(obj => obj.pid.includes(value));
+    this.selectedClassID = value;
+
+  }
+
+  topicChange(value) {
+    this.selectedTopicID = value;
+  }
+
   ngOnDestroy() {
     this.allDataSubscription.unsubscribe();
     this.allVideoSubscription.unsubscribe();
     this.allAudioSubscription.unsubscribe();
+    this.videoClassSubscription.unsubscribe();
+    this.videoTopicSubscription.unsubscribe();
   }
 
 }

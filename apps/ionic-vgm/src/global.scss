@@ -40,3 +40,25 @@
 @import '~@ionic/angular/css/text-alignment.css';
 @import '~@ionic/angular/css/text-transformation.css';
 @import '~@ionic/angular/css/flex-utils.css';
+
+.tab-content {
+  top: 55px;
+  left: 275px;
+}
+@media only screen and (max-width: 1050px) {
+  .tab-content {
+    width: 775px;
+  }
+}
+@media only screen and (min-width: 1051px) {
+  .tab-content {
+    width: calc(100vw - 275px);
+  }
+}
+.card {
+  height: calc(100vh - 150px);
+}
+
+hr.new {
+  border-top: 1px solid rgba(var(--ion-color-dark-rgb), 0.4);
+}

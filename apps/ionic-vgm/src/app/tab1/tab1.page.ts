@@ -1,16 +1,7 @@
 import { Component, NgZone, OnInit } from '@angular/core';
-import { VIDEO_CLASS_QUERY, VIDEO_TOPIC_QUERY, Classification, Topic } from '../db.types';
-import { Apollo } from 'apollo-angular';
-import { Subscription } from 'rxjs';
 import { ElectronService } from 'ngx-electron';
+import { videoClasses, videoTopics } from '../tab2/tab2.page';
 
-
-type VideoClassResponse = {
-  getVideoClasses: Classification;
-}
-type VideoTopicResponse = {
-  getVideoTopics: Topic;
-}
 @Component({
   selector: 'vgm-converter-tab1',
   templateUrl: 'tab1.page.html',
@@ -21,8 +12,8 @@ export class Tab1Page implements OnInit {
   videoClasses;
   videoTopics;
   selectedTopics;
-  classificationID;
-  topicID;
+  selectedClassID;
+  selectedTopicID;
   // Declare variable for conversion feature
   inputPath = '';
   inputPathShort = '';
@@ -35,27 +26,16 @@ export class Tab1Page implements OnInit {
   convertedFiles = 0;
   totalFiles = 0;
   // electronService API for ipcMain and ipcRenderer communication, ngZone for immediately reflect data change from ipcMain sender
-  constructor(private _electronService: ElectronService, private zone: NgZone, private apollo: Apollo) { }
-  private videoClassSubscription: Subscription;
-  private videoTopicSubscription: Subscription;
+  constructor(private _electronService: ElectronService, private zone: NgZone) { }
   ngOnInit() {
-    this.connectGQL();
-  }
-
-  connectGQL() {
-    // Connect to GQL Server and get all Data
-    this.videoClassSubscription = this.apollo.watchQuery<VideoClassResponse>({
-      query: VIDEO_CLASS_QUERY
-    }).valueChanges.subscribe(({ data }) => { this.videoClasses = data.getVideoClasses; });
-    this.videoTopicSubscription = this.apollo.watchQuery<VideoTopicResponse>({
-      query: VIDEO_TOPIC_QUERY
-    }).valueChanges.subscribe(({ data }) => { this.videoTopics = data.getVideoTopics; });
+    this.videoClasses = videoClasses;
+    this.videoTopics = videoTopics;
   }
 
   categoryChange(value) {
     if (value !== '0') {
       this.selectedTopics = this.videoTopics.filter(obj => obj.pid.includes(value));
-      this.classificationID = value;
+      this.selectedClassID = value;
     } else {
       this.selectedTopics = undefined;
     }
@@ -63,14 +43,10 @@ export class Tab1Page implements OnInit {
 
   topicChange(value) {
     if (value !== '0') {
-      this.topicID = value;
+      this.selectedTopicID = value;
     }
   }
 
-  test() {
-    console.log(this.videoClasses.getVideoClasses);
-    console.log(this.videoClasses);
-  }
 
   CheckBoxChange() {
     this.inputPathShort = '';
@@ -154,8 +130,5 @@ export class Tab1Page implements OnInit {
     }
   }
 
-  ngOnDestroy() {
-    this.videoClassSubscription.unsubscribe();
-    this.videoTopicSubscription.unsubscribe();
-  }
+  ngOnDestroy() { }
 }

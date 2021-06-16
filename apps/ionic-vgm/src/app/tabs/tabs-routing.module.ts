@@ -24,14 +24,14 @@ const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: '/vgm/converter',
+        redirectTo: '/vgm/database',
         pathMatch: 'full',
       },
     ],
   },
   {
     path: '',
-    redirectTo: '/vgm/converter',
+    redirectTo: '/vgm/database',
     pathMatch: 'full',
   },
 ];

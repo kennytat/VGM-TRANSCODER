@@ -26,18 +26,6 @@
     <ion-tab-bar slot="top">
       <ion-tab-button
         type="icon-start"
-        tab="converter"
-        class="tabs-left-item"
-        selected="{{tabConverter}}"
-        (click)="tabSelect('converter')"
-      >
-        <ion-icon name="sync-outline"></ion-icon>
-        <ion-label>M3U8 Converter</ion-label>
-      </ion-tab-button>
-    </ion-tab-bar>
-    <ion-tab-bar slot="top">
-      <ion-tab-button
-        type="icon-start"
         tab="database"
         class="tabs-left-item"
         selected="{{tabDatabase}}"
@@ -45,6 +33,18 @@
       >
         <ion-icon name="server-outline"></ion-icon>
         <ion-label>Database</ion-label>
+      </ion-tab-button>
+    </ion-tab-bar>
+    <ion-tab-bar slot="top">
+      <ion-tab-button
+        type="icon-start"
+        tab="converter"
+        class="tabs-left-item"
+        selected="{{tabConverter}}"
+        (click)="tabSelect('converter')"
+      >
+        <ion-icon name="sync-outline"></ion-icon>
+        <ion-label>M3U8 Converter</ion-label>
       </ion-tab-button>
     </ion-tab-bar>
 
@@ -65,13 +65,13 @@
 
 <ion-tabs>
   <ion-tab-bar slot="bottom">
-    <ion-tab-button tab="converter" (click)="tabSelect('converter')">
-      <ion-icon name="sync-outline"></ion-icon>
-      <ion-label>Converter</ion-label>
-    </ion-tab-button>
     <ion-tab-button tab="database" (click)="tabSelect('database')">
       <ion-icon name="server-outline"></ion-icon>
       <ion-label>Database</ion-label>
+    </ion-tab-button>
+    <ion-tab-button tab="converter" (click)="tabSelect('converter')">
+      <ion-icon name="sync-outline"></ion-icon>
+      <ion-label>Converter</ion-label>
     </ion-tab-button>
 
     <ion-tab-button tab="ipfs" (click)="tabSelect('ipfs')">
