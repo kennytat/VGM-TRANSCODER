@@ -2,6 +2,7 @@ import { Component, NgZone, OnInit } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { videoClasses, videoTopics } from '../tab2/tab2.page';
 
+
 @Component({
   selector: 'vgm-converter-tab1',
   templateUrl: 'tab1.page.html',
@@ -130,5 +131,4 @@ export class Tab1Page implements OnInit {
     }
   }
 
-  ngOnDestroy() { }
 }

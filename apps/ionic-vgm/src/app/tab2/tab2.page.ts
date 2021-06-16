@@ -201,13 +201,4 @@ export class Tab2Page implements OnInit {
   topicChange(value) {
     this.selectedTopicID = value;
   }
-
-  ngOnDestroy() {
-    this.allDataSubscription.unsubscribe();
-    this.allVideoSubscription.unsubscribe();
-    this.allAudioSubscription.unsubscribe();
-    this.videoClassSubscription.unsubscribe();
-    this.videoTopicSubscription.unsubscribe();
-  }
-
 }
