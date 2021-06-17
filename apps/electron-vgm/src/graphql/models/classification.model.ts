@@ -21,6 +21,12 @@ export class Classification {
   name: string
 
   @Field((type) => String, { nullable: true })
+  origin: string | null
+
+  @Field((type) => String, { nullable: true })
+  folder: string | null
+
+  @Field((type) => String, { nullable: true })
   qm?: string | null
 
   @Field((type) => String)

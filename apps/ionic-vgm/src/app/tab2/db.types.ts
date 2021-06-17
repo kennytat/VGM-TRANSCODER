@@ -54,7 +54,7 @@ export type Content = {
 
 export const LIST_ALL_QUERY = gql`
  query {
-  media (id: "2f80967a-8d4d-4d72-b934-68308d47ade7") {
+  media (id: "f7310b93-52b4-4a6f-b028-18cda3693737") {
     value:id
     text:name
     children:categories {
@@ -109,6 +109,7 @@ export const VIDEO_QUERY = gql`
     qm
     updatedAt
     createdAt
+    origin
     folder
     verse
     thumb
@@ -133,6 +134,7 @@ export const AUDIO_QUERY = gql`
     qm
     updatedAt
     createdAt
+    origin
     folder
     verse
     thumb

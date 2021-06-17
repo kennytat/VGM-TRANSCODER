@@ -13,7 +13,8 @@ type Content {
   qm: String
   duration: String!
   size: String!
-  folder: String!
+  origin: String
+  folder: String
   verse: String!
   thumb: String!
   filetype: String!
@@ -30,6 +31,8 @@ type Topic {
   classes: [Classification!]!
   pid: String!
   name: String!
+  origin: String
+  folder: String
   qm: String
   foldertype: String!
   contents: [Content!]!
@@ -41,6 +44,8 @@ type Classification {
   dblevel: Int!
   pid: String!
   name: String!
+  origin: String
+  folder: String
   qm: String
   foldertype: String!
   topics: [Topic!]!
@@ -52,6 +57,8 @@ type Category {
   dblevel: Int!
   pid: String!
   name: String!
+  origin: String
+  folder: String
   qm: String
   foldertype: String!
   classes: [Classification!]!
@@ -62,6 +69,8 @@ type Media {
   dblevel: Int!
   pid: String!
   name: String!
+  origin: String
+  folder: String
   qm: String
   categories: [Category!]!
 }

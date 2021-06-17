@@ -256,7 +256,16 @@
                           </div>
                           <div class="file-info-segment" *ngIf="pathFilter">
                             <div>
-                              <ion-label>Local</ion-label>
+                              <ion-label>Original</ion-label>
+                              <input
+                                type="text"
+                                placeholder="{{file.origin}}"
+                                value=""
+                                disabled
+                              />
+                            </div>
+                            <div>
+                              <ion-label>Converted</ion-label>
                               <input
                                 type="text"
                                 placeholder="{{file.folder}}"
@@ -296,7 +305,7 @@
                             </div>
                           </div>
                         </div>
-                        <div>
+                        <div *ngIf="basicFilter">
                           <ion-thumbnail>
                             <img
                               src="https://gravatar.com/avatar/dba6bae8c566f9d4041fb9cd9ada7741?d=identicon&f=y"

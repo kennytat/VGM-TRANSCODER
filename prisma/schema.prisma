@@ -12,6 +12,8 @@ model Media {
   pid        String     @default("none")
   dblevel    Int        @default(0)
   name       String
+  origin     String?
+  folder     String?
   qm         String?    @unique
   categories Category[]
 }
@@ -22,6 +24,8 @@ model Category {
   dblevel    Int              @default(1)
   pid        String
   name       String
+  origin     String?
+  folder     String?
   qm         String?          @unique
   foldertype String
   classes    Classification[]
@@ -35,6 +39,8 @@ model Classification {
   dblevel    Int      @default(2)
   pid        String
   name       String
+  origin     String?
+  folder     String?
   qm         String?  @unique
   foldertype String
   topics     Topic[]
@@ -48,6 +54,8 @@ model Topic {
   dblevel    Int            @default(3)
   pid        String
   name       String
+  origin     String?
+  folder     String?
   qm         String?        @unique
   foldertype String
   contents   Content[]
@@ -66,7 +74,8 @@ model Content {
   qm        String?  @unique
   duration  String
   size      String
-  folder    String
+  origin    String?
+  folder    String?
   verse     String
   thumb     String
   filetype  String

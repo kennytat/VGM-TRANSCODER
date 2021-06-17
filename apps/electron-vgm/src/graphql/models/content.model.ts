@@ -34,8 +34,11 @@ export class Content {
   @Field((type) => String)
   size: string
 
-  @Field((type) => String)
-  folder: string
+  @Field((type) => String, { nullable: true })
+  origin: string | null
+
+  @Field((type) => String, { nullable: true })
+  folder: string | null
 
   @Field((type) => String)
   verse: string

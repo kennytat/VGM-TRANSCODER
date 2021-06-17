@@ -11,8 +11,6 @@ export class Category {
   @Field((type) => [Media])
   media: [Media]
 
-
-
   @Field((type) => Int)
   dblevel: number
 
@@ -21,6 +19,12 @@ export class Category {
 
   @Field((type) => String)
   name: string
+
+  @Field((type) => String, { nullable: true })
+  origin: string | null
+
+  @Field((type) => String, { nullable: true })
+  folder: string | null
 
   @Field((type) => String, { nullable: true })
   qm?: string | null

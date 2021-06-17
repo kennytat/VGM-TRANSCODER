@@ -16,10 +16,16 @@ export class Media {
   @Field((type) => String)
   name: string
 
-  @Field((type) => String, {nullable: true})
+  @Field((type) => String, { nullable: true })
+  origin: string | null
+
+  @Field((type) => String, { nullable: true })
+  folder: string | null
+
+  @Field((type) => String, { nullable: true })
   qm?: string | null
 
-  @Field((type) => [Category], {nullable: true})
+  @Field((type) => [Category], { nullable: true })
   categories?: [Category] | null
 }
 

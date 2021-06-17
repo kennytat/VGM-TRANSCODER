@@ -113,6 +113,11 @@ export class Tab1Page implements OnInit {
             }
           });
         });
+
+        this._electronService.ipcRenderer.on('create-db', (event, data) => {
+          console.log(data);
+        });
+
         this.convertButton = false;
         this.btnDisable = true;
       };
