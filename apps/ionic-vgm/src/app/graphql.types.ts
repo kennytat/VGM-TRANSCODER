@@ -45,6 +45,7 @@ export type Content = {
   qm: string;
   duration: string;
   size: string;
+  origin: string;
   folder: string;
   verse: string;
   thumb: string;
@@ -54,7 +55,7 @@ export type Content = {
 
 export const LIST_ALL_QUERY = gql`
  query {
-  media (id: "f7310b93-52b4-4a6f-b028-18cda3693737") {
+  media (id: "41dcec53-b35f-4c9d-8c2e-403a4ba894d7") {
     value:id
     text:name
     children:categories {
@@ -147,5 +148,52 @@ export const AUDIO_QUERY = gql`
         name
       }
     }
+  }
+}`;
+
+export const CREATE_CONTENT = gql`
+mutation createContent (
+  $contentName: String!,
+  $contentPid: String!,
+  $contentDuration: String!,
+    $contentSize: String!,
+     $contentOrigin: String!,
+ $contentFolder: String!,
+  $contentThumb: String!,
+    $contentType: String!
+  ) {
+  createContent (data:{
+    name: $contentName,
+    pid: $contentPid,
+    duration: $contentDuration,
+    size: $contentSize,
+    origin: $contentOrigin,
+    folder: $contentFolder,
+    thumb: $contentThumb,
+    filetype: $contentType
+  }) {
+     id
+  dblevel
+  pid
+  name
+  createdAt
+  updatedAt
+  qm
+  duration
+  size
+  origin
+  folder
+  verse
+  thumb
+  filetype
+  }
+}`;
+
+
+export const DELETE_CONTENT = gql`
+mutation {
+  deleteContent (id: $contentId) {
+    id
+    name
   }
 }`;

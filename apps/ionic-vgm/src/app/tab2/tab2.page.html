@@ -130,13 +130,22 @@
                       <input
                         type="checkbox"
                         checked
-                        value="basicFilter"
-                        #basic
-                        (change)="checkFilter(basic.value, basic.checked)"
+                        value="topicFilter"
+                        #topic
+                        (change)="checkFilter(topic.value, topic.checked)"
                       />
-                      Basic
+                      Topic
                     </label>
-
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked
+                        value="nameFilter"
+                        #name
+                        (change)="checkFilter(name.value, name.checked)"
+                      />
+                      Name
+                    </label>
                     <label>
                       <input
                         type="checkbox"
@@ -178,7 +187,7 @@
                         *ngFor="let file of selectedFileInfo"
                       >
                         <div class="file-info-container">
-                          <div class="file-info-segment" *ngIf="basicFilter">
+                          <div class="file-info-segment" *ngIf="topicFilter">
                             <div>
                               <ion-label>Category</ion-label>
                               <select
@@ -224,6 +233,8 @@
                                 </option>
                               </select>
                             </div>
+                          </div>
+                          <div class="file-info-segment" *ngIf="nameFilter">
                             <div>
                               <ion-label>Name</ion-label>
                               <input
@@ -305,7 +316,7 @@
                             </div>
                           </div>
                         </div>
-                        <div *ngIf="basicFilter">
+                        <div *ngIf="metaFilter">
                           <ion-thumbnail>
                             <img
                               src="https://gravatar.com/avatar/dba6bae8c566f9d4041fb9cd9ada7741?d=identicon&f=y"

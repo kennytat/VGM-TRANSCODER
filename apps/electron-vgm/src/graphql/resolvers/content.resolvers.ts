@@ -17,15 +17,39 @@ import { Content } from '../models/content.model'
 import { Topic } from '../models/topic.model'
 import { PrismaService } from '../prisma.service'
 
-// @InputType()
-// export class ContentCreateInput {
-//   @Field()
-//   name: string
+@InputType()
+export class ContentCreateInput {
 
-//   @Field({ nullable: true })
-//   qm: string
+  @Field((type) => String)
+  pid: string
 
-// }
+  @Field((type) => String)
+  name: string
+
+  @Field((type) => String, { nullable: true })
+  qm?: string | null
+
+  @Field((type) => String)
+  duration: string
+
+  @Field((type) => String)
+  size: string
+
+  @Field((type) => String, { nullable: true })
+  origin: string | null
+
+  @Field((type) => String, { nullable: true })
+  folder: string | null
+
+  @Field((type) => String, { nullable: true})
+  verse: string | null
+
+  @Field((type) => String)
+  thumb: string
+
+  @Field((type) => String)
+  filetype: string
+}
 
 @InputType()
 class PostOrderByUpdatedAtInput {
@@ -120,22 +144,44 @@ export class ContentResolver {
       orderBy: orderBy || undefined,
     })
   }
-  // @Mutation((returns) => Post)
-  // createDraft(
-  //   @Args('data') data: PostCreateInput,
-  //   @Args('authorEmail') authorEmail: string,
-  //   @Context() ctx,
-  // ): Promise<Post> {
-  //   return this.prismaService.post.create({
-  //     data: {
-  //       title: data.title,
-  //       content: data.content,
-  //       author: {
-  //         connect: { email: authorEmail },
-  //       },
-  //     },
-  //   })
-  // }
+
+  @Mutation((returns) => Content)
+  createContent(
+    @Args('data') data: ContentCreateInput,
+    @Context() ctx,
+  ) {
+    return this.prismaService.content.create({
+      data: {
+        name: data.name,
+        qm: data.qm,
+        duration: data.duration,
+        size: data.size,
+        origin: data.origin,
+        folder: data.folder,
+        verse: data.verse,
+        thumb:data.thumb,
+        filetype: data.filetype,
+        topics: {
+          connect: {
+            id: data.pid
+          }
+        }
+      },
+    })
+  }
+
+
+    @Mutation((returns) => Content, { nullable: true })
+    async deleteContent(
+      @Args('id') id: string,
+      @Context() ctx,
+    ) {
+      return this.prismaService.content.delete({
+        where: {
+          id: id,
+        },
+      })
+    }
 
   // @Mutation(returns => Post)
   // incrementPostViewCount(

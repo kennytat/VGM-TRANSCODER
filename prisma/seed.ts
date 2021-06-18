@@ -50,6 +50,54 @@ const mediaData: Prisma.MediaCreateInput[] = [
                     }
                   ]
                 }
+              },
+              {
+                name: '02-Khoa Học Và Niềm Tin',
+                foldertype: 'video',
+                topics: {
+                  create: [
+                    {
+                      name: '01-Sự Khởi Đầu',
+                      foldertype: 'video'
+                    }
+                  ]
+                }
+              },
+              {
+                name: '03-Hoạt Hình',
+                foldertype: 'video',
+                topics: {
+                  create: [
+                    {
+                      name: 'Hoạt Hình 2D',
+                      foldertype: 'video'
+                    }
+                  ]
+                }
+              },
+              {
+                name: '04-Thiếu Nhi',
+                foldertype: 'video',
+                topics: {
+                  create: [
+                    {
+                      name: 'Bước Theo Chúa Giê-xu',
+                      foldertype: 'video'
+                    }
+                  ]
+                }
+              },
+              {
+                name: '05-Ngôn Ngữ Ký Hiệu',
+                foldertype: 'video',
+                topics: {
+                  create: [
+                    {
+                      name: 'Giáo Lý Căn Bản',
+                      foldertype: 'video'
+                    }
+                  ]
+                }
               }
             ]
           }

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Subscription } from 'rxjs';
 import { TreeviewItem, TreeviewConfig } from 'ngx-treeview';
-import * as type from './db.types';
+import * as type from '../graphql.types';
 
 type AllDataResponse = {
   media: type.Media;
@@ -79,7 +79,8 @@ export class Tab2Page implements OnInit {
   duration: number;
   size: number;
   // Declare output filter
-  basicFilter = true;
+  nameFilter = true;
+  topicFilter = true;
   publishFilter = true;
   pathFilter = true;
   metaFilter = true;
@@ -193,8 +194,11 @@ export class Tab2Page implements OnInit {
 
   checkFilter(value, check) {
     switch (value) {
-      case 'basicFilter':
-        this.basicFilter = check;
+      case 'nameFilter':
+        this.nameFilter = check;
+        break;
+      case 'topicFilter':
+        this.topicFilter = check;
         break;
       case 'publishFilter':
         this.publishFilter = check;
@@ -206,7 +210,8 @@ export class Tab2Page implements OnInit {
         this.metaFilter = check;
         break;
       default:
-        this.basicFilter = true;
+        this.nameFilter = true;
+        this.topicFilter = true;
         this.publishFilter = true;
         this.pathFilter = true;
         this.metaFilter = true;

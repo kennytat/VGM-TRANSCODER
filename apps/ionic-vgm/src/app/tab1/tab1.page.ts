@@ -1,7 +1,14 @@
 import { Component, NgZone, OnInit } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { videoClasses, videoTopics } from '../tab2/tab2.page';
+import { Content, CREATE_CONTENT } from '../graphql.types';
+import { Apollo } from 'apollo-angular';
 
+type CreateContentResult = {
+  createContent: {
+    content: Content[];
+  };
+}
 
 @Component({
   selector: 'vgm-converter-tab1',
@@ -27,7 +34,7 @@ export class Tab1Page implements OnInit {
   convertedFiles = 0;
   totalFiles = 0;
   // electronService API for ipcMain and ipcRenderer communication, ngZone for immediately reflect data change from ipcMain sender
-  constructor(private _electronService: ElectronService, private zone: NgZone) { }
+  constructor(private _electronService: ElectronService, private zone: NgZone, private apollo: Apollo) { }
   ngOnInit() {
     this.videoClasses = videoClasses;
     this.videoTopics = videoTopics;
@@ -45,6 +52,8 @@ export class Tab1Page implements OnInit {
   topicChange(value) {
     if (value !== '0') {
       this.selectedTopicID = value;
+    } else {
+      this.selectedTopicID = undefined;
     }
   }
 
@@ -53,6 +62,35 @@ export class Tab1Page implements OnInit {
     this.inputPathShort = '';
     this.inputPath = '';
   }
+
+  createDB(raw) {
+    const files = raw.replace(/}[\n,\s]+?{/g,'}splitjson{').split('splitjson');
+    files.forEach(item => {
+      const file = JSON.parse(item);
+      console.log(file.format.filename);
+      console.log(file.format.duration);
+      console.log(file.format.size);
+    
+    //  this.apollo.mutate<CreateContentResult>({
+    //   mutation: CREATE_CONTENT,
+    //   variables: {
+    //     contentName: this.fileName,
+    //     contentPid: this.selectedTopicID,
+    //     contentDuration: file.format.duration,
+    //     contentSize: file.format.size,
+    //     contentOrigin: file.format.filename,
+    //     contentFolder: this.outputPath,
+    //     contentThumb: this.fileThumb,
+    //     contentType: 'video'
+    //   },
+    // }).subscribe(({ data }) => {console.log(data);}, (error) => {
+    //   console.log('error creating new entries', error);
+    // });
+
+    });
+  }
+
+
   OpenDialog() {
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.send('open-file-dialog', this.fileCheckbox);
@@ -85,7 +123,7 @@ export class Tab1Page implements OnInit {
 
   Convert() {
     if (this._electronService.isElectronApp) {
-      if (this.inputPathShort === '' || this.outputPath === '') {
+      if (this.inputPathShort === '' || this.outputPath === '' || this.selectedTopicID === undefined) {
         this._electronService.ipcRenderer.send('missing-path');
       } else {
         this._electronService.ipcRenderer.send('start-convert', this.inputPath, this.outputPath, this.fileCheckbox);
@@ -115,7 +153,7 @@ export class Tab1Page implements OnInit {
         });
 
         this._electronService.ipcRenderer.on('create-db', (event, data) => {
-          console.log(data);
+          this.createDB(data);
         });
 
         this.convertButton = false;

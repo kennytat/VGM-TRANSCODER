@@ -40,11 +40,11 @@ export class Content {
   @Field((type) => String, { nullable: true })
   folder: string | null
 
-  @Field((type) => String)
-  verse: string
+  @Field((type) => String, { nullable: true })
+  verse: string | null
 
-  @Field((type) => String)
-  thumb: string
+  @Field((type) => String, {nullable: true})
+  thumb: string | null
 
   @Field((type) => String)
   filetype: string

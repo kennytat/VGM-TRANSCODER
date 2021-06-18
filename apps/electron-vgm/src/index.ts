@@ -177,8 +177,8 @@ try {
     dialog.showMessageBox(null, {
       type: 'warning',
       title: 'Warning',
-      message: 'Invalid input or output path',
-      detail: 'Please select valid input source and output destination.',
+      message: 'Invalid input/output or database',
+      detail: 'Please select valid source, destination and database',
     }).then(result => {
       console.log(result.response);
       console.log(result.checkboxChecked);
@@ -256,8 +256,8 @@ try {
                 return
               }
 
-  //file removed
-})
+              //file removed
+            })
 
             dialog.showMessageBox(null, {
               type: 'info',

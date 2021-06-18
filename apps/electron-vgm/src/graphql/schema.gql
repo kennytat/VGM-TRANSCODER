@@ -15,8 +15,8 @@ type Content {
   size: String!
   origin: String
   folder: String
-  verse: String!
-  thumb: String!
+  verse: String
+  thumb: String
   filetype: String!
 }
 
@@ -93,4 +93,22 @@ input PostOrderByUpdatedAtInput {
 enum SortOrder {
   asc
   desc
+}
+
+type Mutation {
+  createContent(data: ContentCreateInput!): Content!
+  deleteContent(id: String!): Content
+}
+
+input ContentCreateInput {
+  pid: String!
+  name: String!
+  qm: String
+  duration: String!
+  size: String!
+  origin: String
+  folder: String
+  verse: String
+  thumb: String!
+  filetype: String!
 }

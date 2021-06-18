@@ -20,7 +20,7 @@ model Media {
 
 model Category {
   id         String           @id @default(uuid())
-  parent     Media            @relation(fields: [pid], references: [id])
+  media      Media            @relation(fields: [pid], references: [id])
   dblevel    Int              @default(1)
   pid        String
   name       String
@@ -35,7 +35,7 @@ model Category {
 
 model Classification {
   id         String   @id @default(uuid())
-  parent     Category @relation(fields: [pid], references: [id])
+  categories Category @relation(fields: [pid], references: [id])
   dblevel    Int      @default(2)
   pid        String
   name       String
@@ -50,7 +50,7 @@ model Classification {
 
 model Topic {
   id         String         @id @default(uuid())
-  parent     Classification @relation(fields: [pid], references: [id])
+  classes    Classification @relation(fields: [pid], references: [id])
   dblevel    Int            @default(3)
   pid        String
   name       String
@@ -65,7 +65,7 @@ model Topic {
 
 model Content {
   id        String   @id @default(uuid())
-  parent    Topic    @relation(fields: [pid], references: [id])
+  topics    Topic    @relation(fields: [pid], references: [id])
   dblevel   Int      @default(4)
   pid       String
   name      String
@@ -76,7 +76,7 @@ model Content {
   size      String
   origin    String?
   folder    String?
-  verse     String
-  thumb     String
+  verse     String?
+  thumb     String?
   filetype  String
 }
