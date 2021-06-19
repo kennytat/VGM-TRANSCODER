@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, NgZone, OnInit } from '@angular/core';
 import { Apollo } from 'apollo-angular';
+import { ElectronService } from 'ngx-electron';
 import { Subscription } from 'rxjs';
 import { TreeviewItem, TreeviewConfig } from 'ngx-treeview';
 import * as type from '../graphql.types';
@@ -28,7 +29,7 @@ export let videoTopics: any;
 })
 
 export class Tab2Page implements OnInit {
-  constructor(private apollo: Apollo) { }
+  constructor(private _electronService: ElectronService, private zone: NgZone, private apollo: Apollo) { }
   // GQL client subscription for connecting GQL server
   private allDataSubscription: Subscription;
   private allVideoSubscription: Subscription;
@@ -63,6 +64,7 @@ export class Tab2Page implements OnInit {
   selectedTopics;
   selectedClassID;
   selectedTopicID;
+  selectedFilesID = [];
   // Declare file info variable on selected
   disable = true;
   mainFn = true;
@@ -135,7 +137,8 @@ export class Tab2Page implements OnInit {
   }
 
   treeSelectedChange(event) {
-    this.selectedFileCount = event.length;
+    this.selectedFilesID = event;
+    this.selectedFileCount = this.selectedFilesID.length;
     if (this.selectedFileCount >= 1) {
       const v = this.videoFiles.filter(data => event.includes(data.id));
       const a = this.audioFiles.filter(data => event.includes(data.id));
@@ -158,39 +161,6 @@ export class Tab2Page implements OnInit {
     console.log('filter:', event);
   }
 
-  modifyDB(value) {
-    if (value === 'edit') {
-      this.editFn = true;
-      this.disable = false;
-    } else {
-      this.newFn = true;
-    }
-    this.mainFn = false;
-  }
-
-  updateDB() {
-    this.editFn = false;
-    this.mainFn = true;
-    this.disable = true;
-  }
-
-  deleteDB() {
-    this.editFn = false;
-    this.mainFn = true;
-    this.disable = true;
-  }
-  saveDB() {
-    this.newFn = false;
-    this.mainFn = true;
-    this.disable = true;
-  }
-
-  cancelDB() {
-    this.mainFn = true;
-    this.editFn = false;
-    this.newFn = false;
-    this.disable = true;
-  }
 
   checkFilter(value, check) {
     switch (value) {
@@ -226,5 +196,103 @@ export class Tab2Page implements OnInit {
 
   topicChange(value) {
     this.selectedTopicID = value;
+  }
+
+
+  modifyDBBtn(value) {
+    switch (value) {
+      case 'edit':
+        this.editFn = true;
+        this.disable = false;
+        this.mainFn = false;
+        break;
+      case 'new':
+        this.newFn = true;
+        this.mainFn = false;
+        break;
+      case 'update':
+        this.editFn = false;
+        this.mainFn = true;
+        this.disable = true;
+        this.execDBConfirmation('updateDB');
+        break;
+      case 'delete':
+        this.editFn = false;
+        this.mainFn = true;
+        this.disable = true;
+        this.execDBConfirmation('deleteDB');
+        break;
+      case 'save':
+        this.newFn = false;
+        this.mainFn = true;
+        this.disable = true;
+        this.execDBConfirmation('newDB');
+        break;
+
+      case 'cancel':
+        this.mainFn = true;
+        this.editFn = false;
+        this.newFn = false;
+        this.disable = true;
+        break;
+      default:
+        this.mainFn = true;
+        this.newFn = false;
+        this.editFn = false;
+        this.disable = true;
+    }
+
+  }
+
+  newDB(messageID) {
+    console.log('function to create new db', messageID);
+  }
+
+  updateDB(messageID) {
+    console.log('function to update db', messageID);
+  }
+
+  deleteDB(messageID) {
+    this.selectedFilesID.forEach(fileID => {
+      this.apollo.mutate({
+        mutation: type.DELETE_CONTENT,
+        variables: { contentId: fileID, },
+      }).subscribe(({ data }) => { console.log(data); }, (error) => {
+        console.log('error deleting files', error);
+      });
+    });
+
+    const deletedFilesCount = this.selectedFilesID.length;
+    let execDoneMessage = '';
+    if (messageID === 1) {
+      execDoneMessage = `Total ${deletedFilesCount} data deleted and keeping original files `;
+      console.log('exec deleting data and keeping files');
+    } else if (messageID === 2) {
+      execDoneMessage = `Total ${deletedFilesCount} data and original files have been deleted`;
+      console.log('exec deleting data and files');
+    }
+    this.execDBDone(execDoneMessage);
+  }
+
+
+
+  execDBConfirmation(method) {
+    if (this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.send('exec-db-confirmation', method);
+      this._electronService.ipcRenderer.on('exec-confirm-message', (event, resMethod, messageID) => {
+        if (messageID !== 0) {
+          if (resMethod === 'newDB') { this.newDB(messageID); }
+          else if (resMethod === 'updateDB') { this.updateDB(messageID); }
+          else if (resMethod === 'deleteDB') { this.deleteDB(messageID); }
+        }
+      })
+    }
+  }
+
+  // Show corresponding message when mutating db done
+  execDBDone(message) {
+    if (this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.send('exec-db-done', message);
+    }
   }
 }

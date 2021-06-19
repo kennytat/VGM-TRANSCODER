@@ -63,7 +63,7 @@
                   shape="round"
                   style="font-size: xx-small"
                   *ngIf="mainFn"
-                  (click)="modifyDB('new')"
+                  (click)="modifyDBBtn('new')"
                   >New</ion-button
                 >
                 <ion-button
@@ -72,7 +72,7 @@
                   shape="round"
                   style="font-size: xx-small"
                   *ngIf="mainFn"
-                  (click)="modifyDB('edit')"
+                  (click)="modifyDBBtn('edit')"
                   >Edit</ion-button
                 >
                 <ion-button
@@ -81,7 +81,7 @@
                   shape="round"
                   style="font-size: xx-small"
                   *ngIf="editFn"
-                  (click)="updateDB()"
+                  (click)="modifyDBBtn('update')"
                   >Update</ion-button
                 >
                 <ion-button
@@ -90,7 +90,7 @@
                   shape="round"
                   style="font-size: xx-small"
                   *ngIf="editFn"
-                  (click)="deleteDB()"
+                  (click)="modifyDBBtn('delete')"
                   >Delete</ion-button
                 >
                 <ion-button
@@ -98,7 +98,7 @@
                   color="success"
                   shape="round"
                   style="font-size: xx-small"
-                  (click)="saveDB()"
+                  (click)="modifyDBBtn('save')"
                   *ngIf="newFn"
                   >Save</ion-button
                 >
@@ -108,7 +108,7 @@
                   shape="round"
                   style="font-size: xx-small"
                   *ngIf="editFn"
-                  (click)="cancelDB()"
+                  (click)="modifyDBBtn('cancel')"
                   >Cancel</ion-button
                 >
                 <ion-button
@@ -117,7 +117,7 @@
                   shape="round"
                   style="font-size: xx-small"
                   *ngIf="newFn"
-                  (click)="cancelDB()"
+                  (click)="modifyDBBtn('cancel')"
                   >Cancel</ion-button
                 >
               </div>

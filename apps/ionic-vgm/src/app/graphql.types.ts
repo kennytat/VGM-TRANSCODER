@@ -191,7 +191,7 @@ mutation createContent (
 
 
 export const DELETE_CONTENT = gql`
-mutation {
+mutation  deleteContent ($contentId: String!) {
   deleteContent (id: $contentId) {
     id
     name

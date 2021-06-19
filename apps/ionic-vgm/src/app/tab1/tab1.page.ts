@@ -67,25 +67,33 @@ export class Tab1Page implements OnInit {
     const files = raw.replace(/}[\n,\s]+?{/g,'}splitjson{').split('splitjson');
     files.forEach(item => {
       const file = JSON.parse(item);
+      const fileName = file.format.filename.replace(/^(.*[\\\/])/,'');
+      const originalPath = file.format.filename.replace(/([^\/]+$)/,'');
+      const fileThumb = this.outputPath.concat('/',fileName,'/','Thumb_720p/01.jpg');
+
       console.log(file.format.filename);
       console.log(file.format.duration);
       console.log(file.format.size);
-    
-    //  this.apollo.mutate<CreateContentResult>({
-    //   mutation: CREATE_CONTENT,
-    //   variables: {
-    //     contentName: this.fileName,
-    //     contentPid: this.selectedTopicID,
-    //     contentDuration: file.format.duration,
-    //     contentSize: file.format.size,
-    //     contentOrigin: file.format.filename,
-    //     contentFolder: this.outputPath,
-    //     contentThumb: this.fileThumb,
-    //     contentType: 'video'
-    //   },
-    // }).subscribe(({ data }) => {console.log(data);}, (error) => {
-    //   console.log('error creating new entries', error);
-    // });
+      console.log(fileName);
+      console.log(originalPath);
+      console.log(fileThumb);
+      
+
+     this.apollo.mutate<CreateContentResult>({
+      mutation: CREATE_CONTENT,
+      variables: {
+        contentName: fileName,
+        contentPid: this.selectedTopicID,
+        contentDuration: file.format.duration,
+        contentSize: file.format.size,
+        contentOrigin: originalPath,
+        contentFolder: this.outputPath,
+        contentThumb: fileThumb,
+        contentType: 'video'
+      },
+    }).subscribe(({ data }) => {console.log(data);}, (error) => {
+      console.log('error creating new entries', error);
+    });
 
     });
   }

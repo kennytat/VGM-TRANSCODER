@@ -222,7 +222,6 @@ try {
               detail: 'None expected errors occured, please try again.',
             }).then(result => {
               console.log(result.response);
-              console.log(result.checkboxChecked);
             }).catch(err => { console.log(err) });
 
             console.log(`Error: ${error}`);
@@ -235,7 +234,6 @@ try {
               detail: 'None expected standard errors occured, please try again.',
             }).then(result => {
               console.log(result.response);
-              console.log(result.checkboxChecked);
             }).catch(err => { console.log(err) });
 
             console.log(`Stderr: ${stderr}`);
@@ -266,7 +264,6 @@ try {
               detail: 'Your files have been converted sucessfully',
             }).then(result => {
               console.log(result.response);
-              console.log(result.checkboxChecked);
             }).catch(err => { console.log(err) });
 
             console.log(`conversion stdout: ${stdout}`);
@@ -314,7 +311,6 @@ try {
           detail: 'No valid video files found, please try again.',
         }).then(result => {
           console.log(result.response);
-          console.log(result.checkboxChecked);
         }).catch(err => { console.log(err) });
         event.sender.send('exec-done');
       }
@@ -338,7 +334,6 @@ try {
             detail: 'None expected errors occured, please try again.',
           }).then(result => {
             console.log(result.response);
-            console.log(result.checkboxChecked);
           }).catch(err => { console.log(err) });
           console.log(`Error: ${error}`);
         } else if (stderr) {
@@ -349,7 +344,6 @@ try {
             detail: 'None expected standard errors occured, please try again.',
           }).then(result => {
             console.log(result.response);
-            console.log(result.checkboxChecked);
           }).catch(err => { console.log(err) });
           console.log(`Stderr: ${stderr}`);
         } else {
@@ -360,7 +354,6 @@ try {
             detail: 'Your conversion have been cancelled.',
           }).then(result => {
             console.log(result.response);
-            console.log(result.checkboxChecked);
           }).catch(err => { console.log(err) });
           console.log(`Stdout: ${stdout}`);
         }
@@ -377,6 +370,55 @@ try {
   })
 
 
+  ipcMain.on('exec-db-confirmation', (event, method) => {
+    let options;
+    if (method === 'newDB') {
+      options = {
+        type: 'question',
+        buttons: ['Cancel', 'Create'],
+        defaultId: 0,
+        title: 'Create Data Confirmation',
+        message: 'Are you sure want to create selected entries',
+        detail: 'Create new data will also publish it on IPFS',
+      }
+    } else if (method === 'updateDB') {
+      options = {
+        type: 'question',
+        buttons: ['Cancel', 'Update'],
+        defaultId: 0,
+        title: 'Update Confirmation',
+        message: 'Are you sure want to update selected entries',
+        detail: 'Update data will also update it on IPFS',
+      }
+    } else if (method === 'deleteDB') {
+      options = {
+        type: 'question',
+        buttons: ['Cancel', 'Delete data and keep files', 'Delete data and files'],
+        defaultId: 0,
+        title: 'Deletion Confirmation',
+        message: 'Are you sure want to delete selected entries',
+        detail: 'Delete data will also unpublish it on IPFS',
+      }
+    }
+    dialog.showMessageBox(win, options).then(result => {
+      event.sender.send('exec-confirm-message', method, result.response);
+    }).catch(err => { console.log(err) });
+
+
+  })
+
+
+  ipcMain.on('exec-db-done', (event, message) => {
+
+    dialog.showMessageBox(null, {
+      type: 'info',
+      title: 'Done',
+      message: 'Your request have been executed sucessfully!',
+      detail: message,
+    }).then(result => { result.response }).catch(err => { console.log(err) });
+
+
+  })
 
   app.on('activate', () => {
     // On macOS it's common to re-create a window in the app when the
