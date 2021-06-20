@@ -202,43 +202,25 @@ export class Tab2Page implements OnInit {
   modifyDBBtn(value) {
     switch (value) {
       case 'edit':
+        this.mainFn = false;
         this.editFn = true;
         this.disable = false;
-        this.mainFn = false;
         break;
       case 'new':
-        this.newFn = true;
         this.mainFn = false;
+        this.newFn = true;
+        this.disable = false;
         break;
-      case 'update':
-        this.editFn = false;
-        this.mainFn = true;
-        this.disable = true;
-        this.execDBConfirmation('updateDB');
-        break;
-      case 'delete':
-        this.editFn = false;
-        this.mainFn = true;
-        this.disable = true;
-        this.execDBConfirmation('deleteDB');
-        break;
-      case 'save':
-        this.newFn = false;
-        this.mainFn = true;
-        this.disable = true;
-        this.execDBConfirmation('newDB');
-        break;
-
       case 'cancel':
-        this.mainFn = true;
         this.editFn = false;
         this.newFn = false;
+        this.mainFn = true;
         this.disable = true;
         break;
       default:
-        this.mainFn = true;
         this.newFn = false;
         this.editFn = false;
+        this.mainFn = true;
         this.disable = true;
     }
 
@@ -253,6 +235,7 @@ export class Tab2Page implements OnInit {
   }
 
   deleteDB(messageID) {
+    console.log('function to delete db', messageID);
     this.selectedFilesID.forEach(fileID => {
       this.apollo.mutate({
         mutation: type.DELETE_CONTENT,
@@ -260,7 +243,9 @@ export class Tab2Page implements OnInit {
       }).subscribe(({ data }) => { console.log(data); }, (error) => {
         console.log('error deleting files', error);
       });
-    });
+
+    }
+    );
 
     const deletedFilesCount = this.selectedFilesID.length;
     let execDoneMessage = '';
@@ -272,27 +257,43 @@ export class Tab2Page implements OnInit {
       console.log('exec deleting data and files');
     }
     this.execDBDone(execDoneMessage);
+
   }
 
 
 
   execDBConfirmation(method) {
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('exec-db-confirmation', method);
-      this._electronService.ipcRenderer.on('exec-confirm-message', (event, resMethod, messageID) => {
-        if (messageID !== 0) {
-          if (resMethod === 'newDB') { this.newDB(messageID); }
-          else if (resMethod === 'updateDB') { this.updateDB(messageID); }
-          else if (resMethod === 'deleteDB') { this.deleteDB(messageID); }
-        }
-      })
+      if (this.selectedFilesID !== []) {
+        this._electronService.ipcRenderer.send('exec-db-confirmation', method);
+        this._electronService.ipcRenderer.on('exec-confirm-message', (event, resMethod, messageID) => {
+          if (messageID !== 0) {
+            if (resMethod === 'newDB') {
+              this.newDB(messageID);
+            }
+            else if (resMethod === 'updateDB') { this.updateDB(messageID); }
+            else if (resMethod === 'deleteDB') { this.deleteDB(messageID); }
+          }
+        })
+      } else {
+        this._electronService.ipcRenderer.send('error-message', 'empty-select');
+      }
+
+
     }
+
   }
 
   // Show corresponding message when mutating db done
   execDBDone(message) {
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.send('exec-db-done', message);
+      this.zone.run(() => {
+        this.editFn = false;
+        this.newFn = false;
+        this.mainFn = true;
+        this.disable = true;
+      });
     }
   }
 }

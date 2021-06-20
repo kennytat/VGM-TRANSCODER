@@ -81,7 +81,7 @@
                   shape="round"
                   style="font-size: xx-small"
                   *ngIf="editFn"
-                  (click)="modifyDBBtn('update')"
+                  (click)="execDBConfirmation('updateDB')"
                   >Update</ion-button
                 >
                 <ion-button
@@ -90,7 +90,7 @@
                   shape="round"
                   style="font-size: xx-small"
                   *ngIf="editFn"
-                  (click)="modifyDBBtn('delete')"
+                  (click)="execDBConfirmation('deleteDB')"
                   >Delete</ion-button
                 >
                 <ion-button
@@ -98,7 +98,7 @@
                   color="success"
                   shape="round"
                   style="font-size: xx-small"
-                  (click)="modifyDBBtn('save')"
+                  (click)="execDBConfirmation('newDB')"
                   *ngIf="newFn"
                   >Save</ion-button
                 >

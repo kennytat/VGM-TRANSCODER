@@ -64,36 +64,36 @@ export class Tab1Page implements OnInit {
   }
 
   createDB(raw) {
-    const files = raw.replace(/}[\n,\s]+?{/g,'}splitjson{').split('splitjson');
+    const files = raw.replace(/}[\n,\s]+?{/g, '}splitjson{').split('splitjson');
     files.forEach(item => {
       const file = JSON.parse(item);
-      const fileName = file.format.filename.replace(/^(.*[\\\/])/,'');
-      const originalPath = file.format.filename.replace(/([^\/]+$)/,'');
-      const fileThumb = this.outputPath.concat('/',fileName,'/','Thumb_720p/01.jpg');
+      const fileName = file.format.filename.replace(/^(.*[\\\/])/, '');
+      const originalPath = file.format.filename.replace(/([^\/]+$)/, '');
+      const fileThumb = this.outputPath.concat('/', fileName, '/', 'Thumb_720p/01.jpg');
 
-      console.log(file.format.filename);
-      console.log(file.format.duration);
-      console.log(file.format.size);
-      console.log(fileName);
-      console.log(originalPath);
-      console.log(fileThumb);
-      
+      // console.log(file.format.filename);
+      // console.log(file.format.duration);
+      // console.log(file.format.size);
+      // console.log(fileName);
+      // console.log(originalPath);
+      // console.log(fileThumb);
 
-     this.apollo.mutate<CreateContentResult>({
-      mutation: CREATE_CONTENT,
-      variables: {
-        contentName: fileName,
-        contentPid: this.selectedTopicID,
-        contentDuration: file.format.duration,
-        contentSize: file.format.size,
-        contentOrigin: originalPath,
-        contentFolder: this.outputPath,
-        contentThumb: fileThumb,
-        contentType: 'video'
-      },
-    }).subscribe(({ data }) => {console.log(data);}, (error) => {
-      console.log('error creating new entries', error);
-    });
+
+      this.apollo.mutate<CreateContentResult>({
+        mutation: CREATE_CONTENT,
+        variables: {
+          contentName: fileName,
+          contentPid: this.selectedTopicID,
+          contentDuration: file.format.duration,
+          contentSize: file.format.size,
+          contentOrigin: originalPath,
+          contentFolder: this.outputPath,
+          contentThumb: fileThumb,
+          contentType: 'video'
+        },
+      }).subscribe(({ data }) => { console.log(data); }, (error) => {
+        console.log('error creating new entries', error);
+      });
 
     });
   }
@@ -132,7 +132,7 @@ export class Tab1Page implements OnInit {
   Convert() {
     if (this._electronService.isElectronApp) {
       if (this.inputPathShort === '' || this.outputPath === '' || this.selectedTopicID === undefined) {
-        this._electronService.ipcRenderer.send('missing-path');
+        this._electronService.ipcRenderer.send('error-message', 'missing-path');
       } else {
         this._electronService.ipcRenderer.send('start-convert', this.inputPath, this.outputPath, this.fileCheckbox);
         this._electronService.ipcRenderer.on('exec-done', (event) => {

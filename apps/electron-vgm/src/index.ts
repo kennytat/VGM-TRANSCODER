@@ -173,18 +173,34 @@ try {
     }).catch(err => { console.log(err) });
   })
 
-  ipcMain.on('missing-path', (event, arg) => {
-    dialog.showMessageBox(null, {
-      type: 'warning',
-      title: 'Warning',
-      message: 'Invalid input/output or database',
-      detail: 'Please select valid source, destination and database',
-    }).then(result => {
-      console.log(result.response);
-      console.log(result.checkboxChecked);
-    }).catch(err => { console.log(err) });
+  ipcMain.on('error-message', (event, arg) => {
+    if (arg === 'missing-path') {
+      const options = {
+        type: 'warning',
+        title: 'Warning',
+        message: 'Invalid input/output or database',
+        detail: 'Please select valid source, destination and database',
+      };
+      showMessageBox(options);
+    } else if (arg === 'empty-select') {
+      const options = {
+        type: 'warning',
+        title: 'Warning',
+        message: 'No file selected',
+        detail: 'Select file to be modified, please try again',
+      };
+      showMessageBox(options);
+    }
+
+
   })
 
+  // Show message box function
+  function showMessageBox(options) {
+    dialog.showMessageBox(null, options).then(result => {
+      console.log(result.response);
+    }).catch(err => { console.log(err) });
+  }
   // Get input and output path from above and execute sh file
   ipcMain.on('start-convert', (event, argInPath, argOutPath, fileOnly) => {
     // Declare variable for calculate conversion rate
@@ -209,33 +225,30 @@ try {
       count_files_exec.stdout.on('data', data => { totalFiles = parseInt(data); })
       count_files_exec.on('close', (code) => { startConvert(); });
     }
+
     function startConvert() {
       if (totalFiles > 0) {
         // Run ffmpeg to start convert
         execFile('./ffmpeg-exec.sh', [inPath, outPath, isFile], (error, stdout, stderr) => {
           if (error) {
             clearInterval(interval);
-            dialog.showMessageBox(null, {
+            const options = {
               type: 'error',
               title: 'Error',
               message: 'Error converting files',
               detail: 'None expected errors occured, please try again.',
-            }).then(result => {
-              console.log(result.response);
-            }).catch(err => { console.log(err) });
-
+            };
+            showMessageBox(options);
             console.log(`Error: ${error}`);
           } else if (stderr) {
             clearInterval(interval);
-            dialog.showMessageBox(null, {
+            const options = {
               type: 'warning',
               title: 'Stderror',
               message: 'Error converting files',
               detail: 'None expected standard errors occured, please try again.',
-            }).then(result => {
-              console.log(result.response);
-            }).catch(err => { console.log(err) });
-
+            };
+            showMessageBox(options);
             console.log(`Stderr: ${stderr}`);
           } else {
             clearInterval(interval);
@@ -253,18 +266,15 @@ try {
                 console.error(err)
                 return
               }
-
-              //file removed
             })
 
-            dialog.showMessageBox(null, {
+            const options = {
               type: 'info',
               title: 'Done',
               message: 'Congratulations',
               detail: 'Your files have been converted sucessfully',
-            }).then(result => {
-              console.log(result.response);
-            }).catch(err => { console.log(err) });
+            };
+            showMessageBox(options);
 
             console.log(`conversion stdout: ${stdout}`);
           };
@@ -304,14 +314,13 @@ try {
           }
         }, 500);
       } else {
-        dialog.showMessageBox(null, {
+        const options = {
           type: 'warning',
           title: 'Warning',
           message: 'No video found',
           detail: 'No valid video files found, please try again.',
-        }).then(result => {
-          console.log(result.response);
-        }).catch(err => { console.log(err) });
+        };
+        showMessageBox(options);
         event.sender.send('exec-done');
       }
     }
@@ -327,39 +336,35 @@ try {
       let killcmd = "kill " + ffmpeg_bash_pid + " &&" + " killall" + " ffmpeg";
       exec(killcmd, (error, stdout, stderr) => {
         if (error) {
-          dialog.showMessageBox(null, {
+          console.log(`Error: ${error}`);
+          const options = {
             type: 'error',
             title: 'Error',
             message: 'Error cancelling conversion',
             detail: 'None expected errors occured, please try again.',
-          }).then(result => {
-            console.log(result.response);
-          }).catch(err => { console.log(err) });
-          console.log(`Error: ${error}`);
+          };
+          showMessageBox(options);
         } else if (stderr) {
-          dialog.showMessageBox(null, {
+          console.log(`Stderr: ${stderr}`);
+          const options = {
             type: 'error',
             title: 'Error',
             message: 'Error cancelling conversion',
             detail: 'None expected standard errors occured, please try again.',
-          }).then(result => {
-            console.log(result.response);
-          }).catch(err => { console.log(err) });
-          console.log(`Stderr: ${stderr}`);
+          };
+          showMessageBox(options);
         } else {
-          dialog.showMessageBox(null, {
+          console.log(`Stdout: ${stdout}`);
+          const options = {
             type: 'info',
             title: 'Done',
             message: 'Cancellation',
             detail: 'Your conversion have been cancelled.',
-          }).then(result => {
-            console.log(result.response);
-          }).catch(err => { console.log(err) });
-          console.log(`Stdout: ${stdout}`);
+          };
+          showMessageBox(options);
         }
       });
     });
-
     child.stderr.on('data', (data) => { console.log(`stderr: ${data}`) });
     child.on('error', (error) => { console.log(`error: ${error}`) });
     child.on('exit', (code, signal) => {
@@ -403,21 +408,17 @@ try {
     dialog.showMessageBox(win, options).then(result => {
       event.sender.send('exec-confirm-message', method, result.response);
     }).catch(err => { console.log(err) });
-
-
   })
 
 
   ipcMain.on('exec-db-done', (event, message) => {
-
-    dialog.showMessageBox(null, {
+    const options = {
       type: 'info',
       title: 'Done',
       message: 'Your request have been executed sucessfully!',
       detail: message,
-    }).then(result => { result.response }).catch(err => { console.log(err) });
-
-
+    };
+    showMessageBox(options);
   })
 
   app.on('activate', () => {
