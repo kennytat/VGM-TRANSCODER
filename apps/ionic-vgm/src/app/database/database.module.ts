@@ -2,8 +2,8 @@ import { IonicModule } from '@ionic/angular';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Tab2Page } from './tab2.page';
-import { Tab2PageRoutingModule } from './tab2-routing.module';
+import { DatabasePage } from './database.page';
+import { DatabasePageRoutingModule } from './database-routing.module';
 import { TreeviewModule } from 'ngx-treeview';
 
 @NgModule({
@@ -11,9 +11,9 @@ import { TreeviewModule } from 'ngx-treeview';
     IonicModule,
     CommonModule,
     FormsModule,
-    Tab2PageRoutingModule,
+    DatabasePageRoutingModule,
     TreeviewModule.forRoot()
   ],
-  declarations: [Tab2Page],
+  declarations: [DatabasePage],
 })
-export class Tab2PageModule {}
+export class DatabasePageModule { }

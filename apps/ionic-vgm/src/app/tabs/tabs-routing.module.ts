@@ -10,17 +10,17 @@ const routes: Routes = [
       {
         path: 'converter',
         loadChildren: () =>
-          import('../tab1/tab1.module').then((m) => m.Tab1PageModule),
+          import('../converter/converter.module').then((m) => m.ConverterPageModule),
       },
       {
         path: 'database',
         loadChildren: () =>
-          import('../tab2/tab2.module').then((m) => m.Tab2PageModule),
+          import('../database/database.module').then((m) => m.DatabasePageModule),
       },
       {
         path: 'ipfs',
         loadChildren: () =>
-          import('../tab3/tab3.module').then((m) => m.Tab3PageModule),
+          import('../ipfs/ipfs.module').then((m) => m.IpfsPageModule),
       },
       {
         path: '',

@@ -4,8 +4,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 
-import { Tab1Page } from './tab1.page';
-import { Tab1PageRoutingModule } from './tab1-routing.module';
+import { ConverterPage } from './converter.page';
+import { ConverterPageRoutingModule } from './converter-routing.module';
 
 
 @NgModule({
@@ -13,10 +13,10 @@ import { Tab1PageRoutingModule } from './tab1-routing.module';
     IonicModule,
     CommonModule,
     FormsModule,
-    Tab1PageRoutingModule,
+    ConverterPageRoutingModule,
   ],
   providers: [],
-  declarations: [Tab1Page],
+  declarations: [ConverterPage],
 })
 
-export class Tab1PageModule { }
+export class ConverterPageModule { }

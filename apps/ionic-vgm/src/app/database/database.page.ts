@@ -23,12 +23,12 @@ type VideoTopicResponse = {
 export let videoClasses: any;
 export let videoTopics: any;
 @Component({
-  selector: 'vgm-converter-tab2',
-  templateUrl: 'tab2.page.html',
-  styleUrls: ['tab2.page.scss'],
+  selector: 'vgm-database',
+  templateUrl: 'database.page.html',
+  styleUrls: ['database.page.scss'],
 })
 
-export class Tab2Page implements OnInit {
+export class DatabasePage implements OnInit {
   constructor(private _electronService: ElectronService, private zone: NgZone, private apollo: Apollo) { }
   // GQL client subscription for connecting GQL server
   private allDataSubscription: Subscription;

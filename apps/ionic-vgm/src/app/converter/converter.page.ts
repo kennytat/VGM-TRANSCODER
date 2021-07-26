@@ -1,6 +1,6 @@
 import { Component, NgZone, OnInit } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
-import { videoClasses, videoTopics } from '../tab2/tab2.page';
+import { videoClasses, videoTopics } from '../database/database.page';
 import { Content, CREATE_CONTENT } from '../graphql.types';
 import { Apollo } from 'apollo-angular';
 
@@ -11,11 +11,11 @@ type CreateContentResult = {
 }
 
 @Component({
-  selector: 'vgm-converter-tab1',
-  templateUrl: 'tab1.page.html',
-  styleUrls: ['tab1.page.scss'],
+  selector: 'vgm-converter',
+  templateUrl: 'converter.page.html',
+  styleUrls: ['converter.page.scss'],
 })
-export class Tab1Page implements OnInit {
+export class ConverterPage implements OnInit {
   // Declare variable for GQL data
   videoClasses;
   videoTopics;
