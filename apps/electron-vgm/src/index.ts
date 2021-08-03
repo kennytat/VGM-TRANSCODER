@@ -1,8 +1,8 @@
-import { app, BrowserWindow, ipcMain, screen, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, screen, dialog, Menu, globalShortcut } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as url from 'url'
-import { exec, execFile, spawn } from 'child_process'
+import { exec, execFile, spawn, execSync, execFileSync, spawnSync } from 'child_process'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './graphql/app.module'
 
@@ -11,7 +11,7 @@ const args = process.argv.slice(1);
 serve = args.some((val) => val === '--serve');
 
 let win: Electron.BrowserWindow = null;
-
+let menu: Electron.Menu;
 const getFromEnv = parseInt(process.env.ELECTRON_IS_DEV, 10) === 1;
 const isEnvSet = 'ELECTRON_IS_DEV' in process.env;
 const debugMode = isEnvSet
@@ -62,6 +62,34 @@ function initMainListener() {
 
 }
 
+function createMenu() {
+  const template: Electron.MenuItemConstructorOptions[] = [
+    { role: 'fileMenu' },
+    { role: 'editMenu' },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { role: 'resetZoom' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    { role: 'window', submenu: [{ role: 'minimize' }, { role: 'close' }] },
+    {
+      role: 'help',
+      submenu: [{
+        label: 'Learn More',
+        click() {
+          require('electron').shell.openExternal('https://www.vgm.tv');
+        }
+      }]
+    }
+  ];
+  menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
 /**
  * Create main window presentation
  */
@@ -70,21 +98,13 @@ function createWindow() {
   bootstrap();
   // start creating electron window
   const sizes = screen.getPrimaryDisplay().workAreaSize;
+  mainWindowSettings.width = 1100;
+  mainWindowSettings.height = 800;
+  mainWindowSettings.x = (sizes.width - 1100) / 2;
+  mainWindowSettings.y = (sizes.height - 800) / 2;
 
   if (debugMode) {
     process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
-
-    mainWindowSettings.width = 1051;
-    mainWindowSettings.height = 600;
-    // mainWindowSettings.minWidth = 800;
-    // mainWindowSettings.minHeight = 600;
-  } else {
-    mainWindowSettings.width = sizes.width;
-    mainWindowSettings.height = sizes.height;
-    // mainWindowSettings.minWidth = 800;
-    // mainWindowSettings.minHeight = 600; 
-    mainWindowSettings.x = 0;
-    mainWindowSettings.y = 0;
   }
 
   win = new BrowserWindow(mainWindowSettings);
@@ -104,7 +124,12 @@ function createWindow() {
     });
     win.loadURL(launchPath);
   }
-
+  // register macos cmd+Q shortcut for quitting
+  if (process.platform === 'darwin') {
+    globalShortcut.register('Command+Q', () => {
+      app.quit();
+    })
+  }
   console.log('launched electron with:', launchPath);
 
   win.on('closed', () => {
@@ -126,7 +151,10 @@ function createWindow() {
 }
 
 try {
-  app.on('ready', createWindow);
+  app.on('ready', () => {
+    createWindow();
+    createMenu();
+  });
 
   app.on('window-all-closed', quit);
 
@@ -191,8 +219,6 @@ try {
       };
       showMessageBox(options);
     }
-
-
   })
 
   // Show message box function
@@ -201,73 +227,117 @@ try {
       console.log(result.response);
     }).catch(err => { console.log(err) });
   }
+
+  ipcMain.on('test', (event) => {
+    console.log('test called');
+    let input = `"/home/kennytat/Downloads/BigBuck.mp4"`
+    let output = `"/home/kennytat/Desktop"`
+    // execFile('./test.sh', [input, output], (error, stdout, stderr) => {
+    //   if (error) {
+    //     console.log(`Error: ${error}`);
+    //   } else if (stderr) {
+    //     console.log(`Stderr: ${stderr}`);
+    //   } else {
+    //     console.log(`conversion stdout: ${stdout}`);
+    //   };
+    // });
+    // let count_files_arg = `find ${inPath} -regextype posix-extended -regex '.*.(mkv|mp4)' | wc -l`;
+    //   const arg = spawnSync('sh', ['-c', count_files_arg], { encoding: "utf8" });
+    let out;
+    let exec = spawn('./test.sh', [input, output], { shell: true })
+    exec.stdout.on('data', (data) => {
+      out = data.toString();
+      console.log(out);
+    })
+
+    // try {
+    //   execSync(`echo ${input} ${output}`, { stdio: 'ignore' });
+    //   return true;
+    // } catch (e) {
+    //   return false;
+    // }
+  })
+
+
   // Get input and output path from above and execute sh file
   ipcMain.on('start-convert', (event, argInPath, argOutPath, fileOnly) => {
-    // Declare variable for calculate conversion rate
+    let files: string[];
     let totalFiles: number = 0;
     let convertedFiles: number = 0;
     let progression_status: number = 0;
-    let ffprobe_frame_stat = [];
-    let ffmpeg_progress_stat = [];
-    let isFile = '';
-    // Get input and output path
-    let inPath = '\"' + argInPath.join() + '\"';
-    let outPath = '\"' + argOutPath + '\"';
     // Get total input file count 
-    if (fileOnly === true) {
-      totalFiles = argInPath.length;
-      isFile = "isFile";
-      startConvert();
+    if (fileOnly) {
+      files = argInPath;
     } else {
-      isFile = "isFolder";
-      let count_files_arg = "find " + inPath + " -regextype posix-extended -regex '.*.(mkv|mp4)' | wc -l";
-      const count_files_exec = spawn('sh', ['-c', count_files_arg]);
-      count_files_exec.stdout.on('data', data => { totalFiles = parseInt(data); })
-      count_files_exec.on('close', (code) => { startConvert(); });
+      files = execSync(`find ${argInPath} -regextype posix-extended -regex '.*.(mkv|mp4)'`, { encoding: "utf8" }).split('\n');
+    }
+    totalFiles = files.length;
+    if (totalFiles > 0 && convertedFiles < totalFiles) {
+      startConvert(files, 0);
+    } else {
+      const options = {
+        type: 'warning',
+        title: 'Warning',
+        message: 'No video found',
+        detail: 'No valid video files found, please try again.',
+      };
+      showMessageBox(options);
+      event.sender.send('exec-done');
     }
 
-    function startConvert() {
-      if (totalFiles > 0) {
-        // Run ffmpeg to start convert
-        execFile('./ffmpeg-exec.sh', [inPath, outPath, isFile], (error, stdout, stderr) => {
-          if (error) {
-            clearInterval(interval);
-            const options = {
-              type: 'error',
-              title: 'Error',
-              message: 'Error converting files',
-              detail: 'None expected errors occured, please try again.',
-            };
-            showMessageBox(options);
-            console.log(`Error: ${error}`);
-          } else if (stderr) {
-            clearInterval(interval);
-            const options = {
-              type: 'warning',
-              title: 'Stderror',
-              message: 'Error converting files',
-              detail: 'None expected standard errors occured, please try again.',
-            };
-            showMessageBox(options);
-            console.log(`Stderr: ${stderr}`);
-          } else {
-            clearInterval(interval);
-            let dbInfoPath = "".concat(argOutPath, '/.create-db-info.txt');
-            fs.readFile(dbInfoPath, 'utf8', (err, data) => {
-              if (err) {
-                console.error(err)
-                return
-              }
-              console.log(data);
-              event.sender.send('create-db', data);
-            })
-            fs.unlink(dbInfoPath, (err) => {
-              if (err) {
-                console.error(err)
-                return
-              }
-            })
 
+    async function startConvert(files: string[], index: number) {
+      let fileInfo: any = [];
+      let filePath: string = 'hello';
+      // get file Info
+      fileInfo = await execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${files[index]}"`, { encoding: "utf8" }).split('\n');
+      // Then run ffmpeg to start convert
+      const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${argOutPath}"`]);
+
+      conversion.stdout.on('data', async (data) => {
+        // console.log(`conversion stdout: ${data}`, totalFiles, convertedFiles);
+        const ffmpeg_progress_stat: string[] = data.toString().split('\n');
+        if (ffmpeg_progress_stat) {
+          // get fps and total duration
+          const fps_stat: string = fileInfo.filter(name => name.includes("avg_frame_rate=")).toString();
+          const duration_stat: string = fileInfo.filter(name => name.includes("duration=")).toString();
+          const converted_frames: string = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
+
+          if (fps_stat && duration_stat && converted_frames) {
+            const fps: number = parseInt(fps_stat.match(/\d+/g)[0]) / parseInt(fps_stat.match(/\d+/g)[1]);
+            const duration: number = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
+            // calculate total frames
+            if (fps && duration) {
+              const total_frames: number = Math.round(duration * fps);
+              const converted_frames_num: number = parseInt(converted_frames.match(/\d+/)[0])
+              if (converted_frames_num && total_frames) {
+                progression_status = converted_frames_num / total_frames;
+              }
+            }
+          }
+          event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+        }
+
+      });
+
+      conversion.stderr.on('data', async (data) => {
+        const options = {
+          type: 'warning',
+          title: 'Stderror',
+          message: 'Error converting files',
+          detail: 'None expected standard errors occured, please try again.',
+        };
+        showMessageBox(options);
+        event.sender.send('exec-done');
+        console.log(`Stderr: ${data}`);
+      });
+
+      conversion.on('close', async (code) => {
+        if (code === 0) {
+          const qm = await uploadIPFS();
+          await createData();
+          convertedFiles++;
+          if (convertedFiles === totalFiles) {
             const options = {
               type: 'info',
               title: 'Done',
@@ -275,57 +345,30 @@ try {
               detail: 'Your files have been converted sucessfully',
             };
             showMessageBox(options);
-
-            console.log(`conversion stdout: ${stdout}`);
-          };
-          event.sender.send('exec-done');
-        });
-
-        // Run interval to read progression while ffmpeg is running
-        let interval = setInterval(() => {
-          // read ffmpeg-progress.txt 500ms repeatedly, get fps and duration
-          ffprobe_frame_stat = fs.readFileSync("".concat(argOutPath, '/.ffprobe-frame.txt'), { encoding: 'utf8', flag: 'r' }).toString().split("\n");
-          // read ffmpeg-progress.txt 500ms repeatedly, get current converted frames
-          ffmpeg_progress_stat = fs.readFileSync("".concat(argOutPath, '/.ffmpeg-progress.txt'), { encoding: 'utf8', flag: 'r' }).toString().split("\n");
-
-          // get total frames
-          let total_frames = 0;
-          let converted_frames_num = 0;
-          if (ffprobe_frame_stat !== [] && ffmpeg_progress_stat !== []) {
-            // get fps and total duration
-            let fps_stat = ffprobe_frame_stat.filter(name => name.includes("avg_frame_rate=")).toString();
-            let duration_stat = ffprobe_frame_stat.filter(name => name.includes("duration=")).toString();
-            if (fps_stat !== null && duration_stat !== null) {
-              let fps = parseInt(fps_stat.match(/\d+/g)[0]) / parseInt(fps_stat.match(/\d+/g)[1]);
-              let duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
-              // calculate total frames
-              total_frames = Math.round(duration * fps);
-            }
-            // get current progress status, if total converted frames = total frames, then convertedFiles++  
-            convertedFiles = parseInt(ffprobe_frame_stat[0]);
-            // get current converted frames
-            let converted_frames = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
-            if (converted_frames !== undefined) { converted_frames_num = parseInt(converted_frames.match(/\d+/)[0]) };
-            // get conversion progression in rate
-            if (converted_frames_num !== 0 && total_frames !== 0 && totalFiles !== 0) {
-              progression_status = (convertedFiles + converted_frames_num / total_frames) / totalFiles;
-            }
-            event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+            event.sender.send('exec-done');
+          } else {
+            startConvert(files, index + 1);
           }
-        }, 500);
-      } else {
-        const options = {
-          type: 'warning',
-          title: 'Warning',
-          message: 'No video found',
-          detail: 'No valid video files found, please try again.',
-        };
-        showMessageBox(options);
-        event.sender.send('exec-done');
-      }
+        }
+        console.log(`child process exited with code ${code}`, convertedFiles);
+      });
+
+
     }
 
+    async function uploadIPFS() {
+      console.log('ipfs called');
+
+      // return path;
+    }
+
+    async function createData() {
+      console.log('data called');
+    }
   })
+
+
+
 
   // Stop conversion process when button onclick
   ipcMain.on('stop-convert', (event) => {
@@ -333,7 +376,7 @@ try {
     let child = spawn('pgrep', ['-f', 'ffmpeg-exec.sh'], { detached: true });
     child.stdout.on('data', (data) => {
       let ffmpeg_bash_pid = data.toString().trim();
-      let killcmd = "kill " + ffmpeg_bash_pid + " &&" + " killall" + " ffmpeg";
+      let killcmd = `kill ${ffmpeg_bash_pid} && killall ffmpeg`;
       exec(killcmd, (error, stdout, stderr) => {
         if (error) {
           console.log(`Error: ${error}`);

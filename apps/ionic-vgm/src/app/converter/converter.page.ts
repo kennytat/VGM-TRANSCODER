@@ -27,12 +27,11 @@ export class ConverterPage implements OnInit {
   inputPathShort = '';
   outputPath = '';
   fileCheckbox: boolean;
-  convertButton = true;
-  progressLoading = false;
-  btnDisable = false;
-  progressionStatus = 0;
-  convertedFiles = 0;
-  totalFiles = 0;
+  isConverting: boolean = false;
+  progressLoading: boolean = false;
+  progressionStatus: number = 0;
+  convertedFiles: number = 0;
+  totalFiles: number = 0;
   // electronService API for ipcMain and ipcRenderer communication, ngZone for immediately reflect data change from ipcMain sender
   constructor(private _electronService: ElectronService, private zone: NgZone, private apollo: Apollo) { }
   ngOnInit() {
@@ -127,18 +126,23 @@ export class ConverterPage implements OnInit {
       })
     }
   }
+  test() {
+    if (this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.send('test');
+    }
+  }
 
 
   Convert() {
     if (this._electronService.isElectronApp) {
-      if (this.inputPathShort === '' || this.outputPath === '' || this.selectedTopicID === undefined) {
+      if (this.inputPathShort === '' || this.outputPath === '') {
         this._electronService.ipcRenderer.send('error-message', 'missing-path');
       } else {
+        this.isConverting = true;
         this._electronService.ipcRenderer.send('start-convert', this.inputPath, this.outputPath, this.fileCheckbox);
         this._electronService.ipcRenderer.on('exec-done', (event) => {
           this.zone.run(() => {
-            this.convertButton = true;
-            this.btnDisable = false;
+            this.isConverting = false;
             this.progressLoading = false;
             this.progressionStatus = 0;
             this.inputPathShort = '';
@@ -160,12 +164,9 @@ export class ConverterPage implements OnInit {
           });
         });
 
-        this._electronService.ipcRenderer.on('create-db', (event, data) => {
-          this.createDB(data);
-        });
-
-        this.convertButton = false;
-        this.btnDisable = true;
+        // this._electronService.ipcRenderer.on('create-db', (event, data) => {
+        //   this.createDB(data);
+        // });
       };
     }
   }
@@ -173,9 +174,8 @@ export class ConverterPage implements OnInit {
   Cancel() {
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.send('stop-convert');
-      this.convertButton = true;
-      this.btnDisable = false;
       this.zone.run(() => {
+        this.isConverting = false;
         this.inputPath = '';
         this.outputPath = '';
       })
