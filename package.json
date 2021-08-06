@@ -77,9 +77,11 @@
     "apollo-client": "^2.6.10",
     "apollo-server-express": "^2.25.0",
     "cors": "^2.8.5",
+    "crypto-js": "4.0.0",
     "graphql": "^15.5.0",
     "graphql-tag": "^2.12.4",
     "graphql-tools": "^7.0.5",
+    "ipfs-http-client": "^51.0.1",
     "ngx-electron": "^2.2.0",
     "ngx-treeview": "^10.0.2",
     "reflect-metadata": "^0.1.13",
@@ -158,7 +160,7 @@
     "wait-on": "~5.2.1"
   },
   "xplat": {
-    "prefix": "abc",
+    "prefix": "vgm",
     "framework": "angular"
   }
 }

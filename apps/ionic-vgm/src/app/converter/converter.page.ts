@@ -3,6 +3,8 @@ import { ElectronService } from 'ngx-electron';
 import { videoClasses, videoTopics } from '../database/database.page';
 import { Content, CREATE_CONTENT } from '../graphql.types';
 import { Apollo } from 'apollo-angular';
+import CryptoJS from "crypto-js";
+
 
 type CreateContentResult = {
   createContent: {
@@ -19,13 +21,14 @@ export class ConverterPage implements OnInit {
   // Declare variable for GQL data
   videoClasses;
   videoTopics;
+
   selectedTopics;
   selectedClassID;
   selectedTopicID;
   // Declare variable for conversion feature
-  inputPath = '';
-  inputPathShort = '';
-  outputPath = '';
+  inputPath: string | string[] = '';
+  // inputPathShort = '';
+  outputPath: string | string[] = '';
   fileCheckbox: boolean;
   isConverting: boolean = false;
   progressLoading: boolean = false;
@@ -56,13 +59,11 @@ export class ConverterPage implements OnInit {
     }
   }
 
-
-  CheckBoxChange() {
-    this.inputPathShort = '';
-    this.inputPath = '';
-  }
-
   createDB(raw) {
+
+
+
+
     const files = raw.replace(/}[\n,\s]+?{/g, '}splitjson{').split('splitjson');
     files.forEach(item => {
       const file = JSON.parse(item);
@@ -104,14 +105,15 @@ export class ConverterPage implements OnInit {
       this._electronService.ipcRenderer.on('directory-path', (event, inpath) => {
         this.zone.run(() => {
           this.inputPath = inpath;
-          const i = inpath.length;
-          if (i > 1) {
-            this.inputPathShort = inpath[0] + ' and ' + (i - 1) + ' more files';
+        })
+        // const i = inpath.length;
+        // if (i > 1) {
+        //   this.inputPathShort = inpath[0] + ' and ' + (i - 1) + ' more files';
 
-          } else {
-            this.inputPathShort = inpath[0]
-          }
-        });
+        // } else {
+        //   this.inputPathShort = inpath[0]
+        // }
+
       })
     }
   }
@@ -122,11 +124,18 @@ export class ConverterPage implements OnInit {
       this._electronService.ipcRenderer.on('saved-path', (event, outpath) => {
         this.zone.run(() => {
           this.outputPath = outpath[0];
-        });
+        })
       })
     }
   }
   test() {
+    // var ciphertext = CryptoJS.AES.encrypt('my message', 'secret key 123').toString();
+    // console.log(ciphertext);
+    // var bytes = CryptoJS.AES.decrypt(ciphertext, 'secret key 123');
+    // var originalText = bytes.toString(CryptoJS.enc.Utf8);
+    // console.log(originalText);
+
+
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.send('test');
     }
@@ -135,7 +144,7 @@ export class ConverterPage implements OnInit {
 
   Convert() {
     if (this._electronService.isElectronApp) {
-      if (this.inputPathShort === '' || this.outputPath === '') {
+      if (this.inputPath === '' || this.outputPath === '') {
         this._electronService.ipcRenderer.send('error-message', 'missing-path');
       } else {
         this.isConverting = true;
@@ -145,7 +154,7 @@ export class ConverterPage implements OnInit {
             this.isConverting = false;
             this.progressLoading = false;
             this.progressionStatus = 0;
-            this.inputPathShort = '';
+            // this.inputPathShort = '';
             this.outputPath = '';
             this.inputPath = '';
           });

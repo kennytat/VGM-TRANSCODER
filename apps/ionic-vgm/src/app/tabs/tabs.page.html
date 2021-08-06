@@ -1,12 +1,15 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-buttons slot="secondary">
-      <ion-button>
+      <!-- <ion-button>
         <ion-icon slot="icon-only" name="person-circle"></ion-icon>
-      </ion-button>
-      <ion-button>
+      </ion-button> -->
+      <!-- <ion-button>
         <ion-icon slot="icon-only" name="search"></ion-icon>
-      </ion-button>
+      </ion-button> -->
+      <ion-icon slot="icon-only" name="moon" style="font-size: 20px"></ion-icon>
+      <ion-toggle color="primary" checked (ionChange)="darkModeChange($event)">
+      </ion-toggle>
     </ion-buttons>
     <ion-buttons slot="primary">
       <ion-button color="secondary">
@@ -25,18 +28,17 @@
   <ion-tab-bar slot="bottom" mode="ios">
     <ion-card>
       <div>
-        <ion-tab-button tab="database" (click)="tabSelect('database')">
+        <ion-tab-button tab="database">
           <ion-icon name="server-outline"></ion-icon>
           <ion-label>Database</ion-label>
         </ion-tab-button>
-        <ion-tab-button tab="converter" (click)="tabSelect('converter')">
-          <ion-icon name="sync-outline"></ion-icon>
-          <ion-label>Converter</ion-label>
-        </ion-tab-button>
-
-        <ion-tab-button tab="ipfs" (click)="tabSelect('ipfs')">
+        <ion-tab-button tab="ipfs">
           <ion-icon name="cube-outline"></ion-icon>
           <ion-label>IPFS</ion-label>
+        </ion-tab-button>
+        <ion-tab-button tab="converter">
+          <ion-icon name="sync-outline"></ion-icon>
+          <ion-label>Converter</ion-label>
         </ion-tab-button>
       </div>
     </ion-card>

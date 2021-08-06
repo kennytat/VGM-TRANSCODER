@@ -7,31 +7,22 @@ import { Component } from '@angular/core';
 })
 export class TabsPage {
   constructor() { }
-  tabDatabase = true;
-  tabConverter = false;
-  tabIPFS = false;
 
-  tabSelect(tab: string) {
-    switch (tab) {
-      case 'database':
-        this.tabConverter = false;
-        this.tabDatabase = true;
-        this.tabIPFS = false;
-        break;
-      case 'converter':
-        this.tabDatabase = false;
-        this.tabConverter = true;
-        this.tabIPFS = false;
-        break;
-      case 'ipfs':
-        this.tabDatabase = false;
-        this.tabConverter = false;
-        this.tabIPFS = true;
-        break;
-      default:
-        this.tabDatabase = true;
-        this.tabConverter = false;
-        this.tabIPFS = false;
+  darkModeChange(event) {
+    let systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+    systemDark.addListener(this.colorTest);
+    if (event.detail.checked) {
+      document.body.setAttribute('data-theme', 'dark');
+    }
+    else {
+      document.body.setAttribute('data-theme', 'light');
+    }
+  }
+  colorTest(systemInitiatedDark) {
+    if (systemInitiatedDark.matches) {
+      document.body.setAttribute('data-theme', 'dark');
+    } else {
+      document.body.setAttribute('data-theme', 'light');
     }
   }
 

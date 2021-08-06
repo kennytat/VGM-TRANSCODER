@@ -15,7 +15,7 @@
               <ion-row>
                 <ion-col size="8"
                   ><ion-input
-                    value="{{inputPathShort}}"
+                    value="{{inputPath | shortenList }}"
                     placeholder="Select input source..."
                     readonly
                     class="path"
@@ -36,7 +36,7 @@
                       class="check-box"
                       disabled="{{isConverting}}"
                       [(ngModel)]="fileCheckbox"
-                      (ionChange)="CheckBoxChange()"
+                      (ionChange)="inputPath = ''"
                     ></ion-checkbox
                     ><ion-label>Files only</ion-label>
                   </div>

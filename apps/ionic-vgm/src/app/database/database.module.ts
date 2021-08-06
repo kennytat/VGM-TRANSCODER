@@ -5,9 +5,11 @@ import { FormsModule } from '@angular/forms';
 import { DatabasePage } from './database.page';
 import { DatabasePageRoutingModule } from './database-routing.module';
 import { TreeviewModule } from 'ngx-treeview';
+import { SharedModule } from '../features/shared/shared.module';
 
 @NgModule({
   imports: [
+    SharedModule,
     IonicModule,
     CommonModule,
     FormsModule,

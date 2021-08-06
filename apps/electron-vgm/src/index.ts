@@ -6,9 +6,13 @@ import { exec, execFile, spawn, execSync, execFileSync, spawnSync } from 'child_
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './graphql/app.module'
 
+
 let serve;
 const args = process.argv.slice(1);
 serve = args.some((val) => val === '--serve');
+
+const { create, globSource } = require('ipfs-http-client')
+const ipfsClient = create();
 
 let win: Electron.BrowserWindow = null;
 let menu: Electron.Menu;
@@ -228,34 +232,10 @@ try {
     }).catch(err => { console.log(err) });
   }
 
-  ipcMain.on('test', (event) => {
-    console.log('test called');
-    let input = `"/home/kennytat/Downloads/BigBuck.mp4"`
-    let output = `"/home/kennytat/Desktop"`
-    // execFile('./test.sh', [input, output], (error, stdout, stderr) => {
-    //   if (error) {
-    //     console.log(`Error: ${error}`);
-    //   } else if (stderr) {
-    //     console.log(`Stderr: ${stderr}`);
-    //   } else {
-    //     console.log(`conversion stdout: ${stdout}`);
-    //   };
-    // });
-    // let count_files_arg = `find ${inPath} -regextype posix-extended -regex '.*.(mkv|mp4)' | wc -l`;
-    //   const arg = spawnSync('sh', ['-c', count_files_arg], { encoding: "utf8" });
-    let out;
-    let exec = spawn('./test.sh', [input, output], { shell: true })
-    exec.stdout.on('data', (data) => {
-      out = data.toString();
-      console.log(out);
-    })
+  ipcMain.on('test', async (event) => {
+    const cid: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }))
+    console.log(cid);
 
-    // try {
-    //   execSync(`echo ${input} ${output}`, { stdio: 'ignore' });
-    //   return true;
-    // } catch (e) {
-    //   return false;
-    // }
   })
 
 
