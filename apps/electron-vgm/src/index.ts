@@ -15,6 +15,7 @@ let ipfsClient;
 let ipfsInfo;
 interface FileInfo {
   localpath: string,
+  exportpath: string,
   filename: string,
   size: number,
   duration: number,
@@ -346,7 +347,8 @@ try {
       fileInfo.duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
       fileInfo.localpath = metaData.filter(name => name.includes("filename=")).toString().replace('filename=', '');
       fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
-      fileInfo.filename = fileInfo.localpath.replace(/\s/g, '_').match(/\/[\w\-\_]+\.[a-z0-9]+$/gi)[0]
+      fileInfo.filename = fileInfo.localpath.replace(/\s/g, '_').match(/\/[\w\-\_]+\.[a-z0-9]+$/gi)[0];
+      fileInfo.exportpath = `${argOutPath}/${fileInfo.filename}`;
 
       const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${argOutPath}"`]);
       conversion.stdout.on('data', async (data) => {
@@ -388,12 +390,10 @@ try {
       conversion.on('close', async (code) => {
         if (code === 0) {
           if (ipfsClient) {
-            const ipfsOut: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }));
+            const ipfsOut: any = await ipfsClient.add(globSource(fileInfo.exportpath, { recursive: true }));
             fileInfo.qm = ipfsOut.cid.replace(/^CID\(|\)/, '');
             fileInfo.size = ipfsOut.size;
-            fileInfo.filename = ipfsOut.path;
           }
-
           event.sender.send('create-database', fileInfo);
           convertedFiles++;
           if (convertedFiles === totalFiles) {
@@ -411,16 +411,8 @@ try {
         }
         console.log(`child process exited with code ${code}`, convertedFiles);
       });
-
-
     }
-
-
-
   })
-
-
-
 
   // Stop conversion process when button onclick
   ipcMain.on('stop-convert', (event) => {
@@ -470,8 +462,6 @@ try {
   })
 
 
-
-
   ipcMain.on('test', async (event) => {
     const config = ipfsClient.getEndpointConfig();
     console.log(config);
@@ -479,14 +469,11 @@ try {
     console.log(cid);
     // const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }))
     // console.log(ci);
-
     const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/testfolder', { recursive: true }))
     console.log(ci);
     // console.log(arg);
 
-
   })
-
 
 
   ipcMain.on('exec-db-confirmation', (event, method) => {
