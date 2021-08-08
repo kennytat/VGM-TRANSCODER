@@ -1,8 +1,7 @@
 import { app, BrowserWindow, ipcMain, screen, dialog, Menu, globalShortcut } from 'electron'
 import * as path from 'path'
-import * as fs from 'fs'
 import * as url from 'url'
-import { exec, execFile, spawn, execSync, execFileSync, spawnSync } from 'child_process'
+import { exec, spawn, execSync } from 'child_process'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './graphql/app.module'
 
@@ -12,7 +11,15 @@ const args = process.argv.slice(1);
 serve = args.some((val) => val === '--serve');
 
 const { create, globSource } = require('ipfs-http-client')
-const ipfsClient = create();
+let ipfsClient;
+let ipfsInfo;
+interface FileInfo {
+  localpath: string,
+  filename: string,
+  size: number,
+  duration: number,
+  qm: string
+}
 
 let win: Electron.BrowserWindow = null;
 let menu: Electron.Menu;
@@ -176,6 +183,74 @@ try {
     win.restore();
   });
 
+  ipcMain.on('connect-ipfs', async (event, isConnected, ipfs) => {
+    if (!isConnected) {
+      ipfsInfo = ipfs;
+      exec(`docker image inspect ${ipfs.image}`, (error, stdout, stderr) => {
+        if (stdout) {
+          const cmd =
+            `docker run --name ${ipfs.container} \\
+            -p ${ipfs.swarmPort}:${ipfs.swarmPort} \\
+            -p ${ipfs.swarmPort}:${ipfs.swarmPort}/udp \\
+            -p ${ipfs.host}:${ipfs.gatewayPort}:${ipfs.gatewayPort} \\
+            -p ${ipfs.host}:${ipfs.apiPort}:${ipfs.apiPort} --rm --privileged \\
+          -e 'AWSACCESSKEYID=${ipfs.accessKey}' \\
+          -e 'AWSSECRETACCESSKEY=${ipfs.secretKey}' \\
+          -e 'ENDPOINT_URL=${ipfs.endPoint}' \\
+          -e 'S3_BUCKET=${ipfs.bucket}' \\
+          -e 'MOUNT_POINT=/var/s3' \\
+          -e 'IAM_ROLE=none' \\
+          -i ${ipfs.image}`;
+
+          let child = spawn('sh', ['-c', cmd], { detached: true });
+          child.stdout.on('data', (data) => {
+            event.sender.send('ipfs-response', true, data.toString())
+          })
+          child.stderr.on('data', (data) => {
+            const options = {
+              type: 'warning',
+              title: 'Warning',
+              message: 'IPFS connection error',
+              detail: data.toString()
+            };
+            showMessageBox(options);
+          })
+        } else {
+          const options = {
+            type: 'warning',
+            title: 'Warning',
+            message: 'IPFS Docker connection error',
+            detail: error.toString() || stderr.toString(),
+          };
+          showMessageBox(options);
+        }
+      })
+
+    } else {
+      exec(`docker kill ${ipfs.container}`, (error, stdout, stderr) => {
+        if (stdout) {
+          event.sender.send('ipfs-response', false, stdout)
+        } else {
+          const options = {
+            type: 'warning',
+            title: 'Warning',
+            message: 'IPFS Docker Error',
+            detail: error.toString() || stderr.toString(),
+          };
+          showMessageBox(options);
+        }
+      })
+
+    }
+
+
+  })
+
+  ipcMain.on('ipfs-ready', async (event, httpApiConfig) => {
+    ipfsClient = await create(httpApiConfig);
+
+  })
+
   // Listen to renderer process and open dialog for input and output path
   ipcMain.on('open-file-dialog', (event, isfile) => {
     let options = {};
@@ -232,13 +307,6 @@ try {
     }).catch(err => { console.log(err) });
   }
 
-  ipcMain.on('test', async (event) => {
-    const cid: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }))
-    console.log(cid);
-
-  })
-
-
   // Get input and output path from above and execute sh file
   ipcMain.on('start-convert', (event, argInPath, argOutPath, fileOnly) => {
     let files: string[];
@@ -267,20 +335,25 @@ try {
 
 
     async function startConvert(files: string[], index: number) {
-      let fileInfo: any = [];
+      let fileInfo: FileInfo;
+      let metaData: any = [];
       let filePath: string = 'hello';
       // get file Info
-      fileInfo = await execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${files[index]}"`, { encoding: "utf8" }).split('\n');
+      metaData = await execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${files[index]}"`, { encoding: "utf8" }).split('\n');
       // Then run ffmpeg to start convert
-      const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${argOutPath}"`]);
+      const fps_stat: string = metaData.filter(name => name.includes("avg_frame_rate=")).toString();
+      const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
+      fileInfo.duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
+      fileInfo.localpath = metaData.filter(name => name.includes("filename=")).toString().replace('filename=', '');
+      fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
+      fileInfo.filename = fileInfo.localpath.replace(/\s/g, '_').match(/\/[\w\-\_]+\.[a-z0-9]+$/gi)[0]
 
+      const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${argOutPath}"`]);
       conversion.stdout.on('data', async (data) => {
         // console.log(`conversion stdout: ${data}`, totalFiles, convertedFiles);
         const ffmpeg_progress_stat: string[] = data.toString().split('\n');
         if (ffmpeg_progress_stat) {
           // get fps and total duration
-          const fps_stat: string = fileInfo.filter(name => name.includes("avg_frame_rate=")).toString();
-          const duration_stat: string = fileInfo.filter(name => name.includes("duration=")).toString();
           const converted_frames: string = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
 
           if (fps_stat && duration_stat && converted_frames) {
@@ -314,8 +387,14 @@ try {
 
       conversion.on('close', async (code) => {
         if (code === 0) {
-          const qm = await uploadIPFS();
-          await createData();
+          if (ipfsClient) {
+            const ipfsOut: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }));
+            fileInfo.qm = ipfsOut.cid.replace(/^CID\(|\)/, '');
+            fileInfo.size = ipfsOut.size;
+            fileInfo.filename = ipfsOut.path;
+          }
+
+          event.sender.send('create-database', fileInfo);
           convertedFiles++;
           if (convertedFiles === totalFiles) {
             const options = {
@@ -336,15 +415,8 @@ try {
 
     }
 
-    async function uploadIPFS() {
-      console.log('ipfs called');
 
-      // return path;
-    }
 
-    async function createData() {
-      console.log('data called');
-    }
   })
 
 
@@ -396,6 +468,25 @@ try {
       console.log(`Done ✅`)
     });
   })
+
+
+
+
+  ipcMain.on('test', async (event) => {
+    const config = ipfsClient.getEndpointConfig();
+    console.log(config);
+    const cid: any = await ipfsClient.add('Hello world')
+    console.log(cid);
+    // const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }))
+    // console.log(ci);
+
+    const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/testfolder', { recursive: true }))
+    console.log(ci);
+    // console.log(arg);
+
+
+  })
+
 
 
   ipcMain.on('exec-db-confirmation', (event, method) => {
@@ -454,6 +545,7 @@ try {
 } catch (err) { }
 
 function quit() {
+  exec(`docker kill ${ipfsInfo.container}`, (error, stdout, stderr) => { console.log('kill ipfs container') })
   if (process.platform !== 'darwin') {
     app.quit();
   }

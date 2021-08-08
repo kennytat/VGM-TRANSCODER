@@ -5,16 +5,37 @@
         <ion-card class="card">
           <div>
             <ion-item>
-              <ion-icon name="cube" slot="start"></ion-icon>
-              <ion-label>IPFS Connection</ion-label>
-              <ion-button fill="outline" slot="end">Disconnect</ion-button>
-              <ion-card-content> </ion-card-content>
+              <ion-icon
+                name="cube"
+                slot="start"
+                color="{{isConnected? 'primary' : ''}}"
+              ></ion-icon>
+              <ion-label>
+                {{ isConnected ? 'IPFS Connected - online': isLoading ?
+                'Establishing IPFS connection' : 'IPFS Connection - offline' }}
+              </ion-label>
+
+              <ion-spinner
+                name="bubbles"
+                color="dark"
+                *ngIf="isLoading"
+              ></ion-spinner>
+              <ion-button
+                fill="{{isConnected? 'solid' : 'outline'}}"
+                color="{{isConnected? 'warning' : 'primary'}}"
+                slot="end"
+                style="margin-left: 10px"
+                (click)="ipfsConnect()"
+                >{{isConnected ? 'Disconnect': isLoading? 'Connecting' :
+                'Connect'}}</ion-button
+              >
             </ion-item>
           </div>
-
-          <div>
-            <ion-button expand="block" (click)="test()">test</ion-button>
-          </div>
+          <ion-card-content>
+            <div class="text-field">
+              <textarea disabled readonly [(ngModel)]="stdOut"> </textarea>
+            </div>
+          </ion-card-content>
         </ion-card>
       </ion-col>
     </ion-row>

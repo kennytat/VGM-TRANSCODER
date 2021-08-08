@@ -106,14 +106,6 @@ export class ConverterPage implements OnInit {
         this.zone.run(() => {
           this.inputPath = inpath;
         })
-        // const i = inpath.length;
-        // if (i > 1) {
-        //   this.inputPathShort = inpath[0] + ' and ' + (i - 1) + ' more files';
-
-        // } else {
-        //   this.inputPathShort = inpath[0]
-        // }
-
       })
     }
   }
