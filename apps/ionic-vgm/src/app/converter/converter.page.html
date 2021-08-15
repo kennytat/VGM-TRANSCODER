@@ -6,6 +6,7 @@
           <ion-item>
             <ion-icon name="folder-open-outline" slot="start"></ion-icon>
             <ion-label>M3U8 Streaming Transcoder</ion-label>
+            <ion-button (click)="test()">TEST</ion-button>
             <ion-button fill="outline" slot="end">View</ion-button>
           </ion-item>
 
@@ -82,73 +83,62 @@
             </div>
             <ion-grid>
               <ion-row>
-                <ion-col size="12" class="no-vertical-padding">
-                  <div style="flex-direction: column">
-                    <select
-                      #selectCategory
-                      (change)="categoryChange(selectCategory.value)"
+                <ion-col size="6" class="no-vertical-padding">
+                  <select
+                    #level1
+                    (change)="selectOptionChange('level1', level1.value)"
+                  >
+                    <option [value]="0" selected>Select DB</option>
+                    <option
+                      *ngFor="let item of level1Options, index as i"
+                      [value]="item.id"
                     >
-                      <option [value]="0" selected>Categories...</option>
-                      <option
-                        *ngFor="let class of videoClasses"
-                        [value]="class.id"
-                      >
-                        {{class.name}}
-                      </option>
-                    </select>
-                    <select
-                      #selectTopic
-                      (change)="topicChange(selectTopic.value)"
-                      [ngStyle]="{'padding-left': selectedTopics ? '20px' : '', 'display': selectedTopics ? '' : 'none'}"
+                      {{item.name}}
+                    </option>
+                  </select>
+                </ion-col>
+              </ion-row>
+              <ion-row *ngIf="level1ID !== '0'">
+                <ion-col size="6" class="no-vertical-padding">
+                  <select
+                    #level2
+                    (change)="selectOptionChange('level2', level2.value)"
+                    style="padding-left: 20px"
+                  >
+                    <option [value]="0" selected>Use current categories</option>
+                    <option [value]="1">Create new topic</option>
+                    <option
+                      *ngFor="let item of level2Options, index as i"
+                      [value]="item.id"
                     >
-                      <option [value]="0" selected>Topics...</option>
-                      <option
-                        *ngFor="let topic of selectedTopics"
-                        [value]="topic.id"
-                      >
-                        {{topic.name}}
-                      </option>
-                    </select>
-                    <!-- <select
-                      #selectTopic
-                      (change)="topicChange(selectTopic.value)"
-                      [ngStyle]="{'padding-left': selectedTopics ? '20px' : '', 'display': selectedTopics ? '' : 'none'}"
+                      {{item.name}}
+                    </option>
+                  </select>
+                </ion-col>
+                <ion-col
+                  style="width: 100%"
+                  class="no-vertical-padding"
+                  *ngIf="level2ID === '1'"
+                >
+                  <ion-input
+                    #level2input
+                    clearInput
+                    clearOnEdit
+                    inputmode="text"
+                    value=""
+                    placeholder="New topic name...."
+                  >
+                    <ion-button
+                      style="font-size: 10px; order: 1"
+                      fill="solid"
+                      size="small"
+                      color="{{level2input.value ? 'success' : 'warning'}}"
+                      disabled="{{level2input.value ? false : true}}"
+                      (click)="topicInfo('level2', level2input.value)"
                     >
-                      <option [value]="0" selected>Topics...</option>
-                      <option
-                        *ngFor="let topic of selectedTopics"
-                        [value]="topic.id"
-                      >
-                        {{topic.name}}
-                      </option>
-                    </select>
-                    <select
-                      #selectTopic
-                      (change)="topicChange(selectTopic.value)"
-                      [ngStyle]="{'padding-left': selectedTopics ? '20px' : '', 'display': selectedTopics ? '' : 'none'}"
-                    >
-                      <option [value]="0" selected>Topics...</option>
-                      <option
-                        *ngFor="let topic of selectedTopics"
-                        [value]="topic.id"
-                      >
-                        {{topic.name}}
-                      </option>
-                    </select>
-                    <select
-                      #selectTopic
-                      (change)="topicChange(selectTopic.value)"
-                      [ngStyle]="{'padding-left': selectedTopics ? '20px' : '', 'display': selectedTopics ? '' : 'none'}"
-                    >
-                      <option [value]="0" selected>Topics...</option>
-                      <option
-                        *ngFor="let topic of selectedTopics"
-                        [value]="topic.id"
-                      >
-                        {{topic.name}}
-                      </option>
-                    </select> -->
-                  </div>
+                      <ion-icon name="checkmark-outline"></ion-icon>
+                    </ion-button>
+                  </ion-input>
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -158,7 +148,6 @@
             <ion-button expand="block" (click)="Convert()"
               >START CONVERSION</ion-button
             >
-            <ion-button expand="block" (click)="test()">TEST</ion-button>
           </ion-card-content>
           <ng-template #stop_convert>
             <ion-card-content>

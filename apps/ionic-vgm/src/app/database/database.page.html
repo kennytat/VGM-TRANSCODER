@@ -12,330 +12,271 @@
             <ion-label>
               {{ _dbInit ? 'Database Connected' : 'Connect Database' }}
             </ion-label>
-            <ion-button fill="outline" slot="end" (click)="connectGQL() "
-              >Refresh</ion-button
+            <ion-button
+              fill="outline"
+              slot="end"
+              style="font-size: 17px"
+              (click)="test()"
             >
-            <ion-card-content> </ion-card-content>
+              test
+            </ion-button>
+            <ion-button
+              fill="clear"
+              slot="end"
+              style="font-size: 17px"
+              color="success"
+              (click)="downloadDB()"
+            >
+              <ion-icon name="download-outline"> </ion-icon>
+            </ion-button>
+            <ion-button
+              fill="clear"
+              slot="end"
+              (click)="fetchLevel1(isVideo)"
+              style="margin: 0; font-size: 17px"
+              color="primary"
+              ><ion-icon name="sync-circle-outline"> </ion-icon>
+            </ion-button>
           </ion-item>
 
           <ion-item>
             <ion-button
-              color="{{videoBtnColor}}"
+              color="{{isVideo ? 'primary' : 'light'}}"
               class="data-btn"
               (click)="showDiv('V')"
               >Video</ion-button
             >
             <ion-button
-              color="{{audioBtnColor}}"
+              color="{{isVideo ? 'light' : 'primary'}}"
               class="data-btn"
               (click)="showDiv('A')"
               >Audio</ion-button
             >
           </ion-item>
-          <div style="position: relative">
-            <div *ngIf="video; else audio" class="data-content">
-              <ngx-treeview
-                [items]="videoTree"
-                [config]="config"
-                (selectedChange)="treeSelectedChange($event)"
-                (filterChange)="treeFilterChange($event)"
-              >
-              </ngx-treeview>
-            </div>
-
-            <ng-template #audio>
-              <div class="data-content">
+          <ion-card-content>
+            <div style="position: relative">
+              <div *ngIf="isVideo; else isAudio" class="data-content">
                 <ngx-treeview
-                  [items]="audioTree"
+                  [items]="videoTree"
                   [config]="config"
                   (selectedChange)="treeSelectedChange($event)"
                   (filterChange)="treeFilterChange($event)"
                 >
                 </ngx-treeview>
               </div>
-            </ng-template>
 
-            <div *ngIf="infoBtn" class="info-btn">
-              <div>
-                <ion-label
-                  >FILE INFO (<span>{{ selectedFileCount }}</span>
-                  selected)</ion-label
-                >
+              <ng-template #isAudio>
+                <div class="data-content">
+                  <ngx-treeview
+                    [items]="audioTree"
+                    [config]="config"
+                    (selectedChange)="treeSelectedChange($event)"
+                    (filterChange)="treeFilterChange($event)"
+                  >
+                  </ngx-treeview>
+                </div>
+              </ng-template>
+
+              <div *ngIf="selectedFileInfo[0]" class="info-btn">
+                <div>
+                  <ion-label
+                    >FILE INFO (<span>{{ selectedFileCount }}</span>
+                    selected)</ion-label
+                  >
+                </div>
+                <div>
+                  <ion-button
+                    size="small"
+                    color="warning"
+                    shape="round"
+                    style="font-size: xx-small"
+                    *ngIf="mainFn"
+                    (click)="modifyDBBtn('edit')"
+                    >Edit</ion-button
+                  >
+                  <ion-button
+                    size="small"
+                    color="success"
+                    shape="round"
+                    style="font-size: xx-small"
+                    *ngIf="editFn"
+                    (click)="execDBConfirmation('updateDB')"
+                    >Update</ion-button
+                  >
+                  <ion-button
+                    size="small"
+                    color="danger"
+                    shape="round"
+                    style="font-size: xx-small"
+                    *ngIf="editFn"
+                    (click)="execDBConfirmation('deleteDB')"
+                    >Delete</ion-button
+                  >
+                  <ion-button
+                    size="small"
+                    color="warning"
+                    shape="round"
+                    style="font-size: xx-small"
+                    *ngIf="editFn"
+                    (click)="modifyDBBtn('cancel')"
+                    >Cancel</ion-button
+                  >
+                </div>
               </div>
-              <div>
-                <ion-button
-                  size="small"
-                  color="success"
-                  shape="round"
-                  style="font-size: xx-small"
-                  *ngIf="mainFn"
-                  (click)="modifyDBBtn('new')"
-                  >New</ion-button
-                >
-                <ion-button
-                  size="small"
-                  color="warning"
-                  shape="round"
-                  style="font-size: xx-small"
-                  *ngIf="mainFn"
-                  (click)="modifyDBBtn('edit')"
-                  >Edit</ion-button
-                >
-                <ion-button
-                  size="small"
-                  color="success"
-                  shape="round"
-                  style="font-size: xx-small"
-                  *ngIf="editFn"
-                  (click)="execDBConfirmation('updateDB')"
-                  >Update</ion-button
-                >
-                <ion-button
-                  size="small"
-                  color="danger"
-                  shape="round"
-                  style="font-size: xx-small"
-                  *ngIf="editFn"
-                  (click)="execDBConfirmation('deleteDB')"
-                  >Delete</ion-button
-                >
-                <ion-button
-                  size="small"
-                  color="success"
-                  shape="round"
-                  style="font-size: xx-small"
-                  (click)="execDBConfirmation('newDB')"
-                  *ngIf="newFn"
-                  >Save</ion-button
-                >
-                <ion-button
-                  size="small"
-                  color="warning"
-                  shape="round"
-                  style="font-size: xx-small"
-                  *ngIf="editFn"
-                  (click)="modifyDBBtn('cancel')"
-                  >Cancel</ion-button
-                >
-                <ion-button
-                  size="small"
-                  color="warning"
-                  shape="round"
-                  style="font-size: xx-small"
-                  *ngIf="newFn"
-                  (click)="modifyDBBtn('cancel')"
-                  >Cancel</ion-button
-                >
-              </div>
-            </div>
-            <div class="data-info">
-              <ion-item>
-                <ion-grid *ngIf="dataInfo">
-                  <ion-row>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked
-                        value="topicFilter"
-                        #topic
-                        (change)="checkFilter(topic.value, topic.checked)"
-                      />
-                      Topic
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked
-                        value="nameFilter"
-                        #name
-                        (change)="checkFilter(name.value, name.checked)"
-                      />
-                      Name
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked="checked"
-                        value="publishFilter"
-                        #publish
-                        (change)="checkFilter(publish.value, publish.checked)"
-                      />
-                      Publish</label
-                    >
+              <div class="data-info">
+                <ion-item>
+                  <ion-grid *ngIf="selectedFileInfo[0]">
+                    <ion-row>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked
+                          value="nameFilter"
+                          #name
+                          (change)="checkFilter(name.value, name.checked)"
+                        />
+                        Name
+                      </label>
 
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked="checked"
-                        value="pathFilter"
-                        #path
-                        (change)="checkFilter(path.value, path.checked)"
-                      />
-                      Path
-                    </label>
-
-                    <label
-                      ><input
-                        type="checkbox"
-                        checked="checked"
-                        value="metaFilter"
-                        #meta
-                        (change)="checkFilter(meta.value, meta.checked)"
-                      />
-                      Metadata
-                    </label>
-                  </ion-row>
-                  <hr class="new" />
-                  <ion-row>
-                    <ion-col>
-                      <div
-                        class="file-info"
-                        *ngFor="let file of selectedFileInfo"
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked="checked"
+                          value="pathFilter"
+                          #path
+                          (change)="checkFilter(path.value, path.checked)"
+                        />
+                        Path
+                      </label>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked="checked"
+                          value="publishFilter"
+                          #publish
+                          (change)="checkFilter(publish.value, publish.checked)"
+                        />
+                        Publish</label
                       >
-                        <div class="file-info-container">
-                          <div class="file-info-segment" *ngIf="topicFilter">
-                            <div>
-                              <ion-label>Category</ion-label>
-                              <select
-                                [disabled]="disable"
-                                #selectCategory
-                                (change)="categoryChange(selectCategory.value)"
-                              >
-                                <option
-                                  [value]="file.topic[0].classes[0].id"
-                                  selected
-                                  disabled
-                                >
-                                  {{file.topic[0].classes[0].name}}
-                                </option>
-                                <option
-                                  *ngFor="let class of displayDB.children"
-                                  [value]="class.value"
-                                >
-                                  {{class.text}}
-                                </option>
-                              </select>
-                            </div>
-                            <div>
-                              <ion-label>Topic</ion-label>
 
-                              <select
-                                [disabled]="disable"
-                                #selectTopic
-                                (change)="topicChange(selectTopic.value)"
-                              >
-                                <option
-                                  [value]="file.topic[0].id"
-                                  selected
+                      <label
+                        ><input
+                          type="checkbox"
+                          checked="checked"
+                          value="metaFilter"
+                          #meta
+                          (change)="checkFilter(meta.value, meta.checked)"
+                        />
+                        Metadata
+                      </label>
+                    </ion-row>
+                    <hr class="new" />
+                    <ion-row>
+                      <ion-col>
+                        <div
+                          class="file-info"
+                          *ngFor="let file of selectedFileInfo"
+                        >
+                          <div class="file-info-container">
+                            <div class="file-info-segment" *ngIf="nameFilter">
+                              <div>
+                                <ion-label>Name</ion-label>
+                                <input
+                                  type="text"
+                                  placeholder="{{file.name}}"
+                                  value=""
+                                  [disabled]="mainFn"
+                                />
+                              </div>
+                            </div>
+                            <div class="file-info-segment" *ngIf="pathFilter">
+                              <div>
+                                <ion-label>Location</ion-label>
+                                <input
+                                  type="text"
+                                  placeholder="{{ file.location}}"
+                                  value=""
                                   disabled
-                                >
-                                  {{file.topic[0].name}}
-                                </option>
-                                <option
-                                  *ngFor="let topic of selectedTopics"
-                                  [value]="topic.id"
-                                >
-                                  {{topic.name}}
-                                </option>
-                              </select>
+                                />
+                              </div>
                             </div>
-                          </div>
-                          <div class="file-info-segment" *ngIf="nameFilter">
-                            <div>
-                              <ion-label>Name</ion-label>
-                              <input
-                                type="text"
-                                placeholder="{{file.name}}"
-                                value=""
-                                [disabled]="disable"
-                              />
-                            </div>
-                            <div>
-                              <ion-label>Verse</ion-label>
-                              <input
-                                type="text"
-                                placeholder="{{file.verse}}"
-                                value=""
-                                [disabled]="disable"
-                              />
-                            </div>
-                          </div>
-                          <div class="file-info-segment" *ngIf="publishFilter">
-                            <div>
-                              <ion-label>Publish</ion-label>
-                              <input
-                                type="text"
-                                placeholder="{{ file.qm !== null ? file.qm : 'unpublished' }}"
-                                value=""
-                                disabled
-                              />
-                            </div>
-                          </div>
-                          <div class="file-info-segment" *ngIf="pathFilter">
-                            <div>
-                              <ion-label>Original</ion-label>
-                              <input
-                                type="text"
-                                placeholder="{{file.origin}}"
-                                value=""
-                                disabled
-                              />
-                            </div>
-                            <div>
-                              <ion-label>Converted</ion-label>
-                              <input
-                                type="text"
-                                placeholder="{{file.folder}}"
-                                value=""
-                                disabled
-                              />
-                            </div>
-                          </div>
-                          <div class="file-info-segment" *ngIf="metaFilter">
-                            <div>
-                              <ion-label>Updated</ion-label>
-                              <input
-                                type="text"
-                                placeholder="{{file.updatedAt | date }}"
-                                value=""
-                                disabled
-                              />
+                            <div
+                              class="file-info-segment"
+                              *ngIf="publishFilter"
+                            >
+                              <div>
+                                <ion-label>Hash</ion-label>
+                                <input
+                                  type="text"
+                                  placeholder="{{ file.hash !== null ? file.hash : 'unpublished' }}"
+                                  value=""
+                                  disabled
+                                />
+                              </div>
+                              <div>
+                                <ion-label>URL</ion-label>
+                                <input
+                                  type="text"
+                                  placeholder="{{file.url}}"
+                                  value=""
+                                  disabled
+                                />
+                              </div>
                             </div>
 
-                            <div>
-                              <ion-label>Duration</ion-label>
-                              <input
-                                type="text"
-                                placeholder="{{file.duration}}"
-                                value=""
-                                disabled
-                              />
-                            </div>
-                            <div>
-                              <ion-label>Size</ion-label>
-                              <input
-                                type="text"
-                                placeholder="{{file.size}}"
-                                value=""
-                                disabled
-                              />
+                            <div class="file-info-segment" *ngIf="metaFilter">
+                              <div>
+                                <ion-label>Updated</ion-label>
+                                <input
+                                  type="text"
+                                  placeholder="{{file.updatedAt | date }}"
+                                  value=""
+                                  disabled
+                                />
+                              </div>
+                              <div>
+                                <ion-label>Keyword</ion-label>
+                                <input
+                                  type="text"
+                                  placeholder="{{file.keyword}}"
+                                  value=""
+                                  [disabled]="mainFn"
+                                />
+                              </div>
+
+                              <div>
+                                <ion-label>Duration</ion-label>
+                                <input
+                                  type="text"
+                                  placeholder="{{file.duration}}"
+                                  value=""
+                                  disabled
+                                />
+                              </div>
+                              <div>
+                                <ion-label>Size</ion-label>
+                                <input
+                                  type="text"
+                                  placeholder="{{file.size}}"
+                                  value=""
+                                  disabled
+                                />
+                              </div>
                             </div>
                           </div>
+                          <div *ngIf="metaFilter && file.hash">
+                            <ion-thumbnail>
+                              <img [src]="getThumbnail(file.hash, file.url)" />
+                            </ion-thumbnail>
+                          </div>
                         </div>
-                        <div *ngIf="metaFilter">
-                          <ion-thumbnail>
-                            <img
-                              src="https://gravatar.com/avatar/dba6bae8c566f9d4041fb9cd9ada7741?d=identicon&f=y"
-                            />
-                          </ion-thumbnail>
-                        </div>
-                      </div>
-                    </ion-col>
-                  </ion-row>
-                </ion-grid>
-              </ion-item>
+                      </ion-col>
+                    </ion-row>
+                  </ion-grid>
+                </ion-item>
+              </div>
             </div>
-          </div>
+          </ion-card-content>
         </ion-card>
       </ion-col>
     </ion-row>

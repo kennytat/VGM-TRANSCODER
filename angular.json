@@ -496,6 +496,11 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "allowedCommonJsDependencies": [
+              "lodash",
+              "zen-observable",
+              "crypto-js"
+            ],
             "outputPath": "apps/ionic-vgm/www",
             "index": "apps/ionic-vgm/src/index.html",
             "main": "apps/ionic-vgm/src/main.ts",

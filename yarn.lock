@@ -3930,7 +3930,7 @@
     "@types/node" "*"
     form-data "^3.0.0"
 
-"@types/node@*", "@types/node@14.14.33", "@types/node@>=6":
+"@types/node@*", "@types/node@>=6":
   version "14.14.33"
   resolved "https://registry.npmjs.org/@types/node/-/node-14.14.33.tgz"
   integrity sha512-oJqcTrgPUF29oUP8AsUqbXGJNuPutsetaa9kTQAQce5Lx5dTYWV02ScBiT/k1BX/Z7pKeqedmvp39Wu4zR7N7g==
@@ -3939,6 +3939,11 @@
   version "12.12.50"
   resolved "https://registry.npmjs.org/@types/node/-/node-12.12.50.tgz"
   integrity sha512-5ImO01Fb8YsEOYpV+aeyGYztcYcjGsBvN4D7G5r1ef2cuQOpymjWNQi5V0rKHE6PC2ru3HkoUr/Br2/8GUA84w==
+
+"@types/node@14.17.0":
+  version "14.17.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.17.0.tgz#3ba770047723b3eeb8dc9fca02cce8a7fb6378da"
+  integrity sha512-w8VZUN/f7SSbvVReb9SWp6cJFevxb4/nkG65yLAya//98WgocKm5PLDAtSs5CtJJJM+kHmJjO/6mmYW4MHShZA==
 
 "@types/node@>=13.7.0":
   version "16.4.12"
@@ -7296,10 +7301,10 @@ crypto-browserify@^3.11.0:
     randombytes "^2.0.0"
     randomfill "^1.0.3"
 
-crypto-js@4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.0.0.tgz#2904ab2677a9d042856a2ea2ef80de92e4a36dcc"
-  integrity sha512-bzHZN8Pn+gS7DQA6n+iUmBfl0hO5DJq++QP3U6uTucDtk/0iGpXd/Gg7CGR0p8tJhofJyaKoWBuJI4eAO00BBg==
+crypto-js@^4.0.0:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.1.1.tgz#9e485bcf03521041bd85844786b83fb7619736cf"
+  integrity sha512-o2JlM7ydqd3Qk9CA0L4NL6mTzU2sdx96a+oOfPu8Mkl/PK51vSyoi8/rQ8NknZtk44vq15lmhAj9CIAGwgeWKw==
 
 crypto-random-string@^2.0.0:
   version "2.0.0"

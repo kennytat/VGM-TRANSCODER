@@ -2,11 +2,14 @@ import { Module } from '@nestjs/common'
 import { GraphQLModule } from '@nestjs/graphql'
 import { PrismaService } from './prisma.service'
 
-import { MediaResolver } from './resolvers/media.resolvers'
-import { CategoryResolver } from './resolvers/category.resolvers'
-import { ClassificationResolver } from './resolvers/classification.resolvers'
-import { TopicResolver } from './resolvers/topic.resolvers'
-import { ContentResolver } from './resolvers/content.resolvers'
+import { RootResolver } from './resolvers/root.resolvers'
+import { Level1Resolver } from './resolvers/level1.resolvers'
+import { Level2Resolver } from './resolvers/level2.resolvers'
+import { Level3Resolver } from './resolvers/level3.resolvers'
+import { Level4Resolver } from './resolvers/level4.resolvers'
+import { Level5Resolver } from './resolvers/level5.resolvers'
+import { Level6Resolver } from './resolvers/level6.resolvers'
+import { Level7Resolver } from './resolvers/level7.resolvers'
 
 import { join } from 'path'
 
@@ -14,18 +17,21 @@ import { join } from 'path'
   imports: [
     GraphQLModule.forRoot({
       autoSchemaFile: join(process.cwd(), 'apps/electron-vgm/src/graphql/schema.gql'),
-      
-   
+
+
     })
   ],
   controllers: [],
   providers: [
-    PrismaService, 
-    MediaResolver, 
-    CategoryResolver,
-    ClassificationResolver,
-    TopicResolver,
-    ContentResolver
+    PrismaService,
+    RootResolver,
+    Level1Resolver,
+    Level2Resolver,
+    Level3Resolver,
+    Level4Resolver,
+    Level5Resolver,
+    Level6Resolver,
+    Level7Resolver,
   ],
 })
 export class AppModule { }

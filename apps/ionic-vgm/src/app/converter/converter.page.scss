@@ -15,20 +15,26 @@ hr.new {
   color: var(--ion-color-dark);
   padding-top: 0px;
   padding-bottom: 0px;
-  div {
-    display: flex;
-    select {
-      width: 50%;
-      background-color: transparent;
-      outline: none;
-      border: none;
-      option {
-        background-color: var(--ion-color-light);
-      }
+  align-self: center;
+
+  select {
+    width: 100%;
+    background-color: transparent;
+    outline: none;
+    border: none;
+    padding: 7px 0;
+    option {
+      background-color: var(--ion-color-light);
     }
   }
+  ion-input {
+    --padding-top: 0;
+    --padding-bottom: 0;
+  }
+  .has-focus {
+    border-bottom: 1px solid var(--ion-color-primary);
+  }
 }
-
 .check-box {
   margin: 0 10px 0 5px;
   --size: 13px;

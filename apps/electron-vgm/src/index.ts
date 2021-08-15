@@ -1,25 +1,29 @@
 import { app, BrowserWindow, ipcMain, screen, dialog, Menu, globalShortcut } from 'electron'
 import * as path from 'path'
+import * as fs from 'fs'
 import * as url from 'url'
-import { exec, spawn, execSync } from 'child_process'
+import { exec, spawn, execSync, spawnSync } from 'child_process'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './graphql/app.module'
-
+import { create, globSource, CID } from 'ipfs-http-client'
+import CryptoJS from "crypto-js";
+import { slice } from 'ramda';
 
 let serve;
 const args = process.argv.slice(1);
 serve = args.some((val) => val === '--serve');
 
-const { create, globSource } = require('ipfs-http-client')
+
 let ipfsClient;
 let ipfsInfo;
 interface FileInfo {
-  localpath: string,
-  exportpath: string,
+  location: string,
   filename: string,
   size: number,
   duration: number,
-  qm: string
+  qm: string,
+  url: string,
+  hash: string
 }
 
 let win: Electron.BrowserWindow = null;
@@ -249,11 +253,10 @@ try {
 
   ipcMain.on('ipfs-ready', async (event, httpApiConfig) => {
     ipfsClient = await create(httpApiConfig);
-
   })
 
   // Listen to renderer process and open dialog for input and output path
-  ipcMain.on('open-file-dialog', (event, isfile) => {
+  ipcMain.handle('open-dialog', (event, isfile) => {
     let options = {};
     if (isfile === true) {
       options = {
@@ -267,18 +270,26 @@ try {
         properties: ['openDirectory']
       }
     }
-    dialog.showOpenDialog(win, options).then(result => {
-      event.sender.send('directory-path', result.filePaths)
+    const result = dialog.showOpenDialog(win, options).then(result => {
+      return result.filePaths;
     }).catch(err => { console.log(err) });
+    return result
   })
 
-  ipcMain.on('save-dialog', (event) => {
-    dialog.showOpenDialog(win, {
+  ipcMain.handle('save-dialog', async (event, type?) => {
+    const result = await dialog.showOpenDialog(win, {
       title: 'Browse Output Folder',
       properties: ['openDirectory']
     }).then(result => {
-      event.sender.send('saved-path', result.filePaths)
+      return result.filePaths;
     }).catch(err => { console.log(err) });
+    if (type === 'api') {
+      fs.mkdirSync(`${result[0]}/API/items/list`, { recursive: true });
+      fs.mkdirSync(`${result[0]}/API/items/single`, { recursive: true });
+      fs.mkdirSync(`${result[0]}/API/topics/list`, { recursive: true });
+      fs.mkdirSync(`${result[0]}/API/topics/single`, { recursive: true });
+    }
+    return result
   })
 
   ipcMain.on('error-message', (event, arg) => {
@@ -301,15 +312,8 @@ try {
     }
   })
 
-  // Show message box function
-  function showMessageBox(options) {
-    dialog.showMessageBox(null, options).then(result => {
-      console.log(result.response);
-    }).catch(err => { console.log(err) });
-  }
-
   // Get input and output path from above and execute sh file
-  ipcMain.on('start-convert', (event, argInPath, argOutPath, fileOnly) => {
+  ipcMain.on('start-convert', (event, argInPath, argOutPath, fileOnly, itemUrl) => {
     let files: string[];
     let totalFiles: number = 0;
     let convertedFiles: number = 0;
@@ -345,12 +349,16 @@ try {
       const fps_stat: string = metaData.filter(name => name.includes("avg_frame_rate=")).toString();
       const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
       fileInfo.duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
-      fileInfo.localpath = metaData.filter(name => name.includes("filename=")).toString().replace('filename=', '');
       fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
-      fileInfo.filename = fileInfo.localpath.replace(/\s/g, '_').match(/\/[\w\-\_]+\.[a-z0-9]+$/gi)[0];
-      fileInfo.exportpath = `${argOutPath}/${fileInfo.filename}`;
-
-      const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${argOutPath}"`]);
+      // fileInfo.localpath = metaData.filter(name => name.includes("filename=")).toString().replace('filename=', '');
+      const nameExtPath = files[index].match(/[\w\-\_\(\)\s]+\.[\w\S]{3,4}$/gi).toString();
+      fileInfo.filename = nameExtPath.replace(/\.\w+/g, '');
+      const nonVietnamese = nonAccentVietnamese(fileInfo.filename);
+      fileInfo.url = `${itemUrl}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')}`;
+      // fileInfo.filename = files[index].replace(/\s/g, '_').match(/\/[\w\-\_]+\.[a-z0-9]+$/gi)[0]
+      fileInfo.location = `${argOutPath}/${nonVietnamese.replace(/\s/, '')}`;
+      console.log(fileInfo);
+      const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${fileInfo.location}"`]);
       conversion.stdout.on('data', async (data) => {
         // console.log(`conversion stdout: ${data}`, totalFiles, convertedFiles);
         const ffmpeg_progress_stat: string[] = data.toString().split('\n');
@@ -390,10 +398,15 @@ try {
       conversion.on('close', async (code) => {
         if (code === 0) {
           if (ipfsClient) {
-            const ipfsOut: any = await ipfsClient.add(globSource(fileInfo.exportpath, { recursive: true }));
-            fileInfo.qm = ipfsOut.cid.replace(/^CID\(|\)/, '');
+            const ipfsOut: any = await ipfsClient.add(globSource(fileInfo.location, { recursive: true }));
+            const cid: CID = ipfsOut.cid;
+            fileInfo.qm = cid.toString();
+            const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+            fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
             fileInfo.size = ipfsOut.size;
+            console.log(fileInfo);
           }
+
           event.sender.send('create-database', fileInfo);
           convertedFiles++;
           if (convertedFiles === totalFiles) {
@@ -463,31 +476,45 @@ try {
 
 
   ipcMain.on('test', async (event) => {
-    const config = ipfsClient.getEndpointConfig();
-    console.log(config);
-    const cid: any = await ipfsClient.add('Hello world')
-    console.log(cid);
+    // ipfsClient = create();
+    // const config = ipfsClient.getEndpointConfig();
+    // console.log(config);
+    // const ipfsout = await ipfsClient.add('Hello world')
+    // const cid: CID = ipfsout.cid;
+    // console.log(cid);
+    // console.log(cid.toString());
     // const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }))
     // console.log(ci);
-    const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/testfolder', { recursive: true }))
-    console.log(ci);
+    // const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/testfolder', { recursive: true }))
+    // console.log(ci);
     // console.log(arg);
+
+    fs.appendFile('/home/kennytat/Desktop/newfolder/mynewfile1.txt', 'Hello content!', function (err) {
+      if (err) throw err;
+      console.log('Saved!');
+    });
 
   })
 
+  ipcMain.on('export-database', async (event, item, outpath, isLeaf) => {
+    let path: string;
+    const json: string = JSON.stringify(item, null, 2);
+    if (isLeaf === 'isFile') {
+      path = `${outpath.toString()}/API/items/single/${item.url}.json`
+    } else if (isLeaf === 'isLeaf') {
+      path = `${outpath.toString()}/API/items/list/${item.url}.json`
+    } else if (isLeaf === 'nonLeaf') {
+      path = `${outpath.toString()}/API/topics/single/${item.url}.json`
+    }
+    fs.writeFile(path, json, function (err) {
+      if (err) throw err;
+    });
+
+  })
 
   ipcMain.on('exec-db-confirmation', (event, method) => {
     let options;
-    if (method === 'newDB') {
-      options = {
-        type: 'question',
-        buttons: ['Cancel', 'Create'],
-        defaultId: 0,
-        title: 'Create Data Confirmation',
-        message: 'Are you sure want to create selected entries',
-        detail: 'Create new data will also publish it on IPFS',
-      }
-    } else if (method === 'updateDB') {
+    if (method === 'updateDB') {
       options = {
         type: 'question',
         buttons: ['Cancel', 'Update'],
@@ -499,7 +526,7 @@ try {
     } else if (method === 'deleteDB') {
       options = {
         type: 'question',
-        buttons: ['Cancel', 'Delete data and keep files', 'Delete data and files'],
+        buttons: ['Cancel', 'Delete data'],
         defaultId: 0,
         title: 'Deletion Confirmation',
         message: 'Are you sure want to delete selected entries',
@@ -529,6 +556,38 @@ try {
       createWindow();
     }
   });
+
+
+  // Show message box function
+  function showMessageBox(options) {
+    dialog.showMessageBox(null, options).then(result => {
+      console.log(result.response);
+    }).catch(err => { console.log(err) });
+  }
+
+  // Rewrite vietnamese function
+  function nonAccentVietnamese(str) {
+    //     We can also use this instead of from line 11 to line 17
+    //     str = str.replace(/\u00E0|\u00E1|\u1EA1|\u1EA3|\u00E3|\u00E2|\u1EA7|\u1EA5|\u1EAD|\u1EA9|\u1EAB|\u0103|\u1EB1|\u1EAF|\u1EB7|\u1EB3|\u1EB5/g, "a");
+    //     str = str.replace(/\u00E8|\u00E9|\u1EB9|\u1EBB|\u1EBD|\u00EA|\u1EC1|\u1EBF|\u1EC7|\u1EC3|\u1EC5/g, "e");
+    //     str = str.replace(/\u00EC|\u00ED|\u1ECB|\u1EC9|\u0129/g, "i");
+    //     str = str.replace(/\u00F2|\u00F3|\u1ECD|\u1ECF|\u00F5|\u00F4|\u1ED3|\u1ED1|\u1ED9|\u1ED5|\u1ED7|\u01A1|\u1EDD|\u1EDB|\u1EE3|\u1EDF|\u1EE1/g, "o");
+    //     str = str.replace(/\u00F9|\u00FA|\u1EE5|\u1EE7|\u0169|\u01B0|\u1EEB|\u1EE9|\u1EF1|\u1EED|\u1EEF/g, "u");
+    //     str = str.replace(/\u1EF3|\u00FD|\u1EF5|\u1EF7|\u1EF9/g, "y");
+    //     str = str.replace(/\u0111/g, "d");
+    str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+    str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+    str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+    str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+    str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+    str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+    str = str.replace(/đ/g, "d");
+    // Some system encode vietnamese combining accent as individual utf-8 characters
+    str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // Huyền sắc hỏi ngã nặng 
+    str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
+    return str;
+  }
+
 } catch (err) { }
 
 function quit() {

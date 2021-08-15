@@ -2,149 +2,93 @@ import { PrismaClient, Prisma } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-const mediaData: Prisma.MediaCreateInput[] = [
+const rootData: Prisma.RootCreateInput[] = [
   {
     name: 'root',
-    qm: 'Qm00',
-    categories: {
+    children: {
       create: [
         {
-          name: 'videoDB',
-          qm: 'Qm1',
-          foldertype: 'video',
-          classes: {
+          id: '00000000-0000-0000-0000-000000000001',
+          location: '/VGMV',
+          isVideo: true,
+          isLeaf: false,
+          name: 'Video',
+          children: {
             create: [
               {
-                name: '01-Bài Giảng',
-                qm: 'Qm11',
-                foldertype: 'video',
-                topics: {
+                location: '/VGMV/01_BaiGiang',
+                isVideo: true,
+                url: '01-bai-giang',
+                name: '01-Bài Giảng',
+                isLeaf: false,
+                children: {
                   create: [
                     {
+                      location: '/VGMV/01_BaiGiang/CacDienGia',
+                      isVideo: true,
+                      url: '01-bai-giang.cac-dien-gia',
                       name: 'Các Diễn Giả',
-                      qm: 'Qm111',
-                      foldertype: 'video',
-                      contents: {
+                      isLeaf: true,
+                      children: {
                         create: [
                           {
-                            name: 'MSTPT_Bài Giảng Thứ Nhất',
-                            duration: '520s',
-                            size: '123mb',
-                            thumb: '/this is video1 thumbnail url',
-                            folder: '/home/user/Desktop/abc',
-                            verse: 'psalms 20:10',
-                            filetype: 'video'
+                            location: '/VGMV/01_BaiGiang/CacDienGia/MSMPH_ChuToanHayKhongChuToanChucVuChuaGiao',
+                            isVideo: true,
+                            url: '01-bai-giang.cac-dien-gia.msmph-chu-toan-hay-khong-chu-toan-chuc-vu-chua-giao',
+                            name: 'MSMPH_Chu Toàn Hay Không Chu Toàn Chức Vụ Chúa Giao'
                           },
-                          {
-                            name: 'MSTPT_Bài Giảng Thứ Hai ',
-                            qm: 'Qm1112',
-                            duration: '520s',
-                            size: '123mb',
-                            thumb: '/this is video2 thumbnail url',
-                            folder: '/home/user/Desktop/abc',
-                            verse: 'psalms 20:10',
-                            filetype: 'video'
-                          }
                         ]
-                      }
-                    }
+                      },
+                    },
                   ]
-                }
+                },
               },
               {
-                name: '02-Khoa Học Và Niềm Tin',
-                foldertype: 'video',
-                topics: {
-                  create: [
-                    {
-                      name: '01-Sự Khởi Đầu',
-                      foldertype: 'video'
-                    }
-                  ]
-                }
+                location: '/VGMV/02_KhoaHocVaNiemTin',
+                isVideo: true,
+                isLeaf: false,
+                url: '02-khoa-hoc-va-niem-tin',
+                name: '02-Khoa Học Và Niềm Tin'
               },
               {
-                name: '03-Hoạt Hình',
-                foldertype: 'video',
-                topics: {
-                  create: [
-                    {
-                      name: 'Hoạt Hình 2D',
-                      foldertype: 'video'
-                    }
-                  ]
-                }
+                location: '/VGMV/03_HoatHinh',
+                isVideo: true,
+                isLeaf: false,
+                url: '03-hoat-hinh',
+                name: '03-Hoạt Hình'
               },
               {
-                name: '04-Thiếu Nhi',
-                foldertype: 'video',
-                topics: {
-                  create: [
-                    {
-                      name: 'Bước Theo Chúa Giê-xu',
-                      foldertype: 'video'
-                    }
-                  ]
-                }
+                location: '/VGMV/04_ThieuNhi',
+                isVideo: true,
+                isLeaf: false,
+                url: '04-thieu-nhi',
+                name: '04-Thiếu Nhi'
               },
               {
-                name: '05-Ngôn Ngữ Ký Hiệu',
-                foldertype: 'video',
-                topics: {
-                  create: [
-                    {
-                      name: 'Giáo Lý Căn Bản',
-                      foldertype: 'video'
-                    }
-                  ]
-                }
-              }
+                location: '/VGMV/05_NgonNguKyHieu',
+                isVideo: true,
+                isLeaf: false,
+                url: '05-ngon-ngu-ky-hieu',
+                name: '05-Ngôn Ngữ Ký Hiệu'
+              },
             ]
           }
         },
         {
-          name: 'audioDB',
-          qm: 'Qm2',
-          foldertype: 'audio',
-          classes: {
+          id: '00000000-0000-0000-0000-000000000002',
+          location: '/VGMA',
+          isVideo: false,
+          isLeaf: false,
+          name: 'Audio',
+          children: {
             create: [
               {
+                location: '/VGMA/BaiGiangTheoDienGia',
+                isVideo: false,
+                isLeaf: false,
+                url: 'bai-giang-theo-dien-gia',
                 name: 'Bài Giảng Theo Diễn Giả',
-                qm: 'Qm21',
-                foldertype: 'audio',
-                topics: {
-                  create: [
-                    {
-                      name: 'MS. Nguyễn Hữu Bình',
-                      qm: 'Qm211',
-                      foldertype: 'audio',
-                      contents: {
-                        create: [
-                          {
-                            name: 'MSTPT Bài Giảng Thứ Nhất',
-                            qm: 'Qm2111',
-                            duration: '520s',
-                            size: '123mb',
-                            thumb: '/this is audio thumbnail url',
-                            folder: '/home/user/Desktop/abc',
-                            verse: 'psalms 20:10',
-                            filetype: 'audio'
-                          },
-                          {
-                            name: 'MSTPT Bài Giảng Thứ Hai',
-                            duration: '520s',
-                            size: '123mb',
-                            thumb: '/this is audio thumbnail url',
-                            folder: '/home/user/Desktop/abc',
-                            verse: 'psalms 20:10',
-                            filetype: 'audio'
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
+              },
             ]
           }
         },
@@ -155,11 +99,11 @@ const mediaData: Prisma.MediaCreateInput[] = [
 
 async function main() {
   console.log(`Start seeding ...`)
-  for (const u of mediaData) {
-    const media = await prisma.media.create({
-      data: u,
+  for (const db of rootData) {
+    const root = await prisma.root.create({
+      data: db,
     })
-    console.log(`Created user with id: ${media.id}`)
+    console.log(`Created user with id: ${root.id}`)
   }
   console.log(`Seeding finished.`)
 }

@@ -7,76 +7,213 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model Media {
-  id         String     @id @default(uuid())
-  pid        String     @default("none")
-  dblevel    Int        @default(0)
-  name       String
-  origin     String?
-  folder     String?
-  qm         String?    @unique
-  categories Category[]
-}
-
-model Category {
-  id         String           @id @default(uuid())
-  media      Media            @relation(fields: [pid], references: [id])
-  dblevel    Int              @default(1)
-  pid        String
-  name       String
-  origin     String?
-  folder     String?
-  qm         String?          @unique
-  foldertype String
-  classes    Classification[]
-
-  @@unique([pid, name])
-}
-
-model Classification {
-  id         String   @id @default(uuid())
-  categories Category @relation(fields: [pid], references: [id])
-  dblevel    Int      @default(2)
-  pid        String
-  name       String
-  origin     String?
-  folder     String?
-  qm         String?  @unique
-  foldertype String
-  topics     Topic[]
-
-  @@unique([pid, name])
-}
-
-model Topic {
-  id         String         @id @default(uuid())
-  classes    Classification @relation(fields: [pid], references: [id])
-  dblevel    Int            @default(3)
-  pid        String
-  name       String
-  origin     String?
-  folder     String?
-  qm         String?        @unique
-  foldertype String
-  contents   Content[]
-
-  @@unique([pid, name])
-}
-
-model Content {
-  id        String   @id @default(uuid())
-  topics    Topic    @relation(fields: [pid], references: [id])
-  dblevel   Int      @default(4)
-  pid       String
-  name      String
+model Root {
+  id        String   @id @default("00000000-0000-0000-0000-000000000000")
+  dblevel   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  qm        String?  @unique
-  duration  String
-  size      String
-  origin    String?
-  folder    String?
-  verse     String?
+  name      String   @default("VGM-Root")
+  children  Level1[]
+}
+
+model Level1 {
+  // auto generate
+  id        String   @id
+  pid       String
+  dblevel   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String
+  isLeaf    Boolean  @default(false)
+  isVideo   Boolean
+  name      String
+  count     Int      @default(0)
+  // parent children list
+  parent    Root     @relation(fields: [pid], references: [id])
+  children  Level2[]
+
+  @@unique([pid, name])
+}
+
+model Level2 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
   thumb     String?
-  filetype  String
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Int?
+  // children list
+  // parent children list
+  parent    Level1   @relation(fields: [pid], references: [id])
+  children  Level3[]
+
+  @@unique([pid, name])
+}
+
+model Level3 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Int?
+  parent    Level2   @relation(fields: [pid], references: [id])
+  children  Level4[]
+
+  @@unique([pid, name])
+}
+
+model Level4 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(4)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Int?
+  parent    Level3   @relation(fields: [pid], references: [id])
+  children  Level5[]
+
+  @@unique([pid, name])
+}
+
+model Level5 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Int?
+  parent    Level4   @relation(fields: [pid], references: [id])
+  children  Level6[]
+
+  @@unique([pid, name])
+}
+
+model Level6 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(6)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Int?
+  parent    Level5   @relation(fields: [pid], references: [id])
+  children  Level7[]
+
+  @@unique([pid, name])
+}
+
+model Level7 {
+  // auto generate
+  id        String   @id @default(uuid())
+  pid       String
+  dblevel   Int      @default(7)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // topic & item fields
+  location  String   @default("")
+  isVideo   Boolean
+  url       String   @default("")
+  name      String
+  count     Int      @default(0)
+  isLeaf    Boolean?
+  // item only fields
+  keyword   String?
+  thumb     String?
+  qm        String?
+  hash      String?
+  audience  Int?
+  mtime     Int?
+  viewCount Int?
+  duration  String?
+  size      Int?
+  parent    Level6   @relation(fields: [pid], references: [id])
+  // children Level8[]          ?????????????
+
+  @@unique([pid, name])
 }

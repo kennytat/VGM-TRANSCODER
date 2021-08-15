@@ -2,22 +2,28 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Content {
+type Level7 {
   id: String!
-  topic: [Topic!]!
-  dblevel: Int!
   pid: String!
-  name: String!
+  dblevel: Int!
   createdAt: DateTime!
   updatedAt: DateTime!
-  qm: String
-  duration: String!
-  size: String!
-  origin: String
-  folder: String
-  verse: String
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
+  name: String!
+  count: Int!
+  keyword: String
   thumb: String
-  filetype: String!
+  qm: String
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+  parent: [Level6!]!
 }
 
 """
@@ -25,90 +31,168 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-type Topic {
+type Level6 {
   id: String!
-  dblevel: Int!
-  classes: [Classification!]!
   pid: String!
+  dblevel: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
   name: String!
-  origin: String
-  folder: String
+  count: Int!
+  keyword: String
+  thumb: String
   qm: String
-  foldertype: String!
-  contents: [Content!]!
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+  parent: [Level5!]!
+  children: [Level7!]!
 }
 
-type Classification {
+type Level5 {
   id: String!
-  categories: [Category!]!
-  dblevel: Int!
   pid: String!
+  dblevel: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
   name: String!
-  origin: String
-  folder: String
+  count: Int!
+  keyword: String
+  thumb: String
   qm: String
-  foldertype: String!
-  topics: [Topic!]!
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+  parent: [Level4!]!
+  children: [Level6!]!
 }
 
-type Category {
+type Level4 {
   id: String!
-  media: [Media!]!
-  dblevel: Int!
   pid: String!
+  dblevel: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
   name: String!
-  origin: String
-  folder: String
+  count: Int!
+  keyword: String
+  thumb: String
   qm: String
-  foldertype: String!
-  classes: [Classification!]!
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+  parent: [Level3!]!
+  children: [Level5!]!
 }
 
-type Media {
+type Level3 {
+  id: String!
+  pid: String!
+  dblevel: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
+  name: String!
+  count: Int!
+  keyword: String
+  thumb: String
+  qm: String
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+  parent: [Level2!]!
+  children: [Level4!]!
+}
+
+type Level2 {
+  id: String!
+  pid: String!
+  dblevel: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
+  name: String!
+  count: Int!
+  keyword: String
+  thumb: String
+  qm: String
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+  parent: [Level1!]!
+  children: [Level3!]!
+}
+
+type Level1 {
+  id: String!
+  pid: String!
+  dblevel: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  location: String!
+  isLeaf: Boolean!
+  isVideo: Boolean!
+  name: String!
+  count: Int!
+  parent: [Root!]!
+  children: [Level2!]!
+}
+
+type Root {
   id: String!
   dblevel: Int!
-  pid: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
   name: String!
-  origin: String
-  folder: String
-  qm: String
-  categories: [Category!]!
+  children: [Level1!]!
 }
 
 type Query {
-  media(id: String!): Media!
-  categories(id: String!): Category!
-  classes(id: String!): Classification!
-  getVideoClasses(take: Float, skip: Float, searchVideoClasses: String): [Classification!]!
-  topics(id: String!): Topic!
-  getVideoTopics(take: Float, skip: Float, searchVideoTopics: String): [Topic!]!
-  video(orderBy: PostOrderByUpdatedAtInput, take: Float, skip: Float, searchVideo: String): [Content!]!
-  audio(orderBy: PostOrderByUpdatedAtInput, take: Float, skip: Float, searchAudio: String): [Content!]!
-}
-
-input PostOrderByUpdatedAtInput {
-  updatedAt: SortOrder!
-}
-
-enum SortOrder {
-  asc
-  desc
-}
-
-type Mutation {
-  createContent(data: ContentCreateInput!): Content!
-  deleteContent(id: String!): Content
-}
-
-input ContentCreateInput {
-  pid: String!
-  name: String!
-  qm: String
-  duration: String!
-  size: String!
-  origin: String
-  folder: String
-  verse: String
-  thumb: String!
-  filetype: String!
+  root(id: String!): Root!
+  level1Unique(id: String!): Level1!
+  level2Unique(id: String!): Level2!
+  level2Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level2!]!
+  level3Unique(id: String!): Level3!
+  level3Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level3!]!
+  level4Unique(id: String!): Level4!
+  level4Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level4!]!
+  level5Unique(id: String!): Level5!
+  level5Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level5!]!
+  level6Unique(id: String!): Level6!
+  level6Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level6!]!
+  level7Unique(id: String!): Level7!
+  level7Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level7!]!
 }
