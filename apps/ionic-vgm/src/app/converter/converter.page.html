@@ -79,37 +79,39 @@
           <hr class="new" />
           <ion-card-content>
             <div>
-              <ion-label position="stacked">Database Location</ion-label>
+              <ion-label position="stacked"
+                >Database Location:
+                <span style="color: var(--ion-color-success)">
+                  {{selectedItem ? selectedItem.location : ''}}
+                </span>
+              </ion-label>
             </div>
-            <ion-grid>
-              <ion-row>
-                <ion-col size="6" class="no-vertical-padding">
+            <ion-grid *ngIf="selectedTopics">
+              <ion-row *ngFor="let level of selectedTopics; index as i">
+                <ion-col
+                  size="6"
+                  class="no-vertical-padding"
+                  *ngIf="i >= 1 ? selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1' : false || level.level === 1  "
+                >
                   <select
-                    #level1
-                    (change)="selectOptionChange('level1', level1.value)"
+                    [(ngModel)]="level.id"
+                    (ngModelChange)="selectOptionChange(level.level, level.id)"
+                    [ngStyle]="{ 'padding-left.px': i * 20, 'color': level.id === '0' ? 'var(--ion-color-success)' : '' }"
                   >
-                    <option [value]="0" selected>Select DB</option>
-                    <option
-                      *ngFor="let item of level1Options, index as i"
-                      [value]="item.id"
-                    >
-                      {{item.name}}
+                    <option [ngValue]="'0'" selected>
+                      {{ i === 0 ? 'Select Database' :'Use current categories'}}
                     </option>
-                  </select>
-                </ion-col>
-              </ion-row>
-              <ion-row *ngIf="level1ID !== '0'">
-                <ion-col size="6" class="no-vertical-padding">
-                  <select
-                    #level2
-                    (change)="selectOptionChange('level2', level2.value)"
-                    style="padding-left: 20px"
-                  >
-                    <option [value]="0" selected>Use current categories</option>
-                    <option [value]="1">Create new topic</option>
                     <option
-                      *ngFor="let item of level2Options, index as i"
-                      [value]="item.id"
+                      [ngValue]="'1'"
+                      *ngIf="i !== 0"
+                      style="color: var(--ion-color-warning)"
+                    >
+                      Create new topic
+                    </option>
+                    <option
+                      *ngFor="let item of level.options, index as i"
+                      [ngValue]="item.id"
+                      style="color: var(--ion-color-dark)"
                     >
                       {{item.name}}
                     </option>
@@ -118,10 +120,10 @@
                 <ion-col
                   style="width: 100%"
                   class="no-vertical-padding"
-                  *ngIf="level2ID === '1'"
+                  *ngIf="level.id === '1' && i !== 0"
                 >
                   <ion-input
-                    #level2input
+                    [(ngModel)]="level.name"
                     clearInput
                     clearOnEdit
                     inputmode="text"
@@ -132,9 +134,9 @@
                       style="font-size: 10px; order: 1"
                       fill="solid"
                       size="small"
-                      color="{{level2input.value ? 'success' : 'warning'}}"
-                      disabled="{{level2input.value ? false : true}}"
-                      (click)="topicInfo('level2', level2input.value)"
+                      color="{{level.name ? 'success' : 'warning'}}"
+                      disabled="{{level.name ? false : true}}"
+                      (click)="createNewTopic(level.level, level.name)"
                     >
                       <ion-icon name="checkmark-outline"></ion-icon>
                     </ion-button>

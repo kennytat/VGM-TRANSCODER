@@ -15,8 +15,11 @@ import { ConverterPageRoutingModule } from './converter-routing.module';
     CommonModule,
     FormsModule,
     ConverterPageRoutingModule,
+
   ],
-  providers: [],
+  providers: [
+
+  ],
   declarations: [ConverterPage],
 })
 

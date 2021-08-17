@@ -6,7 +6,7 @@ import { exec, spawn, execSync, spawnSync } from 'child_process'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './graphql/app.module'
 import { create, globSource, CID } from 'ipfs-http-client'
-import CryptoJS from "crypto-js";
+import * as CryptoJS from "crypto-js";
 import { slice } from 'ramda';
 
 let serve;
@@ -17,13 +17,16 @@ serve = args.some((val) => val === '--serve');
 let ipfsClient;
 let ipfsInfo;
 interface FileInfo {
+  pid: string,
   location: string,
-  filename: string,
+  name: string,
   size: number,
-  duration: number,
+  duration: string,
   qm: string,
   url: string,
-  hash: string
+  hash: string,
+  isVideo: boolean,
+  dblevel: number
 }
 
 let win: Electron.BrowserWindow = null;
@@ -309,11 +312,19 @@ try {
         detail: 'Select file to be modified, please try again',
       };
       showMessageBox(options);
+    } else if (arg === 'topic-db-error') {
+      const options = {
+        type: 'warning',
+        title: 'Warning',
+        message: 'Error creating new topic',
+        detail: 'Existing topic or server error',
+      };
+      showMessageBox(options);
     }
   })
 
   // Get input and output path from above and execute sh file
-  ipcMain.on('start-convert', (event, argInPath, argOutPath, fileOnly, itemUrl) => {
+  ipcMain.on('start-convert', (event, argInPath, argOutPath, fileOnly, pItem) => {
     let files: string[];
     let totalFiles: number = 0;
     let convertedFiles: number = 0;
@@ -340,25 +351,27 @@ try {
 
 
     async function startConvert(files: string[], index: number) {
-      let fileInfo: FileInfo;
+      let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
       let metaData: any = [];
-      let filePath: string = 'hello';
       // get file Info
       metaData = await execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${files[index]}"`, { encoding: "utf8" }).split('\n');
       // Then run ffmpeg to start convert
       const fps_stat: string = metaData.filter(name => name.includes("avg_frame_rate=")).toString();
       const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
-      fileInfo.duration = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
+      const duration: number = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
+      const minutes: number = Math.floor(duration / 60);
+      fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
       fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
-      // fileInfo.localpath = metaData.filter(name => name.includes("filename=")).toString().replace('filename=', '');
       const nameExtPath = files[index].match(/[\w\-\_\(\)\s]+\.[\w\S]{3,4}$/gi).toString();
-      fileInfo.filename = nameExtPath.replace(/\.\w+/g, '');
-      const nonVietnamese = nonAccentVietnamese(fileInfo.filename);
-      fileInfo.url = `${itemUrl}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')}`;
-      // fileInfo.filename = files[index].replace(/\s/g, '_').match(/\/[\w\-\_]+\.[a-z0-9]+$/gi)[0]
-      fileInfo.location = `${argOutPath}/${nonVietnamese.replace(/\s/, '')}`;
-      console.log(fileInfo);
-      const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${fileInfo.location}"`]);
+      fileInfo.name = nameExtPath.replace(/\.\w+/g, '');
+      const nonVietnamese = nonAccentVietnamese(fileInfo.name);
+      fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')}`;
+      fileInfo.location = `${pItem.location}/${nonVietnamese.replace(/\s/, '')}`;
+      const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/, '')}`;
+      fileInfo.isVideo = pItem.isVideo;
+      fileInfo.pid = pItem.id;
+      fileInfo.dblevel = pItem.dblevel + 1;
+      const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${outPath}"`]);
       conversion.stdout.on('data', async (data) => {
         // console.log(`conversion stdout: ${data}`, totalFiles, convertedFiles);
         const ffmpeg_progress_stat: string[] = data.toString().split('\n');
@@ -368,7 +381,6 @@ try {
 
           if (fps_stat && duration_stat && converted_frames) {
             const fps: number = parseInt(fps_stat.match(/\d+/g)[0]) / parseInt(fps_stat.match(/\d+/g)[1]);
-            const duration: number = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
             // calculate total frames
             if (fps && duration) {
               const total_frames: number = Math.round(duration * fps);
@@ -396,18 +408,22 @@ try {
       });
 
       conversion.on('close', async (code) => {
-        if (code === 0) {
+        if (code == 0) {
           if (ipfsClient) {
-            const ipfsOut: any = await ipfsClient.add(globSource(fileInfo.location, { recursive: true }));
-            const cid: CID = ipfsOut.cid;
-            fileInfo.qm = cid.toString();
-            const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
-            fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
-            fileInfo.size = ipfsOut.size;
-            console.log(fileInfo);
+            const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
+            if (ipfsOut) {
+              const cid: CID = ipfsOut.cid;
+              console.log(cid);
+              fileInfo.qm = cid.toString();
+              const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+              fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
+              fileInfo.size = ipfsOut.size;
+              console.log(fileInfo);
+              event.sender.send('create-database', fileInfo);
+            }
+          } else {
+            event.sender.send('create-database', fileInfo);
           }
-
-          event.sender.send('create-database', fileInfo);
           convertedFiles++;
           if (convertedFiles === totalFiles) {
             const options = {
@@ -489,10 +505,19 @@ try {
     // console.log(ci);
     // console.log(arg);
 
-    fs.appendFile('/home/kennytat/Desktop/newfolder/mynewfile1.txt', 'Hello content!', function (err) {
-      if (err) throw err;
-      console.log('Saved!');
-    });
+    // fs.appendFile('/home/kennytat/Desktop/newfolder/mynewfile1.txt', 'Hello content!', function (err) {
+    //   if (err) throw err;
+    //   console.log('Saved!');
+    // });
+
+
+    // const secretKey = slice(0, 32, 'jashdkfhjkahj4350pdfvkhdv');
+    // const test = CryptoJS.AES.encrypt('fileInfo.qm', secretKey).toString();
+
+    // console.log(test);
+
+
+    // event.sender.send('create-database')
 
   })
 
@@ -512,7 +537,33 @@ try {
 
   })
 
-  ipcMain.on('exec-db-confirmation', (event, method) => {
+  // ipcMain.on('exec-db-confirmation', (event, method) => {
+  //   let options;
+  //   if (method === 'updateDB') {
+  //     options = {
+  //       type: 'question',
+  //       buttons: ['Cancel', 'Update'],
+  //       defaultId: 0,
+  //       title: 'Update Confirmation',
+  //       message: 'Are you sure want to update selected entries',
+  //       detail: 'Update data will create new entry on IPFS',
+  //     }
+  //   } else if (method === 'deleteDB') {
+  //     options = {
+  //       type: 'question',
+  //       buttons: ['Cancel', 'Delete data'],
+  //       defaultId: 0,
+  //       title: 'Deletion Confirmation',
+  //       message: 'Are you sure want to delete selected entries',
+  //       detail: 'Delete data will not mutate original item on IPFS',
+  //     }
+  //   }
+  //   dialog.showMessageBox(win, options).then(result => {
+  //     event.sender.send('exec-confirm-message', method, result.response);
+  //   }).catch(err => { console.log(err) });
+  // })
+
+  ipcMain.handle('exec-db-confirmation', async (event, method) => {
     let options;
     if (method === 'updateDB') {
       options = {
@@ -521,7 +572,7 @@ try {
         defaultId: 0,
         title: 'Update Confirmation',
         message: 'Are you sure want to update selected entries',
-        detail: 'Update data will also update it on IPFS',
+        detail: 'Update data will create new entry on IPFS',
       }
     } else if (method === 'deleteDB') {
       options = {
@@ -530,12 +581,13 @@ try {
         defaultId: 0,
         title: 'Deletion Confirmation',
         message: 'Are you sure want to delete selected entries',
-        detail: 'Delete data will also unpublish it on IPFS',
+        detail: 'Delete data will not mutate original item on IPFS',
       }
     }
-    dialog.showMessageBox(win, options).then(result => {
-      event.sender.send('exec-confirm-message', method, result.response);
+    const result = dialog.showMessageBox(win, options).then(result => {
+      return { method: method, response: result.response }
     }).catch(err => { console.log(err) });
+    return result
   })
 
 

@@ -19,40 +19,67 @@ import { Level6 } from '../models/level6.model'
 import { Level7 } from '../models/level7.model'
 
 
+@InputType()
+export class Level7UpdateInput {
 
-// @InputType()
-// export class ContentCreateInput {
+  @Field((type) => String)
+  id: string
 
-//   @Field((type) => String)
-//   pid: string
+  @Field((type) => Boolean, { nullable: true })
+  isLeaf?: boolean
 
-//   @Field((type) => String)
-//   name: string
+}
+@InputType()
+export class Level7CreateInput {
 
-//   @Field((type) => String, { nullable: true })
-//   qm?: string | null
+  @Field((type) => String)
+  pid: string
 
-//   @Field((type) => String)
-//   duration: string
+  @Field((type) => Boolean, { nullable: true })
+  isLeaf: boolean
 
-//   @Field((type) => String)
-//   size: string
+  @Field((type) => String)
+  location: string
 
-//   @Field((type) => String, { nullable: true })
-//   origin: string | null
+  @Field((type) => String)
+  url: string
 
-//   @Field((type) => String, { nullable: true })
-//   folder: string | null
+  @Field((type) => Boolean)
+  isVideo: boolean
 
-//   @Field((type) => String, { nullable: true})
-//   verse: string | null
+  @Field((type) => String)
+  name: string
 
-//   @Field((type) => String)
-//   thumb: string
+  @Field((type) => Int, { nullable: true })
+  count?: number
 
-//   @Field((type) => String)
-//   filetype: string
-// }
+  @Field((type) => String, { nullable: true })
+  keyword?: string
+
+  @Field((type) => String, { nullable: true })
+  thumb?: string
+
+  @Field((type) => String, { nullable: true })
+  qm?: string
+
+  @Field((type) => String, { nullable: true })
+  hash?: string
+
+  @Field((type) => Int, { nullable: true })
+  audience?: number
+
+  @Field((type) => Int, { nullable: true })
+  mtime?: number
+
+  @Field((type) => Int, { nullable: true })
+  viewCount?: number
+
+  @Field((type) => String, { nullable: true })
+  duration?: string
+
+  @Field((type) => Int, { nullable: true })
+  size?: number
+}
 
 // @InputType()
 // class PostOrderByUpdatedAtInput {
@@ -114,6 +141,63 @@ export class Level7Resolver {
     })
   }
 
+  @Mutation((returns) => Level7)
+  createLevel7(
+    @Args('data') data: Level7CreateInput,
+    @Context() ctx,
+  ) {
+    return this.prismaService.level7.create({
+      data: {
+        isLeaf: data.isLeaf,
+        location: data.location,
+        url: data.url,
+        isVideo: data.isVideo,
+        name: data.name,
+        count: data.count,
+        keyword: data.keyword,
+        thumb: data.thumb,
+        qm: data.qm,
+        hash: data.hash,
+        audience: data.audience,
+        mtime: data.mtime,
+        viewCount: data.viewCount,
+        duration: data.duration,
+        size: data.size,
+        parent: {
+          connect: {
+            id: data.pid
+          }
+        }
+      },
+    })
+  }
+
+
+  @Mutation((returns) => Level7)
+  updateLevel7(
+    @Args('data') data: Level7UpdateInput,
+    @Context() ctx,
+  ) {
+    return this.prismaService.level7.update({
+      where: {
+        id: data.id
+      },
+      data: {
+        isLeaf: data.isLeaf,
+      },
+    })
+  }
+
+  @Mutation((returns) => Level7)
+  deleteLevel7(
+    @Args('id') id: string
+  ) {
+    return this.prismaService.level7.delete({
+      where: {
+        id: id
+      }
+    })
+  }
   // @ResolveField('children', () => [Level8])
   // async getChildren(@Root() level7: Level7) {
   //   return this.prismaService.level8.findMany({
@@ -199,30 +283,7 @@ export class Level7Resolver {
   //     })
   //   }
 
-  //   @Mutation((returns) => Content)
-  //   createContent(
-  //     @Args('data') data: ContentCreateInput,
-  //     @Context() ctx,
-  //   ) {
-  //     return this.prismaService.content.create({
-  //       data: {
-  //         name: data.name,
-  //         qm: data.qm,
-  //         duration: data.duration,
-  //         size: data.size,
-  //         origin: data.origin,
-  //         folder: data.folder,
-  //         verse: data.verse,
-  //         thumb:data.thumb,
-  //         filetype: data.filetype,
-  //         topics: {
-  //           connect: {
-  //             id: data.pid
-  //           }
-  //         }
-  //       },
-  //     })
-  //   }
+
 
 
   //     @Mutation((returns) => Content, { nullable: true })

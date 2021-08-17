@@ -9,6 +9,7 @@ import {
   Root,
   InputType,
   Field,
+  Int,
 } from '@nestjs/graphql'
 import { Inject } from '@nestjs/common'
 import { PrismaService } from '../prisma.service'
@@ -17,6 +18,68 @@ import { PrismaService } from '../prisma.service'
 import { Level3 } from '../models/level3.model'
 import { Level4 } from '../models/level4.model'
 import { Level5 } from '../models/level5.model'
+
+@InputType()
+export class Level4UpdateInput {
+
+  @Field((type) => String)
+  id: string
+
+  @Field((type) => Boolean, { nullable: true })
+  isLeaf?: boolean
+
+}
+@InputType()
+export class Level4CreateInput {
+
+  @Field((type) => String)
+  pid: string
+
+  @Field((type) => Boolean, { nullable: true })
+  isLeaf: boolean
+
+  @Field((type) => String)
+  location: string
+
+  @Field((type) => String)
+  url: string
+
+  @Field((type) => Boolean)
+  isVideo: boolean
+
+  @Field((type) => String)
+  name: string
+
+  @Field((type) => Int, { nullable: true })
+  count?: number
+
+  @Field((type) => String, { nullable: true })
+  keyword?: string
+
+  @Field((type) => String, { nullable: true })
+  thumb?: string
+
+  @Field((type) => String, { nullable: true })
+  qm?: string
+
+  @Field((type) => String, { nullable: true })
+  hash?: string
+
+  @Field((type) => Int, { nullable: true })
+  audience?: number
+
+  @Field((type) => Int, { nullable: true })
+  mtime?: number
+
+  @Field((type) => Int, { nullable: true })
+  viewCount?: number
+
+  @Field((type) => String, { nullable: true })
+  duration?: string
+
+  @Field((type) => Int, { nullable: true })
+  size?: number
+}
 
 @Resolver(Level4)
 export class Level4Resolver {
@@ -67,6 +130,64 @@ export class Level4Resolver {
       where: {
         ...or,
       },
+    })
+  }
+
+  @Mutation((returns) => Level4)
+  createLevel4(
+    @Args('data') data: Level4CreateInput,
+    @Context() ctx,
+  ) {
+    return this.prismaService.level4.create({
+      data: {
+        isLeaf: data.isLeaf,
+        location: data.location,
+        url: data.url,
+        isVideo: data.isVideo,
+        name: data.name,
+        count: data.count,
+        keyword: data.keyword,
+        thumb: data.thumb,
+        qm: data.qm,
+        hash: data.hash,
+        audience: data.audience,
+        mtime: data.mtime,
+        viewCount: data.viewCount,
+        duration: data.duration,
+        size: data.size,
+        parent: {
+          connect: {
+            id: data.pid
+          }
+        }
+      },
+    })
+  }
+
+
+  @Mutation((returns) => Level4)
+  updateLevel4(
+    @Args('data') data: Level4UpdateInput,
+    @Context() ctx,
+  ) {
+    return this.prismaService.level4.update({
+      where: {
+        id: data.id
+      },
+      data: {
+        isLeaf: data.isLeaf,
+      },
+    })
+  }
+
+  @Mutation((returns) => Level4)
+  deleteLevel4(
+    @Args('id') id: string
+  ) {
+    return this.prismaService.level4.delete({
+      where: {
+        id: id
+      }
     })
   }
 

@@ -16,6 +16,7 @@ import { environment } from './environments/environment';
 import { LogService } from './services/log.service';
 import { PlatformLanguageToken } from './services/tokens';
 import { WindowService } from './services/window.service';
+import { DataService } from './services/data.service';
 
 /**
  * DEBUGGING
@@ -35,6 +36,7 @@ export class CoreModule {
       providers: [
         LogService,
         WindowService,
+        DataService,
         {
           provide: APP_BASE_HREF,
           useValue: '/',

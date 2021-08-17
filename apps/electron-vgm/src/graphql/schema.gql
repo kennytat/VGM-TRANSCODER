@@ -196,3 +196,168 @@ type Query {
   level7Unique(id: String!): Level7!
   level7Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level7!]!
 }
+
+type Mutation {
+  createLevel2(data: Level2CreateInput!): Level2!
+  updateLevel2(data: Level2UpdateInput!): Level2!
+  deleteLevel2(id: String!): Level2!
+  createLevel3(data: Level3CreateInput!): Level3!
+  updateLevel3(data: Level3UpdateInput!): Level3!
+  deleteLevel3(id: String!): Level3!
+  createLevel4(data: Level4CreateInput!): Level4!
+  updateLevel4(data: Level4UpdateInput!): Level4!
+  deleteLevel4(id: String!): Level4!
+  createLevel5(data: Level5CreateInput!): Level5!
+  updateLevel5(data: Level5UpdateInput!): Level5!
+  deleteLevel5(id: String!): Level5!
+  createLevel6(data: Level6CreateInput!): Level6!
+  updateLevel6(data: Level6UpdateInput!): Level6!
+  deleteLevel6(id: String!): Level6!
+  createLevel7(data: Level7CreateInput!): Level7!
+  updateLevel7(data: Level7UpdateInput!): Level7!
+  deleteLevel7(id: String!): Level7!
+}
+
+input Level2CreateInput {
+  pid: String!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
+  name: String!
+  count: Int
+  keyword: String
+  thumb: String
+  qm: String
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+}
+
+input Level2UpdateInput {
+  id: String!
+  isLeaf: Boolean
+}
+
+input Level3CreateInput {
+  pid: String!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
+  name: String!
+  count: Int
+  keyword: String
+  thumb: String
+  qm: String
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+}
+
+input Level3UpdateInput {
+  id: String!
+  isLeaf: Boolean
+}
+
+input Level4CreateInput {
+  pid: String!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
+  name: String!
+  count: Int
+  keyword: String
+  thumb: String
+  qm: String
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+}
+
+input Level4UpdateInput {
+  id: String!
+  isLeaf: Boolean
+}
+
+input Level5CreateInput {
+  pid: String!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
+  name: String!
+  count: Int
+  keyword: String
+  thumb: String
+  qm: String
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+}
+
+input Level5UpdateInput {
+  id: String!
+  isLeaf: Boolean
+}
+
+input Level6CreateInput {
+  pid: String!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
+  name: String!
+  count: Int
+  keyword: String
+  thumb: String
+  qm: String
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+}
+
+input Level6UpdateInput {
+  id: String!
+  isLeaf: Boolean
+}
+
+input Level7CreateInput {
+  pid: String!
+  isLeaf: Boolean
+  location: String!
+  url: String!
+  isVideo: Boolean!
+  name: String!
+  count: Int
+  keyword: String
+  thumb: String
+  qm: String
+  hash: String
+  audience: Int
+  mtime: Int
+  viewCount: Int
+  duration: String
+  size: Int
+}
+
+input Level7UpdateInput {
+  id: String!
+  isLeaf: Boolean
+}

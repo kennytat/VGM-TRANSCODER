@@ -1,23 +1,17 @@
 import { Component, NgZone, OnInit } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
-import { videoDB, audioDB } from '../database/database.page';
-// import { Content, CREATE_CONTENT } from '../graphql.types';
 import { Apollo } from 'apollo-angular';
-
-
-// type CreateContentResult = {
-//   createContent: {
-//     content: Content[];
-//   };
-// }
-
-interface TopicInfo {
-  pid: string,
-  location: string,
-  isVideo: boolean,
-  url: string,
-  name: string,
-  isLeaf: boolean
+import * as type from 'libs/xplat/core/src/lib/services/graphql.types';
+import { DataService } from '@vgm-converter/xplat/core';
+import * as _ from 'lodash';
+import { Subscription } from 'rxjs';
+interface SelectedTopic {
+  level: number,
+  id: string,
+  name?: string,
+  createGQL?: any,
+  updateGQL?: any,
+  options: any[]
 }
 @Component({
   selector: 'vgm-converter',
@@ -25,37 +19,25 @@ interface TopicInfo {
   styleUrls: ['converter.page.scss'],
 })
 export class ConverterPage implements OnInit {
-  currentDB: any[] = [];
-  isVideo: boolean;
-  // Declare variable for GQL data
+  isVideo: boolean = true;
+  videoDBSub: Subscription
+  audioDBSub: Subscription
+  videoDB: any[] = [];
+  audioDB: any[] = [];
 
-  // selectedTopics;
-  // selectedClassID;
-  selectedItemUrl: string = '01-bai-giang.cac-dien-gia';
-
-  level1ID: string = '0';
-  level2ID: string = '0';
-  level3ID: string = '0';
-  level4ID: string = '0';
-  level5ID: string = '0';
-  level6ID: string = '0';
-
-  level1Options: any[] = [{ name: 'videoDB', id: '00000000-0000-0000-0000-000000000001' }, { name: 'audioDB', id: '00000000-0000-0000-0000-000000000002' }];
-  level2Options: any[] = [];
-  level3Options: any[] = [];
-  level4Options: any[] = [];
-  level5Options: any[] = [];
-  level6Options: any[] = [];
-
-  level2Topic: TopicInfo;
-  level3Topic: TopicInfo;
-  level4Topic: TopicInfo;
-  level5Topic: TopicInfo;
-  level6Topic: TopicInfo;
-
-
-
-
+  level1: SelectedTopic = {
+    level: 1, id: '0', options: [
+      { name: 'videoDB', id: '00000000-0000-0000-0000-000000000001', location: '/VGMV', url: '' },
+      { name: 'audioDB', id: '00000000-0000-0000-0000-000000000002', location: '/VGMA', url: '' }
+    ]
+  }
+  level2: SelectedTopic = { level: 2, id: '0', createGQL: type.CREATE_LEVEL_2, updateGQL: type.UPDATE_LEVEL_2, options: [] }
+  level3: SelectedTopic = { level: 3, id: '0', createGQL: type.CREATE_LEVEL_3, updateGQL: type.UPDATE_LEVEL_3, options: [] }
+  level4: SelectedTopic = { level: 4, id: '0', createGQL: type.CREATE_LEVEL_4, updateGQL: type.UPDATE_LEVEL_4, options: [] }
+  level5: SelectedTopic = { level: 5, id: '0', createGQL: type.CREATE_LEVEL_5, updateGQL: type.UPDATE_LEVEL_5, options: [] }
+  level6: SelectedTopic = { level: 6, id: '0', createGQL: type.CREATE_LEVEL_6, updateGQL: type.UPDATE_LEVEL_6, options: [] }
+  selectedTopics = [this.level1, this.level2, this.level3, this.level4, this.level5, this.level6]
+  selectedItem: any;
   // Declare variable for conversion feature
   inputPath: string | string[] = '';
   // inputPathShort = '';
@@ -70,100 +52,141 @@ export class ConverterPage implements OnInit {
   constructor(
     private _electronService: ElectronService,
     private zone: NgZone,
-    private apollo: Apollo) {
+    private apollo: Apollo,
+    private dataService: DataService) {
 
   }
+
+
   ngOnInit() {
+    this.videoDBSub = this.dataService.videoDB$.subscribe((data) => {
+      console.log(data);
+      this.videoDB = data;
+    });
+
+    this.audioDBSub = this.dataService.audioDB$.subscribe((data) => {
+      console.log(data);
+      this.audioDB = data;
+    });
     // this.audioDB = audioDB
     // console.log(this.videoDB);
     // console.log(this.audioDB);
-
-
   }
+  ngOnDestroy(): void {
+    (this.videoDBSub, this.audioDBSub as Subscription).unsubscribe();
+  }
+
+
 
   selectOptionChange(level, itemID) {
-    let options: any;
-    if (level === 'level1' && itemID === this.level1Options[0].id) {
-      this.currentDB = videoDB;
+    if (itemID === this.level1.options[0].id) {
       this.isVideo = true;
-    } else if (level === 'level1' && itemID === this.level1Options[1].id) {
-      this.currentDB = audioDB
+    } else if (itemID === this.level1.options[1].id) {
       this.isVideo = false;
     }
-    console.log(level, itemID, this.currentDB);
 
-    switch (level) {
-      case 'level1':
-        this.level1ID = itemID;
-        this.level2Options = getOptions(this.currentDB, itemID);
-        break;
-      case 'level2':
-        this.level2ID = itemID;
-        this.level3Options = getOptions(this.currentDB, itemID);
-        break;
-      case 'level3':
-        this.level3ID = itemID;
-        this.level4Options = getOptions(this.currentDB, itemID);
-        break;
-      case 'level4':
-        this.level4ID = itemID;
-        this.level5Options = getOptions(this.currentDB, itemID);
-        break;
-      case 'level5':
-        this.level5ID = itemID;
-        this.level6Options = getOptions(this.currentDB, itemID);
-        break;
-      case 'level6':
-        this.level6ID = itemID;
-        break;
-      default:
-    }
-
-    function getOptions(db, id) {
-      console.log(db);
-      if (id !== ('0' || '1')) {
-        [options] = db.filter(function getItem(item) {
-          if (item.children.length > 0) { return item.id === id || item.children.filter(getItem) }
-        });
-        return options.children
-      } else {
-        return []
+    if (itemID === '0') {
+      this.selectedTopics[level - 1].id = '0';
+    } else if (itemID === '1') {
+      this.selectedTopics[level - 1].id = '1';
+    } else {
+      this.selectedTopics[level - 1].id = itemID;
+      this.selectedTopics[level].id = '0';
+      this.selectedTopics[level].options = [];
+      const options = this.getOptions(itemID);
+      if (options.id) { this.selectedItem = options }
+      if (this.selectedItem.children && this.selectedItem.children.length > 0 && this.selectedItem.isLeaf !== true) {
+        this.selectedTopics[level].options = this.selectedItem.children;
       }
+      console.log('on select video', this.isVideo, level, itemID, this.selectedItem);
     }
   }
 
-  topicInfo(level, value) {
-    switch (level) {
-      case 'level2':
-        this.level2Topic = this.getTopicInfo(value, this.level1ID, this.level1Options);
-        break;
-      case 'level3':
-        this.level3Topic = this.getTopicInfo(value, this.level2ID, this.level2Options);
-        break;
-      case 'level4':
-        this.level4Topic = this.getTopicInfo(value, this.level3ID, this.level3Options);
-        break;
-      case 'level5':
-        this.level5Topic = this.getTopicInfo(value, this.level4ID, this.level4Options);
-        break;
-      case 'level6':
-        this.level6Topic = this.getTopicInfo(value, this.level5ID, this.level5Options);
-        break;
-      default:
+  getOptions(id) {
+    let selected: any = {};
+    let db: any[] = []
+    if (this.isVideo) {
+      db = this.videoDB
+    } else {
+      db = this.audioDB
     }
+    db.filter(function getItem(item) {
+      if (item.id === id) {
+        selected = item
+      }
+      if (item.children && item.children.length > 0 && item.isLeaf !== true) {
+        item.children.filter(getItem)
+      }
+    });
+    return selected
   }
 
-  getTopicInfo(value, pid, pList) {
-    const nonVietnamese = this.nonAccentVietnamese(value);
-    const pItem = pList.filter(item => item.id = pid);
-    return {
-      pid: pid,
-      location: `${pItem.location}/${nonVietnamese.replace(/\s/, '')}`,
-      isVideo: this.isVideo,
-      url: nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-'),
-      name: value,
-      isLeaf: false
-    }
+
+  async createNewTopic(level, value) {
+    const pid = this.selectedTopics[level - 2].id;
+    const gql = this.selectedTopics[level - 1].createGQL;
+    const nonVietnamese = await this.nonAccentVietnamese(value);
+    const pList = [...this.selectedTopics[level - 2].options];
+    const [pItem] = pList.filter((item) => item.id.includes(pid));
+    console.log('parent', pid, pItem, pList);
+
+    this.selectedTopics[level - 1].name = '';
+    await this.apollo.mutate<any>({
+      mutation: gql,
+      variables: {
+        pid: pid,
+        isLeaf: false,
+        location: `${pItem.location}/${nonVietnamese.replace(/\s/, '')}`,
+        url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, ''),
+        isVideo: this.isVideo,
+        name: value,
+      }
+    }).subscribe(async ({ data }) => {
+      switch (level) {
+        case 2:
+          this.selectedItem = await _.cloneDeep(data.createLevel2)
+          break;
+        case 3:
+          this.selectedItem = await _.cloneDeep(data.createLevel3)
+          break;
+        case 4:
+          this.selectedItem = await _.cloneDeep(data.createLevel4)
+          break;
+        case 5:
+          this.selectedItem = await _.cloneDeep(data.createLevel5)
+          break;
+        case 6:
+          this.selectedItem = await _.cloneDeep(data.createLevel6)
+          break;
+        default:
+      }
+      await this.selectedTopics[level - 1].options.push(this.selectedItem)
+      await this.dataService.fetchDB(this.isVideo);
+      console.log(this.selectedItem);
+
+      await this.selectOptionChange(level, this.selectedItem.id)
+
+    }, (error) => {
+      console.log('there was an error sending the query', error);
+      if (this._electronService.isElectronApp) {
+        this._electronService.ipcRenderer.send('error-message', 'topic-db-error');
+      }
+    });
+  }
+
+  async updateIsLeaf() {
+    await this.apollo.mutate<any>({
+      mutation: this.selectedTopics[this.selectedItem.dblevel - 1].updateGQL,
+      variables: {
+        id: this.selectedItem.id,
+        isLeaf: true,
+      }
+    }).subscribe(async ({ data }) => {
+      console.log(data);
+    }, (error) => {
+      console.log('error sending update isleaf mutation', error);
+
+    });
   }
 
   nonAccentVietnamese(str) {
@@ -179,15 +202,38 @@ export class ConverterPage implements OnInit {
     str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
     return str;
   }
-  // handleOptionChange(value) {
-  //   // this.selectedItemUrl = value;
-  //   console.log(value);
 
-  // }
+  test() {
+    console.log(this.level1.options, '\n', this.level2.options, '\n', this.level3.options, '\n', this.level4.options, '\n', this.level5.options);
 
-  // createDB(raw) {
+    //   console.log(this.level1.options, this.level2.options, this.level3.options, this.level4.options);
+
+    // createDB(raw) {
+
+    // if (this._electronService.isElectronApp) {
+    //   this._electronService.ipcRenderer.send('test');
+    // }
+    // this.apollo.mutate<any>({
+    //   mutation: type.CREATE_LEVEL_2,
+    //   variables: {
+    //     pid: "00000000-0000-0000-0000-000000000001",
+    //     isLeaf: true,
+    //     location: "asdfasdf234",
+    //     url: "data.url",
+    //     isVideo: false,
+    //     name: "data 05 moto",
+    //   }
+    // }).subscribe(({ data }) => {
+    //   console.log('got data', data);
+    //   console.log(data.createLevel2.id);
+    //   console.log(videoDB);
+    // }, (error) => {
+
+    //   console.log('there was an error sending the query', error);
+    // });
 
 
+  }
 
 
   //   const files = raw.replace(/}[\n,\s]+?{/g, '}splitjson{').split('splitjson');
@@ -225,9 +271,10 @@ export class ConverterPage implements OnInit {
   // }
 
 
+
   OpenDialog() {
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.invoke('open-dialog').then((inpath) => {
+      this._electronService.ipcRenderer.invoke('open-dialog', this.fileCheckbox).then((inpath) => {
         console.log(inpath);
         this.zone.run(() => {
           this.inputPath = inpath;
@@ -247,30 +294,19 @@ export class ConverterPage implements OnInit {
   }
 
 
-
-  test() {
-
-    // if (this._electronService.isElectronApp) {
-    //   this._electronService.ipcRenderer.send('test');
-    // }
-  }
-
-
-
-
   Convert() {
     if (this._electronService.isElectronApp) {
-      if (this.inputPath === '' || this.outputPath === '' || this.selectedItemUrl) {
+      if (this.inputPath === '' || this.outputPath === '' || !this.selectedItem) {
         this._electronService.ipcRenderer.send('error-message', 'missing-path');
       } else {
         this.isConverting = true;
-        this._electronService.ipcRenderer.send('start-convert', this.inputPath, this.outputPath, this.fileCheckbox, this.selectedItemUrl);
+        this.updateIsLeaf();
+        this._electronService.ipcRenderer.send('start-convert', this.inputPath, this.outputPath, this.fileCheckbox, this.selectedItem);
         this._electronService.ipcRenderer.on('exec-done', (event) => {
           this.zone.run(() => {
             this.isConverting = false;
             this.progressLoading = false;
             this.progressionStatus = 0;
-            // this.inputPathShort = '';
             this.outputPath = '';
             this.inputPath = '';
           });

@@ -32,7 +32,9 @@
     padding: 0 2px 0 2px;
   }
 }
-
+ion-card-content {
+  height: auto;
+}
 .data-info {
   position: absolute;
   width: 50%;
@@ -135,7 +137,8 @@
     // .treeview-container need to delete all line which include "maxHeight" word in ngx-treeview.js node library
     .treeview-container {
       width: 50%;
-      height: calc(100vh - 400px);
+      height: calc(100vh - 330px);
+      max-height: calc(100vh - 330px) !important;
       &::-webkit-scrollbar {
         display: none;
       }

@@ -166,6 +166,8 @@ export const ALL_DATA = gql`
     id
     isLeaf
     name
+    location
+    dblevel
      children {
           id
           pid
@@ -539,48 +541,465 @@ export const LEVEL_7_QUERIES = gql`
       }
 }`;
 
-export const CREATE_CONTENT = gql`
-mutation createContent (
-  $contentName: String!,
-  $contentPid: String!,
-  $contentDuration: String!,
-    $contentSize: String!,
-     $contentOrigin: String!,
- $contentFolder: String!,
-  $contentThumb: String!,
-    $contentType: String!
+export const CREATE_LEVEL_2 = gql`
+mutation createLevel2 (
+  $pid: String!,
+  $isLeaf: Boolean,
+  $location: String!,
+  $url: String!,
+  $isVideo: Boolean!,
+  $name: String!,
+  $count: Int ,
+  $keyword: String,
+  $thumb: String,
+  $qm: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int,
+  $duration: String,
+  $size: Int,
   ) {
-  createContent (data:{
-    name: $contentName,
-    pid: $contentPid,
-    duration: $contentDuration,
-    size: $contentSize,
-    origin: $contentOrigin,
-    folder: $contentFolder,
-    thumb: $contentThumb,
-    filetype: $contentType
+  createLevel2 (
+    data:{
+      pid: $pid
+      isLeaf: $isLeaf,
+      location: $location,
+      url: $url,
+      isVideo: $isVideo,
+      name: $name,
+      count: $count,
+      keyword: $keyword,
+      thumb: $thumb,
+      qm: $qm,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount,
+      duration: $duration,
+      size: $size,
   }) {
-     id
-  dblevel
-  pid
-  name
-  createdAt
-  updatedAt
-  qm
-  duration
-  size
-  origin
-  folder
-  verse
-  thumb
-  filetype
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
   }
 }`;
 
+export const CREATE_LEVEL_3 = gql`
+mutation createLevel3 (
+  $pid: String!,
+  $isLeaf: Boolean,
+  $location: String!,
+  $url: String!,
+  $isVideo: Boolean!,
+  $name: String!,
+  $count: Int ,
+  $keyword: String,
+  $thumb: String,
+  $qm: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int,
+  $duration: String,
+  $size: Int,
+  ) {
+  createLevel3 (
+    data:{
+      pid: $pid
+      isLeaf: $isLeaf,
+      location: $location,
+      url: $url,
+      isVideo: $isVideo,
+      name: $name,
+      count: $count,
+      keyword: $keyword,
+      thumb: $thumb,
+      qm: $qm,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount,
+      duration: $duration,
+      size: $size,
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
 
-export const DELETE_CONTENT = gql`
-mutation  deleteContent ($contentId: String!) {
-  deleteContent (id: $contentId) {
+export const CREATE_LEVEL_4 = gql`
+mutation createLevel4 (
+  $pid: String!,
+  $isLeaf: Boolean,
+  $location: String!,
+  $url: String!,
+  $isVideo: Boolean!,
+  $name: String!,
+  $count: Int ,
+  $keyword: String,
+  $thumb: String,
+  $qm: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int,
+  $duration: String,
+  $size: Int,
+  ) {
+  createLevel4 (
+    data:{
+      pid: $pid
+      isLeaf: $isLeaf,
+      location: $location,
+      url: $url,
+      isVideo: $isVideo,
+      name: $name,
+      count: $count,
+      keyword: $keyword,
+      thumb: $thumb,
+      qm: $qm,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount,
+      duration: $duration,
+      size: $size,
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
+
+export const CREATE_LEVEL_5 = gql`
+mutation createLevel5 (
+  $pid: String!,
+  $isLeaf: Boolean,
+  $location: String!,
+  $url: String!,
+  $isVideo: Boolean!,
+  $name: String!,
+  $count: Int ,
+  $keyword: String,
+  $thumb: String,
+  $qm: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int,
+  $duration: String,
+  $size: Int,
+  ) {
+  createLevel5 (
+    data:{
+      pid: $pid
+      isLeaf: $isLeaf,
+      location: $location,
+      url: $url,
+      isVideo: $isVideo,
+      name: $name,
+      count: $count,
+      keyword: $keyword,
+      thumb: $thumb,
+      qm: $qm,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount,
+      duration: $duration,
+      size: $size,
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
+
+export const CREATE_LEVEL_6 = gql`
+mutation createLevel6 (
+  $pid: String!,
+  $isLeaf: Boolean,
+  $location: String!,
+  $url: String!,
+  $isVideo: Boolean!,
+  $name: String!,
+  $count: Int ,
+  $keyword: String,
+  $thumb: String,
+  $qm: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int,
+  $duration: String,
+  $size: Int,
+  ) {
+  createLevel6 (
+    data:{
+      pid: $pid
+      isLeaf: $isLeaf,
+      location: $location,
+      url: $url,
+      isVideo: $isVideo,
+      name: $name,
+      count: $count,
+      keyword: $keyword,
+      thumb: $thumb,
+      qm: $qm,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount,
+      duration: $duration,
+      size: $size,
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
+
+export const CREATE_LEVEL_7 = gql`
+mutation createLevel7 (
+  $pid: String!,
+  $isLeaf: Boolean,
+  $location: String!,
+  $url: String!,
+  $isVideo: Boolean!,
+  $name: String!,
+  $count: Int ,
+  $keyword: String,
+  $thumb: String,
+  $qm: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int,
+  $duration: String,
+  $size: Int,
+  ) {
+  createLevel7 (
+    data:{
+      pid: $pid
+      isLeaf: $isLeaf,
+      location: $location,
+      url: $url,
+      isVideo: $isVideo,
+      name: $name,
+      count: $count,
+      keyword: $keyword,
+      thumb: $thumb,
+      qm: $qm,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount,
+      duration: $duration,
+      size: $size,
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
+
+export const UPDATE_LEVEL_2 = gql`
+mutation createLevel2 (
+  $id: String!,
+  $isLeaf: Boolean,
+  ) {
+  createLevel2 (
+    data:{
+      id: $id
+      isLeaf: $isLeaf
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
+
+export const UPDATE_LEVEL_3 = gql`
+mutation createLevel3 (
+  $id: String!,
+  $isLeaf: Boolean,
+  ) {
+  createLevel3 (
+    data:{
+      id: $id
+      isLeaf: $isLeaf
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
+
+export const UPDATE_LEVEL_4 = gql`
+mutation createLevel4 (
+  $id: String!,
+  $isLeaf: Boolean,
+  ) {
+  createLevel4 (
+    data:{
+      id: $id
+      isLeaf: $isLeaf
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
+
+export const UPDATE_LEVEL_5 = gql`
+mutation createLevel5 (
+  $id: String!,
+  $isLeaf: Boolean,
+  ) {
+  createLevel5 (
+    data:{
+      id: $id
+      isLeaf: $isLeaf
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
+
+export const UPDATE_LEVEL_6 = gql`
+mutation createLevel6 (
+  $id: String!,
+  $isLeaf: Boolean,
+  ) {
+  createLevel6 (
+    data:{
+      id: $id
+      isLeaf: $isLeaf
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
+
+export const UPDATE_LEVEL_7 = gql`
+mutation createLevel7 (
+  $id: String!,
+  $isLeaf: Boolean,
+  ) {
+  createLevel7 (
+    data:{
+      id: $id
+      isLeaf: $isLeaf
+  }) {
+    id
+    pid
+    isLeaf
+    url
+    name
+    isVideo
+    dblevel
+    location
+  }
+}`;
+
+export const DELETE_LEVEL_2 = gql`
+mutation deleteLevel2 ($id: String!) {
+  deleteLevel2 (id: $id) {
+    id
+    name
+  }
+}`;
+
+export const DELETE_LEVEL_3 = gql`
+mutation deleteLevel3 ($id: String!) {
+  deleteLevel3 (id: $id) {
+    id
+    name
+  }
+}`;
+export const DELETE_LEVEL_4 = gql`
+mutation deleteLevel4 ($id: String!) {
+  deleteLevel4 (id: $id) {
+    id
+    name
+  }
+}`;
+export const DELETE_LEVEL_5 = gql`
+mutation deleteLevel5 ($id: String!) {
+  deleteLevel5 (id: $id) {
+    id
+    name
+  }
+}`;
+export const DELETE_LEVEL_6 = gql`
+mutation deleteLevel6 ($id: String!) {
+  deleteLevel6 (id: $id) {
+    id
+    name
+  }
+}`;
+export const DELETE_LEVEL_7 = gql`
+mutation deleteLevel7 ($id: String!) {
+  deleteLevel7 (id: $id) {
     id
     name
   }
