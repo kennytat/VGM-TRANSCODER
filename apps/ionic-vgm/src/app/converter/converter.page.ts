@@ -95,10 +95,10 @@ export class ConverterPage implements OnInit {
       this.selectedTopics[level].options = [];
       const options = this.getOptions(itemID);
       if (options.id) { this.selectedItem = options }
-      if (this.selectedItem.children && this.selectedItem.children.length > 0 && this.selectedItem.isLeaf !== true) {
+      if (this.selectedItem.children && this.selectedItem.children.length > 0 && this.selectedItem.isLeaf === false) {
         this.selectedTopics[level].options = this.selectedItem.children;
       }
-      console.log('on select video', this.isVideo, level, itemID, this.selectedItem);
+      console.log('selected', this.selectedItem);
     }
   }
 
@@ -114,7 +114,7 @@ export class ConverterPage implements OnInit {
       if (item.id === id) {
         selected = item
       }
-      if (item.children && item.children.length > 0 && item.isLeaf !== true) {
+      if (item.children && item.children.length > 0 && item.isLeaf !== null) {
         item.children.filter(getItem)
       }
     });
@@ -182,10 +182,9 @@ export class ConverterPage implements OnInit {
         isLeaf: true,
       }
     }).subscribe(async ({ data }) => {
-      console.log(data);
+      console.log('updated', data);
     }, (error) => {
       console.log('error sending update isleaf mutation', error);
-
     });
   }
 
@@ -204,7 +203,12 @@ export class ConverterPage implements OnInit {
   }
 
   test() {
-    console.log(this.level1.options, '\n', this.level2.options, '\n', this.level3.options, '\n', this.level4.options, '\n', this.level5.options);
+    // this.updateIsLeaf();
+    // console.log(this.level1.options, '\n', this.level2.options, '\n', this.level3.options, '\n', this.level4.options, '\n', this.level5.options);
+    const data = `/home/kennytat/Downloads/bigbig/BigBuck.mp4
+/home/kennytat/Downloads/bigbig/Bigbig-123.mp4`
+    console.log(data.split("\n"));
+
 
     //   console.log(this.level1.options, this.level2.options, this.level3.options, this.level4.options);
 

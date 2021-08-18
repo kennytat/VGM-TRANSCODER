@@ -334,6 +334,7 @@ try {
       files = argInPath;
     } else {
       files = execSync(`find ${argInPath} -regextype posix-extended -regex '.*.(mkv|mp4)'`, { encoding: "utf8" }).split('\n');
+      files.pop();
     }
     totalFiles = files.length;
     if (totalFiles > 0 && convertedFiles < totalFiles) {
@@ -536,32 +537,6 @@ try {
     });
 
   })
-
-  // ipcMain.on('exec-db-confirmation', (event, method) => {
-  //   let options;
-  //   if (method === 'updateDB') {
-  //     options = {
-  //       type: 'question',
-  //       buttons: ['Cancel', 'Update'],
-  //       defaultId: 0,
-  //       title: 'Update Confirmation',
-  //       message: 'Are you sure want to update selected entries',
-  //       detail: 'Update data will create new entry on IPFS',
-  //     }
-  //   } else if (method === 'deleteDB') {
-  //     options = {
-  //       type: 'question',
-  //       buttons: ['Cancel', 'Delete data'],
-  //       defaultId: 0,
-  //       title: 'Deletion Confirmation',
-  //       message: 'Are you sure want to delete selected entries',
-  //       detail: 'Delete data will not mutate original item on IPFS',
-  //     }
-  //   }
-  //   dialog.showMessageBox(win, options).then(result => {
-  //     event.sender.send('exec-confirm-message', method, result.response);
-  //   }).catch(err => { console.log(err) });
-  // })
 
   ipcMain.handle('exec-db-confirmation', async (event, method) => {
     let options;

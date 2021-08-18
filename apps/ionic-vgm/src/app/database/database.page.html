@@ -126,7 +126,13 @@
               <div class="data-info">
                 <ion-item>
                   <ion-grid *ngIf="selectedFileInfo[0]">
-                    <ion-row>
+                    <ion-row
+                      style="
+                        padding-bottom: 10px;
+                        border-bottom: 1px solid
+                          rgba(var(--ion-color-dark-rgb), 0.5);
+                      "
+                    >
                       <label>
                         <input
                           type="checkbox"
@@ -170,7 +176,6 @@
                         Metadata
                       </label>
                     </ion-row>
-                    <hr class="new" />
                     <ion-row>
                       <ion-col>
                         <div

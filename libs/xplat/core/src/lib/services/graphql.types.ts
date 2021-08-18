@@ -587,6 +587,9 @@ mutation createLevel2 (
     isVideo
     dblevel
     location
+    hash
+    duration
+    size
   }
 }`;
 
@@ -636,6 +639,9 @@ mutation createLevel3 (
     isVideo
     dblevel
     location
+    hash
+    duration
+    size
   }
 }`;
 
@@ -685,6 +691,9 @@ mutation createLevel4 (
     isVideo
     dblevel
     location
+    hash
+    duration
+    size
   }
 }`;
 
@@ -734,6 +743,9 @@ mutation createLevel5 (
     isVideo
     dblevel
     location
+    hash
+    duration
+    size
   }
 }`;
 
@@ -783,6 +795,9 @@ mutation createLevel6 (
     isVideo
     dblevel
     location
+    hash
+    duration
+    size
   }
 }`;
 
@@ -832,15 +847,18 @@ mutation createLevel7 (
     isVideo
     dblevel
     location
+    hash
+    duration
+    size
   }
 }`;
 
 export const UPDATE_LEVEL_2 = gql`
-mutation createLevel2 (
+mutation updateLevel2 (
   $id: String!,
   $isLeaf: Boolean,
   ) {
-  createLevel2 (
+  updateLevel2 (
     data:{
       id: $id
       isLeaf: $isLeaf
@@ -848,8 +866,8 @@ mutation createLevel2 (
     id
     pid
     isLeaf
-    url
     name
+    url
     isVideo
     dblevel
     location
@@ -857,11 +875,11 @@ mutation createLevel2 (
 }`;
 
 export const UPDATE_LEVEL_3 = gql`
-mutation createLevel3 (
+mutation updateLevel3 (
   $id: String!,
   $isLeaf: Boolean,
   ) {
-  createLevel3 (
+  updateLevel3 (
     data:{
       id: $id
       isLeaf: $isLeaf
@@ -878,11 +896,11 @@ mutation createLevel3 (
 }`;
 
 export const UPDATE_LEVEL_4 = gql`
-mutation createLevel4 (
+mutation updateLevel4 (
   $id: String!,
   $isLeaf: Boolean,
   ) {
-  createLevel4 (
+  updateLevel4 (
     data:{
       id: $id
       isLeaf: $isLeaf
@@ -899,11 +917,11 @@ mutation createLevel4 (
 }`;
 
 export const UPDATE_LEVEL_5 = gql`
-mutation createLevel5 (
+mutation updateLevel5 (
   $id: String!,
   $isLeaf: Boolean,
   ) {
-  createLevel5 (
+  updateLevel5 (
     data:{
       id: $id
       isLeaf: $isLeaf
@@ -920,11 +938,11 @@ mutation createLevel5 (
 }`;
 
 export const UPDATE_LEVEL_6 = gql`
-mutation createLevel6 (
+mutation updateLevel6 (
   $id: String!,
   $isLeaf: Boolean,
   ) {
-  createLevel6 (
+  updateLevel6 (
     data:{
       id: $id
       isLeaf: $isLeaf
@@ -941,11 +959,11 @@ mutation createLevel6 (
 }`;
 
 export const UPDATE_LEVEL_7 = gql`
-mutation createLevel7 (
+mutation updateLevel7 (
   $id: String!,
   $isLeaf: Boolean,
   ) {
-  createLevel7 (
+  updateLevel7 (
     data:{
       id: $id
       isLeaf: $isLeaf
