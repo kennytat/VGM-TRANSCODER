@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Subject, Subscription } from 'rxjs';
-// import { filter, map } from 'rxjs/operators';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import * as type from "./graphql.types";
 import { Apollo } from 'apollo-angular';
 import * as _ from 'lodash';
@@ -66,8 +65,6 @@ export class DataService {
       },
       fetchPolicy: 'network-only',
     }).valueChanges.subscribe(({ data }) => {
-
-      console.log('data change', isVideo, data);
       if (isVideo) {
         this.videoDB$.next([_.cloneDeep(data.level1Unique)]);
       } else {

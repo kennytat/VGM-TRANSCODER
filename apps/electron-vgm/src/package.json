@@ -1,21 +1,21 @@
 {
-  "name": "vgm",
+  "name": "vgm-converter",
   "version": "1.0.0",
-  "description": "Vgm description.",
+  "description": "VGM CONVERTER",
   "main": "index.js",
   "author": {
-    "name": "Your name",
-    "email": "name@company.com"
+    "name": "Kenny Tat",
+    "email": "kennytat.app@gmail.com"
   },
-  "homepage": "https://nstudio.io/xplat",
+  "homepage": "https://vgm.tv",
   "repository": {
-    "url": "https://github.com/nstudio/xplat"
+    "url": "https://vgm.tv"
   },
   "license": "MIT",
   "build": {
-    "appId": "com.company.vgm",
-    "productName": "Vgm",
-    "copyright": "Copyright © 2018-2019 vgm-converter",
+    "appId": "com.converter.vgm",
+    "productName": "VGM",
+    "copyright": "Copyright © 2021-2025 vgm-converter",
     "asar": false,
     "npmRebuild": false,
     "directories": {
@@ -37,7 +37,7 @@
         "deb",
         "tar.gz"
       ],
-      "synopsis": "Vgm",
+      "synopsis": "VGM",
       "category": "Development"
     },
     "nsis": {

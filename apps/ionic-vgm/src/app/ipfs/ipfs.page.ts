@@ -42,8 +42,9 @@ export class IpfsPage {
         this.zone.run(() => {
           const log = res.split('\n');
           if (connection) {
+            this.stdOut = '';
             this.stdOut += res;
-            if (log[log.length - 2] === 'Daemon is ready') {
+            if (log[log.length - 2] === 'Daemon is ready' || log[0] === 'IPFS daemon has been connected') {
               this.isConnected = connection;
               this.isLoading = false;
               this._electronService.ipcRenderer.send('ipfs-ready', this.httpApiConfig);
@@ -51,7 +52,7 @@ export class IpfsPage {
           } else {
             this.isConnected = connection;
             this.isLoading = false;
-            this.stdOut = `${log[0]} connection has been closed sucessfully`;
+            this.stdOut = `${log[0]} daemon has been closed sucessfully`;
           }
 
         })

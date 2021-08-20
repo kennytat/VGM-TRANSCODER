@@ -160,118 +160,31 @@ export class DatabasePage implements OnInit {
     this.dataService.fetchDB(this.isVideo)
   }
 
-  async test() {
-    this.videoTree = await [new TreeviewItem(this.dataService.videoTree)];
-    this.audioTree = await [new TreeviewItem(this.dataService.audioTree)];
-    // const item = {
-    //   pid: '00000000-0000-0000-0000-000000000001',
-    //   location: '/VGMV/01_BaiGiang/CacDienGia/BigBuck54',
-    //   name: 'BigBuck544564234ghbhm5',
-    //   size: 13,
-    //   duration: '9:56',
-    //   qm: 'QmWfVY9y3xjsixTgbd9AorQxH7VtMpzfx2HaWtsoUYecaX',
-    //   url: '01-bai-giang.cac-dien-gia.bigbuck54456',
-    //   hash: 'U2FsdGVkX18u7ANXFPc8AbRimF0zGNAEyHB8qHaEOcSEA9mhcEyPrnW35SE/miWgTPghsPoAzxHyxEpyP9oMMA==',
-    //   isVideo: true,
-    //   dblevel: 2
-    // }
-    // console.log(item.url);
+  test() {
+    if (this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.send('test')
 
-    // await this.apollo.mutate<any>({
-    //   mutation: type.CREATE_LEVEL_2,
-    //   variables: {
-    //     pid: item.pid,
-    //     location: item.location,
-    //     url: item.url,
-    //     isVideo: item.isVideo,
-    //     name: item.name,
-    //     qm: item.qm,
-    //     hash: item.hash,
-    //     duration: item.duration,
-    //     size: item.size
-    //   }
-    // }).subscribe(async ({ data }) => {
-    //   console.log(data);
-    // }, (error) => {
-    //   console.log('there was an error sending the query', error);
-    // });
+      // this._electronService.ipcRenderer.on('test-response', (event, res) => {
+      //   console.log('test-response', res);
 
+      // })
 
-
-    // this.allData = this.apollo.watchQuery<any>({
-    //   query: type.ALL_DATA,
-    //   variables: {
-    //     id: '00000000-0000-0000-0000-000000000001'
-    //   }
-    // }).valueChanges.subscribe(({ data }) => {
-
-    //   let test = [_.cloneDeep(data.level1Unique)]
-    //   test.push(2)
-    //   // this.dataService.videoDB$.next([...data.level1Unique]);
-    //   // this.dataService.videoDB$.next([...data.level1Unique]);
-    //   // this.videoFiles = this.getAllItem(true);
-    //   console.log(test);
-
-    // })
-
-    // this._electronService.ipcRenderer.send('test');
-
-    // this.getAllItem(true);
-    // this.getAllItem(false);
-    // console.log(this.videoFiles, this.audioFiles);
-    // this.dataService..push('asdfasdf')
-    // console.log(this.dataService.videoDB)
-    // console.log(this.audioFiles, this.audioDB)
+    }
   }
 
   async downloadDB() {
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.invoke('save-dialog', 'api').then(async (outpath) => {
-        const items: any[] = await this.getAllItem(this.isVideo);
-        items.forEach(item => { this._electronService.ipcRenderer.send('export-database', item, outpath, 'isFile') });
         const itemList: any[] = await this.getAllIsLeaf(this.isVideo);
-        itemList.forEach(item => { this._electronService.ipcRenderer.send('export-database', item, outpath, 'isLeaf') });
+        await itemList.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'isLeaf') });
         const topicList: any[] = await this.getAllNonLeaf(this.isVideo);
-        topicList.forEach(item => { this._electronService.ipcRenderer.send('export-database', item, outpath, 'nonLeaf') });
+        await topicList.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'nonLeaf') });
+        const items: any[] = await this.getAllItem(this.isVideo);
+        await items.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'isFile') });
+        await this._electronService.ipcRenderer.send('export-database', items, outpath, 'searchAPI')
+
       })
     }
-  }
-
-  async fetchLevel1(isVideo) {
-    let id: string;
-    if (isVideo) {
-      id = '00000000-0000-0000-0000-000000000001';
-    } else {
-      id = '00000000-0000-0000-0000-000000000002';
-    }
-    await this.apollo.watchQuery<any>({
-      query: type.ALL_DATA,
-      variables: {
-        id: id
-      }
-    }).valueChanges.subscribe(({ data }) => {
-      if (isVideo) {
-        this.dataService.videoDB$.next([_.cloneDeep(data.level1Unique)]);
-        this.videoFiles = this.getAllItem(true);
-      } else {
-        this.dataService.audioDB$.next([_.cloneDeep(data.level1Unique)]);
-        this.audioFiles = this.getAllItem(false);
-      }
-    })
-
-    await this.apollo.watchQuery<any>({
-      query: type.LEVEL_1_TREE,
-      variables: {
-        id: id
-      }
-    }).valueChanges.subscribe(({ data }) => {
-      const db: any = data.level1Unique;
-      if (isVideo) {
-        this.videoTree = [new TreeviewItem(db)];
-      } else {
-        this.audioTree = [new TreeviewItem(db)];
-      }
-    });
   }
 
   getAllItem(isVideo) {

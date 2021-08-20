@@ -196,8 +196,10 @@ try {
       ipfsInfo = ipfs;
       exec(`docker image inspect ${ipfs.image}`, (error, stdout, stderr) => {
         if (stdout) {
-          const cmd =
-            `docker run --name ${ipfs.container} \\
+          exec(`docker container inspect ${ipfs.container}`, (error, stdout, stderr) => {
+            if (stderr || error) {
+              const cmd =
+                `docker run --name ${ipfs.container} \\
             -p ${ipfs.swarmPort}:${ipfs.swarmPort} \\
             -p ${ipfs.swarmPort}:${ipfs.swarmPort}/udp \\
             -p ${ipfs.host}:${ipfs.gatewayPort}:${ipfs.gatewayPort} \\
@@ -209,19 +211,22 @@ try {
           -e 'MOUNT_POINT=/var/s3' \\
           -e 'IAM_ROLE=none' \\
           -i ${ipfs.image}`;
-
-          let child = spawn('sh', ['-c', cmd], { detached: true });
-          child.stdout.on('data', (data) => {
-            event.sender.send('ipfs-response', true, data.toString())
-          })
-          child.stderr.on('data', (data) => {
-            const options = {
-              type: 'warning',
-              title: 'Warning',
-              message: 'IPFS connection error',
-              detail: data.toString()
-            };
-            showMessageBox(options);
+              let child = spawn('sh', ['-c', cmd], { detached: true });
+              child.stdout.on('data', (data) => {
+                event.sender.send('ipfs-response', true, data.toString())
+              })
+              child.stderr.on('data', (data) => {
+                const options = {
+                  type: 'warning',
+                  title: 'Warning',
+                  message: 'IPFS connection error',
+                  detail: data.toString()
+                };
+                showMessageBox(options);
+              })
+            } else if (stdout) {
+              event.sender.send('ipfs-response', true, 'IPFS daemon has been connected')
+            }
           })
         } else {
           const options = {
@@ -400,7 +405,7 @@ try {
         const options = {
           type: 'warning',
           title: 'Stderror',
-          message: 'Error converting files',
+          message: data.toString(),
           detail: 'None expected standard errors occured, please try again.',
         };
         showMessageBox(options);
@@ -517,14 +522,44 @@ try {
 
     // console.log(test);
 
+    // // export json for meiliSeasrch from multiple json files
 
-    // event.sender.send('create-database')
+    // let meiliSearch: any = [];
+    // const apiFolder = '/home/kennytat/Desktop/vgm/API/items/single';
+    // fs.promises.readdir(apiFolder).then(files => {
+    //   let i = 0;
+    //   files.forEach(item => {
+    //     fs.promises.readFile(`${apiFolder}/${item}`, { encoding: "utf8" }).then(result => {
+    //       meiliSearch.push(JSON.parse(result));
+    //       i++
+    //       console.log(result, i);
+    //       if (i === files.length) {
+    //         const json: string = JSON.stringify(meiliSearch);
+    //         fs.writeFile('/home/kennytat/Desktop/search.json', json, 'utf8', function (err) {
+    //           if (err) throw err;
+    //         });
+    //       }
+    //     }).catch(err => {
+    //       console.log(err);
+    //     })
+    //   });
+    // }).catch((error) => {
+    //   console.log(error);
+    // });
+
 
   })
 
+
   ipcMain.on('export-database', async (event, item, outpath, isLeaf) => {
     let path: string;
-    const json: string = JSON.stringify(item, null, 2);
+    let json: string;
+    if (isLeaf === 'searchAPI') {
+      path = `${outpath.toString()}/API/searchAPI.json`
+      json = JSON.stringify(item);
+    } else {
+      json = JSON.stringify(item, null, 2);
+    }
     if (isLeaf === 'isFile') {
       path = `${outpath.toString()}/API/items/single/${item.url}.json`
     } else if (isLeaf === 'isLeaf') {
@@ -532,7 +567,7 @@ try {
     } else if (isLeaf === 'nonLeaf') {
       path = `${outpath.toString()}/API/topics/single/${item.url}.json`
     }
-    fs.writeFile(path, json, function (err) {
+    await fs.writeFile(path, json, function (err) {
       if (err) throw err;
     });
 
@@ -618,7 +653,13 @@ try {
 } catch (err) { }
 
 function quit() {
-  exec(`docker kill ${ipfsInfo.container}`, (error, stdout, stderr) => { console.log('kill ipfs container') })
+  if (ipfsInfo) {
+    exec(`docker container inspect ${ipfsInfo.container}`, (error, stdout, stderr) => {
+      if (stdout) {
+        exec(`docker kill ${ipfsInfo.container}`, (error, stdout, stderr) => { console.log(`ipfs container ${stdout} killed`) })
+      }
+    })
+  }
   if (process.platform !== 'darwin') {
     app.quit();
   }

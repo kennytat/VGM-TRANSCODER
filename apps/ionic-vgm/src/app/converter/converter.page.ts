@@ -68,9 +68,6 @@ export class ConverterPage implements OnInit {
       console.log(data);
       this.audioDB = data;
     });
-    // this.audioDB = audioDB
-    // console.log(this.videoDB);
-    // console.log(this.audioDB);
   }
   ngOnDestroy(): void {
     (this.videoDBSub, this.audioDBSub as Subscription).unsubscribe();
@@ -95,7 +92,7 @@ export class ConverterPage implements OnInit {
       this.selectedTopics[level].options = [];
       const options = this.getOptions(itemID);
       if (options.id) { this.selectedItem = options }
-      if (this.selectedItem.children && this.selectedItem.children.length > 0 && this.selectedItem.isLeaf === false) {
+      if (this.selectedItem.children && this.selectedItem.children.length > 0 && this.selectedItem.isLeaf !== null) {
         this.selectedTopics[level].options = this.selectedItem.children;
       }
       console.log('selected', this.selectedItem);
@@ -114,7 +111,7 @@ export class ConverterPage implements OnInit {
       if (item.id === id) {
         selected = item
       }
-      if (item.children && item.children.length > 0 && item.isLeaf !== null) {
+      if (item.children && item.children.length > 0 && item.isLeaf === false) {
         item.children.filter(getItem)
       }
     });
