@@ -192,14 +192,15 @@ try {
   });
 
   ipcMain.on('connect-ipfs', async (event, isConnected, ipfs) => {
-    if (!isConnected) {
-      ipfsInfo = ipfs;
-      exec(`docker image inspect ${ipfs.image}`, (error, stdout, stderr) => {
-        if (stdout) {
-          exec(`docker container inspect ${ipfs.container}`, (error, stdout, stderr) => {
-            if (stderr || error) {
-              const cmd =
-                `docker run --name ${ipfs.container} \\
+    if (ipfs.host === '127.0.0.1') {
+      if (!isConnected) {
+        ipfsInfo = ipfs;
+        exec(`docker image inspect ${ipfs.image}`, (error, stdout, stderr) => {
+          if (stdout) {
+            exec(`docker container inspect ${ipfs.container}`, (error, stdout, stderr) => {
+              if (stderr || error) {
+                const cmd =
+                  `docker run --name ${ipfs.container} \\
             -p ${ipfs.swarmPort}:${ipfs.swarmPort} \\
             -p ${ipfs.swarmPort}:${ipfs.swarmPort}/udp \\
             -p ${ipfs.host}:${ipfs.gatewayPort}:${ipfs.gatewayPort} \\
@@ -211,52 +212,62 @@ try {
           -e 'MOUNT_POINT=/var/s3' \\
           -e 'IAM_ROLE=none' \\
           -i ${ipfs.image}`;
-              let child = spawn('sh', ['-c', cmd], { detached: true });
-              child.stdout.on('data', (data) => {
-                event.sender.send('ipfs-response', true, data.toString())
-              })
-              child.stderr.on('data', (data) => {
+                let child = spawn('sh', ['-c', cmd], { detached: true });
+                child.stdout.on('data', (data) => {
+                  event.sender.send('ipfs-response', true, data.toString())
+                })
+                child.stderr.on('data', (data) => {
+                  const options = {
+                    type: 'warning',
+                    title: 'Warning',
+                    message: 'IPFS connection error',
+                    detail: data.toString()
+                  };
+                  showMessageBox(options);
+                })
+              } else if (stdout) {
+                event.sender.send('ipfs-response', true, 'Connected to local IPFS daemon')
+              }
+            })
+          } else {
+            const options = {
+              type: 'warning',
+              title: 'Warning',
+              message: 'IPFS Docker connection error',
+              detail: error.toString() || stderr.toString(),
+            };
+            showMessageBox(options);
+          }
+        })
+
+      } else {
+        exec(`docker container inspect ${ipfs.container}`, (error, stdout, stderr) => {
+          if (stdout) {
+            exec(`docker kill ${ipfs.container}`, (error, stdout, stderr) => {
+              if (stdout) {
+                event.sender.send('ipfs-response', false, `Local IPFS Container ${stdout.toString()} has been killed`)
+              } else {
                 const options = {
                   type: 'warning',
                   title: 'Warning',
-                  message: 'IPFS connection error',
-                  detail: data.toString()
+                  message: 'IPFS Docker Error',
+                  detail: error.toString() || stderr.toString(),
                 };
                 showMessageBox(options);
-              })
-            } else if (stdout) {
-              event.sender.send('ipfs-response', true, 'IPFS daemon has been connected')
-            }
-          })
-        } else {
-          const options = {
-            type: 'warning',
-            title: 'Warning',
-            message: 'IPFS Docker connection error',
-            detail: error.toString() || stderr.toString(),
-          };
-          showMessageBox(options);
-        }
-      })
-
+              }
+            })
+          }
+        })
+      }
     } else {
-      exec(`docker kill ${ipfs.container}`, (error, stdout, stderr) => {
+      exec(`curl -X POST ${ipfs.host}/api/v0/id`, (error, stdout, stderr) => {
         if (stdout) {
-          event.sender.send('ipfs-response', false, stdout)
+          event.sender.send('ipfs-response', true, 'Connected to IPFS gateway daemon')
         } else {
-          const options = {
-            type: 'warning',
-            title: 'Warning',
-            message: 'IPFS Docker Error',
-            detail: error.toString() || stderr.toString(),
-          };
-          showMessageBox(options);
+          event.sender.send('ipfs-response', false, 'IPFS Gateway HTTP API Connection Error')
         }
       })
-
     }
-
-
   })
 
   ipcMain.on('ipfs-ready', async (event, httpApiConfig) => {
@@ -498,7 +509,12 @@ try {
 
 
   ipcMain.on('test', async (event) => {
-    // ipfsClient = create();
+    // ipfsClient = create({
+    //   url: 'http://ipfs.hjm.bid',
+    //   port: 80,
+    //   protocol: 'http',
+    //   apiPath: '/api/v0'
+    // });
     // const config = ipfsClient.getEndpointConfig();
     // console.log(config);
     // const ipfsout = await ipfsClient.add('Hello world')
@@ -510,17 +526,25 @@ try {
     // const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/testfolder', { recursive: true }))
     // console.log(ci);
     // console.log(arg);
+    const id = await ipfsClient.id();
+    console.log(id);
+    const online = await ipfsClient.isOnline();
+    console.log(online)
 
-    // fs.appendFile('/home/kennytat/Desktop/newfolder/mynewfile1.txt', 'Hello content!', function (err) {
-    //   if (err) throw err;
-    //   console.log('Saved!');
-    // });
+    // const ipfsOut: any = await ipfsClient.add('hello world');
+    // console.log(ipfsOut);
+
+    // if (ipfsOut) {
+    //   const cid: CID = ipfsOut.cid;
+    //   console.log(cid);
+    // }
+
 
 
     // const secretKey = slice(0, 32, 'jashdkfhjkahj4350pdfvkhdv');
     // const test = CryptoJS.AES.encrypt('fileInfo.qm', secretKey).toString();
 
-    // console.log(test);
+    // console.log('test called');
 
     // // export json for meiliSeasrch from multiple json files
 

@@ -22,12 +22,13 @@
               ></ion-spinner>
               <ion-button
                 fill="{{isConnected? 'solid' : 'outline'}}"
-                color="{{isConnected? 'warning' : 'primary'}}"
+                color="{{isConnected? ipfsConfig.host === 'localhost' ? 'warning'
+                : 'success' : 'primary'}}"
                 slot="end"
-                style="margin-left: 10px"
+                style="margin-left: 10px; font-weight: bold"
                 (click)="ipfsConnect()"
-                >{{isConnected ? 'Disconnect': isLoading? 'Connecting' :
-                'Connect'}}</ion-button
+                >{{isConnected ? ipfsConfig.host === 'localhost' ? 'Disconnect'
+                :'Connected': isLoading? 'Connecting' : 'Connect'}}</ion-button
               >
             </ion-item>
           </div>

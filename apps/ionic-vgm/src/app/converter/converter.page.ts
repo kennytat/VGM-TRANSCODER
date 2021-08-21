@@ -20,11 +20,6 @@ interface SelectedTopic {
 })
 export class ConverterPage implements OnInit {
   isVideo: boolean = true;
-  videoDBSub: Subscription
-  audioDBSub: Subscription
-  videoDB: any[] = [];
-  audioDB: any[] = [];
-
   level1: SelectedTopic = {
     level: 1, id: '0', options: [
       { name: 'videoDB', id: '00000000-0000-0000-0000-000000000001', location: '/VGMV', url: '' },
@@ -58,20 +53,8 @@ export class ConverterPage implements OnInit {
   }
 
 
-  ngOnInit() {
-    this.videoDBSub = this.dataService.videoDB$.subscribe((data) => {
-      console.log(data);
-      this.videoDB = data;
-    });
+  ngOnInit() { }
 
-    this.audioDBSub = this.dataService.audioDB$.subscribe((data) => {
-      console.log(data);
-      this.audioDB = data;
-    });
-  }
-  ngOnDestroy(): void {
-    (this.videoDBSub, this.audioDBSub as Subscription).unsubscribe();
-  }
 
 
 
@@ -92,7 +75,7 @@ export class ConverterPage implements OnInit {
       this.selectedTopics[level].options = [];
       const options = this.getOptions(itemID);
       if (options.id) { this.selectedItem = options }
-      if (this.selectedItem.children && this.selectedItem.children.length > 0 && this.selectedItem.isLeaf !== null) {
+      if (this.selectedItem.children && this.selectedItem.children.length > 0 && this.selectedItem.isLeaf === false) {
         this.selectedTopics[level].options = this.selectedItem.children;
       }
       console.log('selected', this.selectedItem);
@@ -103,9 +86,9 @@ export class ConverterPage implements OnInit {
     let selected: any = {};
     let db: any[] = []
     if (this.isVideo) {
-      db = this.videoDB
+      db = this.dataService.videoDB
     } else {
-      db = this.audioDB
+      db = this.dataService.audioDB
     }
     db.filter(function getItem(item) {
       if (item.id === id) {
@@ -171,17 +154,18 @@ export class ConverterPage implements OnInit {
     });
   }
 
-  async updateIsLeaf() {
-    await this.apollo.mutate<any>({
-      mutation: this.selectedTopics[this.selectedItem.dblevel - 1].updateGQL,
+  updateIsLeaf(item, count) {
+    this.apollo.mutate<any>({
+      mutation: this.selectedTopics[item.dblevel - 1].updateGQL,
       variables: {
-        id: this.selectedItem.id,
+        id: item.id,
         isLeaf: true,
+        count: count
       }
-    }).subscribe(async ({ data }) => {
-      console.log('updated', data);
+    }).subscribe(({ data }) => {
+      console.log(data);
     }, (error) => {
-      console.log('error sending update isleaf mutation', error);
+      console.log('error updating isLeaf', error);
     });
   }
 
@@ -301,15 +285,16 @@ export class ConverterPage implements OnInit {
         this._electronService.ipcRenderer.send('error-message', 'missing-path');
       } else {
         this.isConverting = true;
-        this.updateIsLeaf();
         this._electronService.ipcRenderer.send('start-convert', this.inputPath, this.outputPath, this.fileCheckbox, this.selectedItem);
         this._electronService.ipcRenderer.on('exec-done', (event) => {
           this.zone.run(() => {
+            this.updateIsLeaf(this.selectedItem, this.totalFiles);
             this.isConverting = false;
             this.progressLoading = false;
             this.progressionStatus = 0;
             this.outputPath = '';
             this.inputPath = '';
+            this.dataService.fetchDB(this.isVideo);
           });
         });
 
@@ -340,6 +325,7 @@ export class ConverterPage implements OnInit {
         this.isConverting = false;
         this.inputPath = '';
         this.outputPath = '';
+        this.dataService.fetchDB(this.isVideo);
       })
     }
   }

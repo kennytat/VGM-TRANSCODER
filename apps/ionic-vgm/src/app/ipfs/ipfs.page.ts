@@ -10,14 +10,8 @@ export class IpfsPage {
   isConnected: boolean = false;
   isLoading: boolean = false;
   stdOut: any = '';
-  httpApiConfig = {
-    host: '127.0.0.1',
-    port: '5001',
-    protocol: 'http',
-    apiPath: '/api/v0'
-  }
   ipfsConfig = {
-    host: '127.0.0.1',
+    host: 'ipfs.hjm.bid',
     apiPort: '5001',
     swarmPort: '4001',
     gatewayPort: '8080',
@@ -27,6 +21,12 @@ export class IpfsPage {
     bucket: 'vgm-ipfs',
     image: 'ipfs/image',
     container: 'ipfsContainer'
+  }
+  httpApiConfig = {
+    url: 'http://ipfs.hjm.bid',
+    port: 80,
+    protocol: 'http',
+    apiPath: '/api/v0'
   }
   constructor(
     private _electronService: ElectronService,
@@ -42,9 +42,8 @@ export class IpfsPage {
         this.zone.run(() => {
           const log = res.split('\n');
           if (connection) {
-            this.stdOut = '';
             this.stdOut += res;
-            if (log[log.length - 2] === 'Daemon is ready' || log[0] === 'IPFS daemon has been connected') {
+            if (log[log.length - 2] === 'Daemon is ready' || log[0] === 'Connected to local IPFS daemon' || log[0] === 'Connected to IPFS gateway daemon') {
               this.isConnected = connection;
               this.isLoading = false;
               this._electronService.ipcRenderer.send('ipfs-ready', this.httpApiConfig);
@@ -52,7 +51,7 @@ export class IpfsPage {
           } else {
             this.isConnected = connection;
             this.isLoading = false;
-            this.stdOut = `${log[0]} daemon has been closed sucessfully`;
+            this.stdOut = res;
           }
 
         })

@@ -680,29 +680,6 @@
                   "**/*.ts"
                 ],
                 "output": ""
-              },
-              {
-                "glob": "**/*",
-                "input": "./prisma",
-                "output": "./prisma",
-                "ignore": [
-                  "*.ts"
-                ]
-              },
-              {
-                "glob": "*.key",
-                "input": "./",
-                "output": "./"
-              },
-              {
-                "glob": "*.keyinfo",
-                "input": "./",
-                "output": "./"
-              },
-              {
-                "glob": "*.sh",
-                "input": "./",
-                "output": "./"
               }
             ],
             "styles": [

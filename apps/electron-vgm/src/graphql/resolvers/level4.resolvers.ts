@@ -28,6 +28,9 @@ export class Level4UpdateInput {
   @Field((type) => Boolean, { nullable: true })
   isLeaf?: boolean
 
+  @Field((type) => Int, { nullable: true })
+  count?: number
+
 }
 @InputType()
 export class Level4CreateInput {
@@ -176,6 +179,7 @@ export class Level4Resolver {
       },
       data: {
         isLeaf: data.isLeaf,
+        count: data.count
       },
     })
   }

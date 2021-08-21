@@ -240,6 +240,7 @@ input Level2CreateInput {
 input Level2UpdateInput {
   id: String!
   isLeaf: Boolean
+  count: Int
 }
 
 input Level3CreateInput {
@@ -264,6 +265,7 @@ input Level3CreateInput {
 input Level3UpdateInput {
   id: String!
   isLeaf: Boolean
+  count: Int
 }
 
 input Level4CreateInput {
@@ -288,6 +290,7 @@ input Level4CreateInput {
 input Level4UpdateInput {
   id: String!
   isLeaf: Boolean
+  count: Int
 }
 
 input Level5CreateInput {
@@ -312,6 +315,7 @@ input Level5CreateInput {
 input Level5UpdateInput {
   id: String!
   isLeaf: Boolean
+  count: Int
 }
 
 input Level6CreateInput {
@@ -336,6 +340,7 @@ input Level6CreateInput {
 input Level6UpdateInput {
   id: String!
   isLeaf: Boolean
+  count: Int
 }
 
 input Level7CreateInput {

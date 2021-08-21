@@ -857,11 +857,13 @@ export const UPDATE_LEVEL_2 = gql`
 mutation updateLevel2 (
   $id: String!,
   $isLeaf: Boolean,
+  $count: Int
   ) {
   updateLevel2 (
     data:{
-      id: $id
-      isLeaf: $isLeaf
+      id: $id,
+      isLeaf: $isLeaf,
+      count: $count
   }) {
     id
     pid
@@ -871,6 +873,7 @@ mutation updateLevel2 (
     isVideo
     dblevel
     location
+    count
   }
 }`;
 
@@ -878,11 +881,13 @@ export const UPDATE_LEVEL_3 = gql`
 mutation updateLevel3 (
   $id: String!,
   $isLeaf: Boolean,
+  $count: Int
   ) {
   updateLevel3 (
     data:{
       id: $id
-      isLeaf: $isLeaf
+      isLeaf: $isLeaf,
+      count: $count
   }) {
     id
     pid
@@ -892,6 +897,7 @@ mutation updateLevel3 (
     isVideo
     dblevel
     location
+    count
   }
 }`;
 
@@ -899,11 +905,13 @@ export const UPDATE_LEVEL_4 = gql`
 mutation updateLevel4 (
   $id: String!,
   $isLeaf: Boolean,
+  $count: Int
   ) {
   updateLevel4 (
     data:{
       id: $id
-      isLeaf: $isLeaf
+      isLeaf: $isLeaf,
+      count: $count
   }) {
     id
     pid
@@ -913,6 +921,7 @@ mutation updateLevel4 (
     isVideo
     dblevel
     location
+    count
   }
 }`;
 
@@ -920,11 +929,13 @@ export const UPDATE_LEVEL_5 = gql`
 mutation updateLevel5 (
   $id: String!,
   $isLeaf: Boolean,
+  $count: Int
   ) {
   updateLevel5 (
     data:{
       id: $id
-      isLeaf: $isLeaf
+      isLeaf: $isLeaf,
+      count: $count
   }) {
     id
     pid
@@ -934,6 +945,7 @@ mutation updateLevel5 (
     isVideo
     dblevel
     location
+    count
   }
 }`;
 
@@ -941,11 +953,13 @@ export const UPDATE_LEVEL_6 = gql`
 mutation updateLevel6 (
   $id: String!,
   $isLeaf: Boolean,
+  $count: Int
   ) {
   updateLevel6 (
     data:{
-      id: $id
-      isLeaf: $isLeaf
+      id: $id,
+      isLeaf: $isLeaf,
+      count: $count
   }) {
     id
     pid
@@ -955,6 +969,7 @@ mutation updateLevel6 (
     isVideo
     dblevel
     location
+    count
   }
 }`;
 
@@ -976,6 +991,7 @@ mutation updateLevel7 (
     isVideo
     dblevel
     location
+    count
   }
 }`;
 

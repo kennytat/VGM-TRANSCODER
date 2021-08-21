@@ -109,7 +109,6 @@ export class DatabasePage implements OnInit {
         this.audioTree = [new TreeviewItem(data)];
       }
     });
-
   }
 
   showDiv(divVal: string) {
@@ -150,9 +149,9 @@ export class DatabasePage implements OnInit {
         size: item.size
       }
     }).subscribe(async ({ data }) => {
-      console.log(data);
+      console.log('created', data);
     }, (error) => {
-      console.log('there was an error sending the query', error);
+      console.log('error creating new item', error);
     });
   }
 

@@ -6,7 +6,7 @@
     "ng": "nx",
     "postinstall": "node patch.js && node ./decorate-angular-cli.js && ngcc --properties es2015 browser module main && electron-rebuild install-app-deps",
     "nx": "nx",
-    "start": "ng serve",
+    "start": "ng serve --live-reload false",
     "build": "ng build",
     "test": "ng test",
     "lint": "nx workspace-lint && ng lint",
@@ -92,7 +92,6 @@
     "zone.js": "~0.11.4"
   },
   "devDependencies": {
-    "@angular-builders/custom-webpack": "^12.1.0",
     "@angular-devkit/architect": "~0.1102.0",
     "@angular-devkit/build-angular": "~0.1102.0",
     "@angular-devkit/core": "~11.2.0",
