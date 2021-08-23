@@ -261,7 +261,7 @@ try {
       }
     } else {
       exec(`curl -X POST ${ipfs.host}/api/v0/id`, (error, stdout, stderr) => {
-        if (stdout) {
+        if (JSON.parse(stdout).ID) {
           event.sender.send('ipfs-response', true, 'Connected to IPFS gateway daemon')
         } else {
           event.sender.send('ipfs-response', false, 'IPFS Gateway HTTP API Connection Error')
@@ -427,8 +427,8 @@ try {
       conversion.on('close', async (code) => {
         if (code == 0) {
           if (ipfsClient) {
-            const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
-            if (ipfsOut) {
+            try {
+              const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
               const cid: CID = ipfsOut.cid;
               console.log(cid);
               fileInfo.qm = cid.toString();
@@ -437,6 +437,8 @@ try {
               fileInfo.size = ipfsOut.size;
               console.log(fileInfo);
               event.sender.send('create-database', fileInfo);
+            } catch (err) {
+              console.log('ipfs add error', err);
             }
           } else {
             event.sender.send('create-database', fileInfo);
@@ -521,15 +523,21 @@ try {
     // const cid: CID = ipfsout.cid;
     // console.log(cid);
     // console.log(cid.toString());
-    // const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }))
-    // console.log(ci);
+    try {
+      const test = await ipfsClient.add('Hello world')
+      console.log(test);
+      const ci = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }))
+      console.log(ci);
+    } catch (err) {
+      console.log('error', err);
+    }
     // const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/testfolder', { recursive: true }))
     // console.log(ci);
     // console.log(arg);
-    const id = await ipfsClient.id();
-    console.log(id);
-    const online = await ipfsClient.isOnline();
-    console.log(online)
+    // const id = await ipfsClient.id();
+    // console.log(id);
+    // const online = await ipfsClient.isOnline();
+    // console.log(online)
 
     // const ipfsOut: any = await ipfsClient.add('hello world');
     // console.log(ipfsOut);

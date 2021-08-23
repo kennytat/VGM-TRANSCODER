@@ -11,7 +11,7 @@ export class IpfsPage {
   isLoading: boolean = false;
   stdOut: any = '';
   ipfsConfig = {
-    host: 'ipfs.hjm.bid',
+    host: 'http://ipfs.hjm.bid', // '127.0.0.1'
     apiPort: '5001',
     swarmPort: '4001',
     gatewayPort: '8080',
@@ -23,10 +23,12 @@ export class IpfsPage {
     container: 'ipfsContainer'
   }
   httpApiConfig = {
-    url: 'http://ipfs.hjm.bid',
-    port: 80,
+    // url: 'http://ipfs.hjm.bid:80/api/v0'
+    host: 'http://ipfs.hjm.bid',
+    port: 80, // or 5001
     protocol: 'http',
-    apiPath: '/api/v0'
+    apiPath: '/api/v0',
+    timeout: '6h'
   }
   constructor(
     private _electronService: ElectronService,

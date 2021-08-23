@@ -108,7 +108,7 @@ export class ConverterPage implements OnInit {
     const nonVietnamese = await this.nonAccentVietnamese(value);
     const pList = [...this.selectedTopics[level - 2].options];
     const [pItem] = pList.filter((item) => item.id.includes(pid));
-    console.log('parent', pid, pItem, pList);
+    // console.log('parent', pid, pItem, pList);
 
     this.selectedTopics[level - 1].name = '';
     await this.apollo.mutate<any>({
@@ -142,7 +142,7 @@ export class ConverterPage implements OnInit {
       }
       await this.selectedTopics[level - 1].options.push(this.selectedItem)
       await this.dataService.fetchDB(this.isVideo);
-      console.log(this.selectedItem);
+      // console.log(this.selectedItem);
 
       await this.selectOptionChange(level, this.selectedItem.id)
 
@@ -186,9 +186,9 @@ export class ConverterPage implements OnInit {
   test() {
     // this.updateIsLeaf();
     // console.log(this.level1.options, '\n', this.level2.options, '\n', this.level3.options, '\n', this.level4.options, '\n', this.level5.options);
-    const data = `/home/kennytat/Downloads/bigbig/BigBuck.mp4
-/home/kennytat/Downloads/bigbig/Bigbig-123.mp4`
-    console.log(data.split("\n"));
+    //     const data = `/home/kennytat/Downloads/bigbig/BigBuck.mp4
+    // /home/kennytat/Downloads/bigbig/Bigbig-123.mp4`
+    //     console.log(data.split("\n"));
 
 
     //   console.log(this.level1.options, this.level2.options, this.level3.options, this.level4.options);
@@ -260,7 +260,7 @@ export class ConverterPage implements OnInit {
   OpenDialog() {
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.invoke('open-dialog', this.fileCheckbox).then((inpath) => {
-        console.log(inpath);
+        // console.log(inpath);
         this.zone.run(() => {
           this.inputPath = inpath;
         })

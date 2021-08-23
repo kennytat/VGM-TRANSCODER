@@ -86,10 +86,13 @@
         "User-Agent"
       ],
       "Access-Control-Allow-Methods": [
-        "GET"
+        "PUT", "POST", "GET"
       ],
       "Access-Control-Allow-Origin": [
         "*"
+      ],
+      "Access-Control-Allow-Credentials": [
+        "true"
       ]
     },
     "RootRedirect": "",
