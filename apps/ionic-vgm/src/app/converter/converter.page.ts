@@ -33,9 +33,9 @@ export class ConverterPage implements OnInit {
   level6: SelectedTopic = { level: 6, id: '0', createGQL: type.CREATE_LEVEL_6, updateGQL: type.UPDATE_LEVEL_6, options: [] }
   selectedTopics = [this.level1, this.level2, this.level3, this.level4, this.level5, this.level6]
   selectedItem: any;
+  selectedLevel: string = '0';
   // Declare variable for conversion feature
   inputPath: string | string[] = '';
-  // inputPathShort = '';
   outputPath: string | string[] = '';
   fileCheckbox: boolean;
   isConverting: boolean = false;
@@ -59,16 +59,17 @@ export class ConverterPage implements OnInit {
 
 
   selectOptionChange(level, itemID) {
+    this.selectedLevel = level;
     if (itemID === this.level1.options[0].id) {
       this.isVideo = true;
     } else if (itemID === this.level1.options[1].id) {
       this.isVideo = false;
     }
-
     if (itemID === '0') {
       this.selectedTopics[level - 1].id = '0';
     } else if (itemID === '1') {
       this.selectedTopics[level - 1].id = '1';
+
     } else {
       this.selectedTopics[level - 1].id = itemID;
       this.selectedTopics[level].id = '0';

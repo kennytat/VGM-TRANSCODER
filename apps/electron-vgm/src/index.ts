@@ -280,7 +280,7 @@ try {
     if (isfile === true) {
       options = {
         title: 'Browse Video Folder',
-        filters: [{ name: 'Movies', extensions: ['mkv', 'avi', 'mp4'] }],
+        filters: [{ name: 'Media', extensions: ['mkv', 'avi', 'mp4', 'm4a', 'mp3', 'wav', 'wma', 'aac', 'webm'] }],
         properties: ['openFile', 'multiSelections']
       }
     } else {
@@ -345,6 +345,7 @@ try {
     let totalFiles: number = 0;
     let convertedFiles: number = 0;
     let progression_status: number = 0;
+    let fileType: string;
     // Get total input file count 
     if (fileOnly) {
       files = argInPath;
@@ -354,7 +355,12 @@ try {
     }
     totalFiles = files.length;
     if (totalFiles > 0 && convertedFiles < totalFiles) {
-      startConvert(files, 0);
+      if (pItem.isVideo) {
+        fileType = 'video';
+      } else {
+        fileType = 'audio';
+      }
+      startConvert(files, 0, fileType);
     } else {
       const options = {
         type: 'warning',
@@ -367,15 +373,14 @@ try {
     }
 
 
-    async function startConvert(files: string[], index: number) {
+    async function startConvert(files: string[], index: number, fileType: string) {
       let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
       let metaData: any = [];
       // get file Info
       metaData = await execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${files[index]}"`, { encoding: "utf8" }).split('\n');
       // Then run ffmpeg to start convert
-      const fps_stat: string = metaData.filter(name => name.includes("avg_frame_rate=")).toString();
       const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
-      const duration: number = parseFloat(duration_stat.match(/\d+\.\d+/)[0]);
+      const duration: number = parseFloat(duration_stat.replace(/duration=/g, ''));
       const minutes: number = Math.floor(duration / 60);
       fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
       fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
@@ -388,14 +393,15 @@ try {
       fileInfo.isVideo = pItem.isVideo;
       fileInfo.pid = pItem.id;
       fileInfo.dblevel = pItem.dblevel + 1;
-      const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${outPath}"`]);
+      const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${outPath}"`, fileType]);
+
       conversion.stdout.on('data', async (data) => {
         // console.log(`conversion stdout: ${data}`, totalFiles, convertedFiles);
         const ffmpeg_progress_stat: string[] = data.toString().split('\n');
-        if (ffmpeg_progress_stat) {
+        if (ffmpeg_progress_stat && fileType === 'video') {
           // get fps and total duration
-          const converted_frames: string = ffmpeg_progress_stat.filter(name => name.includes("frame=")).pop();
-
+          const fps_stat: string = metaData.filter(name => name.includes("avg_frame_rate=")).toString();
+          const converted_frames: string = ffmpeg_progress_stat.filter(name => name.includes("frame=")).toString();
           if (fps_stat && duration_stat && converted_frames) {
             const fps: number = parseInt(fps_stat.match(/\d+/g)[0]) / parseInt(fps_stat.match(/\d+/g)[1]);
             // calculate total frames
@@ -408,9 +414,23 @@ try {
             }
           }
           event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+        } else if (ffmpeg_progress_stat && fileType === 'audio') {
+          // get converted time
+          const time_stat: string = ffmpeg_progress_stat.filter(time => time.includes('out_time_ms=')).toString();
+          if (time_stat && duration_stat) {
+            const converted_time: number = parseInt(time_stat.replace(/[(out_time_ms=)\.]/g, ''));
+            const audio_duration: number = parseInt(duration_stat.replace(/[(duration=)\.]/g, ''));
+            // calculate progress
+            if (converted_time && audio_duration) {
+              progression_status = converted_time / audio_duration;
+            }
+          }
+          event.sender.send('progression', progression_status, convertedFiles, totalFiles);
         }
 
       });
+
+
 
       conversion.stderr.on('data', async (data) => {
         const options = {
@@ -454,7 +474,7 @@ try {
             showMessageBox(options);
             event.sender.send('exec-done');
           } else {
-            startConvert(files, index + 1);
+            startConvert(files, index + 1, fileType);
           }
         }
         console.log(`child process exited with code ${code}`, convertedFiles);
@@ -524,10 +544,16 @@ try {
     // console.log(cid);
     // console.log(cid.toString());
     try {
+      const now = new Date()
+      const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+      console.log(timenow);
       const test = await ipfsClient.add('Hello world')
       console.log(test);
       const ci = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }))
       console.log(ci);
+      const later = new Date()
+      const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
+      console.log(timelater);
     } catch (err) {
       console.log('error', err);
     }

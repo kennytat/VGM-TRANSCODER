@@ -92,7 +92,7 @@
                 <ion-col
                   size="6"
                   class="no-vertical-padding"
-                  *ngIf="i >= 1 ? selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1' : false || level.level === 1  "
+                  *ngIf="level.level === 1 || i >= 1 && selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1' && selectedLevel >= i"
                 >
                   <select
                     [(ngModel)]="level.id"
@@ -121,7 +121,7 @@
                 <ion-col
                   style="width: 100%"
                   class="no-vertical-padding"
-                  *ngIf="level.id === '1' && i !== 0"
+                  *ngIf="level.id === '1' && i !== 0 && selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1'  && selectedLevel >= i"
                 >
                   <ion-input
                     [(ngModel)]="level.name"
@@ -167,9 +167,20 @@
                   >
                     <ion-spinner
                       name="lines-small"
-                      style="width: 20px"
+                      style="width: 20px; color: var(--ion-color-warning)"
                       *ngIf="progressLoading"
                     ></ion-spinner>
+                    <ion-text
+                      position="stacked"
+                      class="sub-text"
+                      style="
+                        color: var(--ion-color-warning);
+                        margin-right: 10px;
+                      "
+                      *ngIf="progressLoading"
+                    >
+                      Uploading to IPFS
+                    </ion-text>
                     <ion-text position="stacked" class="sub-text"
                       >{{progressionStatus*100 | number: '1.0-0'}} %</ion-text
                     >
