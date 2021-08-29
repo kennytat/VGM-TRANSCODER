@@ -16,9 +16,7 @@ import { join } from 'path'
 @Module({
   imports: [
     GraphQLModule.forRoot({
-      autoSchemaFile: join(process.cwd(), 'apps/electron-vgm/src/graphql/schema.gql'),
-
-
+      autoSchemaFile: join(process.cwd(), 'apps/electron-vgm/src/graphql/schema.gql')
     })
   ],
   controllers: [],

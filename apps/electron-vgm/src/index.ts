@@ -2,17 +2,17 @@ import { app, BrowserWindow, ipcMain, screen, dialog, Menu, globalShortcut } fro
 import * as path from 'path'
 import * as fs from 'fs'
 import * as url from 'url'
-import { exec, spawn, execSync, spawnSync } from 'child_process'
+import { exec, spawn, execSync } from 'child_process'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './graphql/app.module'
 import { create, globSource, CID } from 'ipfs-http-client'
 import * as CryptoJS from "crypto-js";
 import { slice } from 'ramda';
 
+
 let serve;
 const args = process.argv.slice(1);
 serve = args.some((val) => val === '--serve');
-
 
 let ipfsClient;
 let ipfsInfo;
@@ -62,9 +62,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   await app.listen(3000, () => {
     console.log(`
-🚀 Server ready at: http://localhost:3000/graphql
-⭐️ See sample queries: http://pris.ly/e/ts/graphql-nestjs#using-the-graphql-api
-`)
+  🚀 Server ready at: http://localhost:3000/graphql
+  ⭐️ See sample queries: http://pris.ly/e/ts/graphql-nestjs#using-the-graphql-api
+  `)
   })
 }
 /**
@@ -201,10 +201,10 @@ try {
               if (stderr || error) {
                 const cmd =
                   `docker run --name ${ipfs.container} \\
-            -p ${ipfs.swarmPort}:${ipfs.swarmPort} \\
-            -p ${ipfs.swarmPort}:${ipfs.swarmPort}/udp \\
-            -p ${ipfs.host}:${ipfs.gatewayPort}:${ipfs.gatewayPort} \\
-            -p ${ipfs.host}:${ipfs.apiPort}:${ipfs.apiPort} --rm --privileged \\
+            -p ${ipfs.swarmPort}:4001 \\
+            -p ${ipfs.swarmPort}:4001/udp \\
+            -p ${ipfs.host}:${ipfs.gatewayPort}:8080 \\
+            -p ${ipfs.host}:${ipfs.apiPort}:5001 --rm --privileged \\
           -e 'AWSACCESSKEYID=${ipfs.accessKey}' \\
           -e 'AWSSECRETACCESSKEY=${ipfs.secretKey}' \\
           -e 'ENDPOINT_URL=${ipfs.endPoint}' \\
@@ -261,9 +261,12 @@ try {
       }
     } else {
       exec(`curl -X POST ${ipfs.host}/api/v0/id`, (error, stdout, stderr) => {
-        if (JSON.parse(stdout).ID) {
+        const id = JSON.parse(stdout);
+        if (id.ID) {
+          console.log('ipfs gateway connection ready');
           event.sender.send('ipfs-response', true, 'Connected to IPFS gateway daemon')
         } else {
+          console.log('ipfs gateway connection fail');
           event.sender.send('ipfs-response', false, 'IPFS Gateway HTTP API Connection Error')
         }
       })
@@ -543,15 +546,17 @@ try {
     // const cid: CID = ipfsout.cid;
     // console.log(cid);
     // console.log(cid.toString());
+
+
     try {
-      const now = new Date()
+      const now = new Date();
       const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
       console.log(timenow);
-      const test = await ipfsClient.add('Hello world')
+      const test = await ipfsClient.add('Hello world');
       console.log(test);
-      const ci = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }))
+      const ci = await ipfsClient.add(globSource('/home/kennytat/Desktop/nestjs', { recursive: true }));
       console.log(ci);
-      const later = new Date()
+      const later = new Date();
       const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
       console.log(timelater);
     } catch (err) {
@@ -640,7 +645,7 @@ try {
         defaultId: 0,
         title: 'Update Confirmation',
         message: 'Are you sure want to update selected entries',
-        detail: 'Update data will create new entry on IPFS',
+        detail: 'Update data will also update entries on network',
       }
     } else if (method === 'deleteDB') {
       options = {
@@ -649,7 +654,7 @@ try {
         defaultId: 0,
         title: 'Deletion Confirmation',
         message: 'Are you sure want to delete selected entries',
-        detail: 'Delete data will not mutate original item on IPFS',
+        detail: 'Delete data will also update entries on network',
       }
     }
     const result = dialog.showMessageBox(win, options).then(result => {

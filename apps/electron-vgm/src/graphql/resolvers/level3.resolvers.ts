@@ -31,6 +31,30 @@ export class Level3UpdateInput {
   @Field((type) => Int, { nullable: true })
   count?: number
 
+  @Field((type) => String, { nullable: true })
+  location?: string
+
+  @Field((type) => String, { nullable: true })
+  url?: string
+
+  @Field((type) => String, { nullable: true })
+  name?: string
+
+  @Field((type) => String, { nullable: true })
+  keyword?: string
+
+  @Field((type) => String, { nullable: true })
+  hash?: string
+
+  @Field((type) => Int, { nullable: true })
+  audience?: number
+
+  @Field((type) => Int, { nullable: true })
+  mtime?: number
+
+  @Field((type) => Int, { nullable: true })
+  viewCount?: number
+
 }
 @InputType()
 export class Level3CreateInput {
@@ -179,7 +203,15 @@ export class Level3Resolver {
       },
       data: {
         isLeaf: data.isLeaf,
-        count: data.count
+        count: data.count,
+        location: data.location,
+        name: data.name,
+        url: data.url,
+        keyword: data.keyword,
+        hash: data.hash,
+        audience: data.audience,
+        mtime: data.mtime,
+        viewCount: data.viewCount
       },
     })
   }

@@ -8,6 +8,13 @@ import { slice } from 'ramda';
 import * as type from 'libs/xplat/core/src/lib/services/graphql.types';
 import { DataService } from '@vgm-converter/xplat/core';
 import * as _ from 'lodash';
+import { MeiliSearch } from 'meilisearch';
+
+const client = new MeiliSearch({
+  host: 'http://search.vgm.tv',
+  apiKey: 'VGMs3@rch',
+})
+
 interface FileInfo {
   pid: string,
   location: string,
@@ -36,6 +43,14 @@ export class DatabasePage implements OnInit {
     type.CREATE_LEVEL_5,
     type.CREATE_LEVEL_6,
     type.CREATE_LEVEL_7,
+  ];
+  updateGQL: any[] = [
+    type.UPDATE_LEVEL_2,
+    type.UPDATE_LEVEL_3,
+    type.UPDATE_LEVEL_4,
+    type.UPDATE_LEVEL_5,
+    type.UPDATE_LEVEL_6,
+    type.UPDATE_LEVEL_7,
   ]
   deleteGQL: any[] = [
     type.DELETE_LEVEL_2,
@@ -50,6 +65,8 @@ export class DatabasePage implements OnInit {
   private videoTreeSub: Subscription
   private audioTreeSub: Subscription
   _dbInit = false;
+  _searchInit = false;
+  meiliSearch: any;
   // Declare variable for videoDB and audioDB seperately
   isVideo = true;
   // Declare variable and setting for mapping GQL data to ngx-Tree
@@ -102,11 +119,14 @@ export class DatabasePage implements OnInit {
     this.videoTreeSub = this.dataService.videoTree$.subscribe((data) => {
       if (data.value) {
         this.videoTree = [new TreeviewItem(data)];
+        console.log(this.videoTree);
+
       }
     });
     this.audioTreeSub = this.dataService.videoTree$.subscribe((data) => {
       if (data.value) {
         this.audioTree = [new TreeviewItem(data)];
+
       }
     });
   }
@@ -120,8 +140,20 @@ export class DatabasePage implements OnInit {
   }
   // Run function OnInit
   async ngOnInit() {
-    await this.dataService.dbInit();
-    this._dbInit = this.dataService._dbInit;
+    try {
+      await this.dataService.dbInit();
+      this._dbInit = this.dataService._dbInit;
+      const indexes = await client.listIndexes();
+      console.log('asdf', indexes);
+      if (indexes) {
+
+        this.meiliSearch = client.index('VGM')
+        this._searchInit = true;
+      }
+    } catch (error) {
+      console.log(error);
+
+    }
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.on('create-database', (event, fileInfo) => {
         this.createNewItem(fileInfo)
@@ -149,7 +181,28 @@ export class DatabasePage implements OnInit {
         size: item.size
       }
     }).subscribe(async ({ data }) => {
-      console.log('created', data);
+      console.log('created local DB', data);
+      switch (item.dblevel) {
+        case 2:
+          this.addSearch([data.createLevel2]);
+          break;
+        case 3:
+          this.addSearch([data.createLevel3]);
+          break;
+        case 4:
+          this.addSearch([data.createLevel4]);
+          break;
+        case 5:
+          this.addSearch([data.createLevel5]);
+          break;
+        case 6:
+          this.addSearch([data.createLevel6]);
+          break;
+        case 7:
+          this.addSearch([data.createLevel7]);
+          break;
+        default:
+      }
     }, (error) => {
       console.log('error creating new item', error);
     });
@@ -174,14 +227,15 @@ export class DatabasePage implements OnInit {
   async downloadDB() {
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.invoke('save-dialog', 'api').then(async (outpath) => {
-        const itemList: any[] = await this.getAllIsLeaf(this.isVideo);
-        await itemList.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'isLeaf') });
-        const topicList: any[] = await this.getAllNonLeaf(this.isVideo);
-        await topicList.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'nonLeaf') });
-        const items: any[] = await this.getAllItem(this.isVideo);
-        await items.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'isFile') });
-        await this._electronService.ipcRenderer.send('export-database', items, outpath, 'searchAPI')
-
+        if (outpath[0]) {
+          const itemList: any[] = await this.getAllIsLeaf(this.isVideo);
+          await itemList.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'isLeaf') });
+          const topicList: any[] = await this.getAllNonLeaf(this.isVideo);
+          await topicList.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'nonLeaf') });
+          const items: any[] = await this.getAllItem(this.isVideo);
+          await items.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'isFile') });
+          await this._electronService.ipcRenderer.send('export-database', items, outpath, 'searchAPI')
+        }
       })
     }
   }
@@ -247,12 +301,12 @@ export class DatabasePage implements OnInit {
     return lists;
   }
 
-  treeSelectedChange(event) {
-    this.selectedFilesID = event;
+  treeSelectedChange(ids) {
+    this.selectedFilesID = ids;
     this.selectedFileCount = this.selectedFilesID.length;
     if (this.selectedFileCount >= 1) {
-      const v = this.videoFiles.filter(data => event.includes(data.id));
-      const a = this.audioFiles.filter(data => event.includes(data.id));
+      const v = this.videoFiles.filter(data => ids.includes(data.id));
+      const a = this.audioFiles.filter(data => ids.includes(data.id));
       if (this.isVideo) {
         this.selectedFileInfo = v;
       } else {
@@ -261,7 +315,7 @@ export class DatabasePage implements OnInit {
     } else {
       this.selectedFileInfo = [];
     };
-    console.log(this.selectedFilesID)
+    console.log(this.selectedFilesID, this.selectedFileInfo)
   }
 
   treeFilterChange(event: string) {
@@ -315,7 +369,7 @@ export class DatabasePage implements OnInit {
 
   execDBConfirmation(method) {
     if (this._electronService.isElectronApp) {
-      if (this.selectedFilesID !== []) {
+      if (this.selectedFilesID[0]) {
         this._electronService.ipcRenderer.invoke('exec-db-confirmation', method).then(async (result) => {
           if (result.response !== 0) {
             if (result.method === 'updateDB') { this.updateDB(); }
@@ -330,6 +384,49 @@ export class DatabasePage implements OnInit {
 
   updateDB() {
     console.log('function to update db');
+    this.selectedFileInfo.forEach(item => {
+      this.apollo.mutate<any>({
+        mutation: this.updateGQL[item.dblevel - 2],
+        variables: {
+          id: item.id,
+          isLeaf: item.isLeaf,
+          count: item.count,
+          location: item.location,
+          name: item.name,
+          url: item.url,
+          keyword: item.keyword,
+          hash: item.hash,
+          audience: item.audience,
+          mtime: item.mtime,
+          viewCount: item.viewCount
+        },
+      }).subscribe(({ data }) => {
+        console.log('updated local DB', data);
+        switch (item.dblevel) {
+          case 2:
+            this.addSearch([data.updateLevel2]);
+            break;
+          case 3:
+            this.addSearch([data.updateLevel3]);
+            break;
+          case 4:
+            this.addSearch([data.updateLevel4]);
+            break;
+          case 5:
+            this.addSearch([data.updateLevel5]);
+            break;
+          case 6:
+            this.addSearch([data.updateLevel6]);
+            break;
+          case 7:
+            this.addSearch([data.updateLevel7]);
+            break;
+          default:
+        }
+      }, (error) => {
+        console.log('error deleting files', error);
+      });
+    });
   }
 
   deleteDB() {
@@ -351,17 +448,39 @@ export class DatabasePage implements OnInit {
         }
       });
 
-      this.apollo.mutate({
+      this.apollo.mutate<any>({
         mutation: this.deleteGQL[selected.dblevel - 2],
-        variables: { id: fileID, },
-      }).subscribe(({ data }) => { console.log('deleted', data); }, (error) => {
+        variables: { id: fileID },
+      }).subscribe(({ data }) => {
+        console.log('deleted local DB', data);
+        this.deleteSearch(fileID);
+      }, (error) => {
         console.log('error deleting files', error);
       });
     });
+
     this.dataService.fetchDB(this.isVideo);
-    const deletedFilesCount = this.selectedFilesID.length;
-    let execDoneMessage: string = `Total ${deletedFilesCount} items has been deleted`;
+    const execDoneMessage: string = `Total ${this.selectedFilesID.length} items has been deleted`;
     this.execDBDone(execDoneMessage);
+  }
+
+  uploadDB() {
+    this.addSearch(this.selectedFileInfo);
+    const execDoneMessage: string = `Total ${this.selectedFileInfo.length} items has been updated to blockchain`;
+    this.execDBDone(execDoneMessage);
+  }
+
+
+  addSearch(list: any[]) {
+    if (this.meiliSearch) {
+      this.meiliSearch.addDocuments(list);
+    }
+  }
+
+  deleteSearch(id: string) {
+    if (this.meiliSearch) {
+      this.meiliSearch.deleteDocument(id);
+    }
   }
 
 

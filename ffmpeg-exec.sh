@@ -24,7 +24,7 @@ if [[ $fileType == 'video' ]]; then
 			-map a:0 -c:a aac -b:a:1 128k -ac 2 \
 			-map a:0 -c:a aac -b:a:2 96k -ac 2 \
 			-f hls \
-			-hls_time 2 \
+			-hls_time 10 \
 			-hls_key_info_file enc.keyinfo \
 			-hls_playlist_type vod \
 			-hls_flags independent_segments \

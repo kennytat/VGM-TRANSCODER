@@ -20,14 +20,25 @@
             >
               test
             </ion-button>
+
             <ion-button
               fill="clear"
               slot="end"
-              style="font-size: 17px"
-              color="success"
+              style="margin: 0; font-size: 17px"
+              color="warning"
               (click)="downloadDB()"
             >
               <ion-icon name="download-outline"> </ion-icon>
+            </ion-button>
+            <ion-button
+              fill="clear"
+              slot="end"
+              style="margin: 0; font-size: 17px"
+              color="{{_searchInit ? 'success' : 'dark'}}"
+              (click)="uploadDB()"
+              [disabled]="!_searchInit"
+            >
+              <ion-icon name="cloud-upload-outline"> </ion-icon>
             </ion-button>
             <ion-button
               fill="clear"
@@ -124,161 +135,160 @@
                 </div>
               </div>
               <div class="data-info">
-                <ion-item>
-                  <ion-grid *ngIf="selectedFileInfo[0]">
-                    <ion-row
-                      style="
-                        padding-bottom: 10px;
-                        border-bottom: 1px solid
-                          rgba(var(--ion-color-dark-rgb), 0.5);
-                      "
+                <ion-grid *ngIf="selectedFileInfo[0]">
+                  <ion-row
+                    style="
+                      padding-bottom: 10px;
+                      border-bottom: 1px solid
+                        rgba(var(--ion-color-dark-rgb), 0.5);
+                    "
+                  >
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked
+                        value="nameFilter"
+                        #name
+                        (change)="checkFilter(name.value, name.checked)"
+                      />
+                      Name
+                    </label>
+
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked="checked"
+                        value="pathFilter"
+                        #path
+                        (change)="checkFilter(path.value, path.checked)"
+                      />
+                      Path
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked="checked"
+                        value="publishFilter"
+                        #publish
+                        (change)="checkFilter(publish.value, publish.checked)"
+                      />
+                      Publish</label
                     >
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked
-                          value="nameFilter"
-                          #name
-                          (change)="checkFilter(name.value, name.checked)"
-                        />
-                        Name
-                      </label>
 
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked="checked"
-                          value="pathFilter"
-                          #path
-                          (change)="checkFilter(path.value, path.checked)"
-                        />
-                        Path
-                      </label>
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked="checked"
-                          value="publishFilter"
-                          #publish
-                          (change)="checkFilter(publish.value, publish.checked)"
-                        />
-                        Publish</label
+                    <label
+                      ><input
+                        type="checkbox"
+                        checked="checked"
+                        value="metaFilter"
+                        #meta
+                        (change)="checkFilter(meta.value, meta.checked)"
+                      />
+                      Metadata
+                    </label>
+                  </ion-row>
+                  <ion-row>
+                    <ion-col>
+                      <div
+                        class="file-info"
+                        *ngFor="let file of selectedFileInfo; index as i"
                       >
-
-                      <label
-                        ><input
-                          type="checkbox"
-                          checked="checked"
-                          value="metaFilter"
-                          #meta
-                          (change)="checkFilter(meta.value, meta.checked)"
-                        />
-                        Metadata
-                      </label>
-                    </ion-row>
-                    <ion-row>
-                      <ion-col>
-                        <div
-                          class="file-info"
-                          *ngFor="let file of selectedFileInfo"
-                        >
-                          <div class="file-info-container">
-                            <div class="file-info-segment" *ngIf="nameFilter">
-                              <div>
-                                <ion-label>Name</ion-label>
-                                <input
-                                  type="text"
-                                  placeholder="{{file.name}}"
-                                  value=""
-                                  [disabled]="mainFn"
-                                />
-                              </div>
-                            </div>
-                            <div class="file-info-segment" *ngIf="pathFilter">
-                              <div>
-                                <ion-label>Location</ion-label>
-                                <input
-                                  type="text"
-                                  placeholder="{{ file.location}}"
-                                  value=""
-                                  disabled
-                                />
-                              </div>
-                            </div>
-                            <div
-                              class="file-info-segment"
-                              *ngIf="publishFilter"
-                            >
-                              <div>
-                                <ion-label>Hash</ion-label>
-                                <input
-                                  type="text"
-                                  placeholder="{{ file.hash !== null ? file.hash : 'unpublished' }}"
-                                  value=""
-                                  disabled
-                                />
-                              </div>
-                              <div>
-                                <ion-label>URL</ion-label>
-                                <input
-                                  type="text"
-                                  placeholder="{{file.url}}"
-                                  value=""
-                                  disabled
-                                />
-                              </div>
-                            </div>
-
-                            <div class="file-info-segment" *ngIf="metaFilter">
-                              <div>
-                                <ion-label>Updated</ion-label>
-                                <input
-                                  type="text"
-                                  placeholder="{{file.updatedAt | date }}"
-                                  value=""
-                                  disabled
-                                />
-                              </div>
-                              <div>
-                                <ion-label>Keyword</ion-label>
-                                <input
-                                  type="text"
-                                  placeholder="{{file.keyword}}"
-                                  value=""
-                                  [disabled]="mainFn"
-                                />
-                              </div>
-
-                              <div>
-                                <ion-label>Duration</ion-label>
-                                <input
-                                  type="text"
-                                  placeholder="{{file.duration}}"
-                                  value=""
-                                  disabled
-                                />
-                              </div>
-                              <div>
-                                <ion-label>Size</ion-label>
-                                <input
-                                  type="text"
-                                  placeholder="{{file.size}}"
-                                  value=""
-                                  disabled
-                                />
-                              </div>
+                        <div class="file-info-container">
+                          <div class="file-info-segment" *ngIf="nameFilter">
+                            <div>
+                              <ion-label>Name</ion-label>
+                              <ion-input
+                                [ngModel]="file.name"
+                                type="text"
+                                clearOnEdit
+                                placeholder="{{file.name}}"
+                                value=""
+                                [style.pointerEvents]="mainFn ? 'none' : ''"
+                              >
+                              </ion-input>
                             </div>
                           </div>
-                          <!-- <div *ngIf="metaFilter && file.hash">
+                          <div class="file-info-segment" *ngIf="pathFilter">
+                            <div>
+                              <ion-label>Location</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{ file.location}}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                          </div>
+                          <div class="file-info-segment" *ngIf="publishFilter">
+                            <div>
+                              <ion-label>Hash</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{ file.hash !== null ? file.hash : 'unpublished' }}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                            <div>
+                              <ion-label>URL</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{file.url}}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                          </div>
+
+                          <div class="file-info-segment" *ngIf="metaFilter">
+                            <div>
+                              <ion-label>Updated</ion-label>
+                              <input
+                                type="text"
+                                placeholder="{{file.updatedAt | date }}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              />
+                            </div>
+                            <div>
+                              <ion-label>Keyword</ion-label>
+                              <ion-input
+                                [ngModel]="file.keyword"
+                                type="text"
+                                placeholder="{{file.keyword}}"
+                                value=""
+                                [style.pointerEvents]="mainFn ? 'none' : ''"
+                              ></ion-input>
+                            </div>
+
+                            <div>
+                              <ion-label>Duration</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{file.duration}}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                            <div>
+                              <ion-label>Size</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{file.size}}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- <div *ngIf="metaFilter && file.hash">
                             <ion-thumbnail>
                               <img [src]="getThumbnail(file.hash, file.url)" />
                             </ion-thumbnail>
                           </div> -->
-                        </div>
-                      </ion-col>
-                    </ion-row>
-                  </ion-grid>
-                </ion-item>
+                      </div>
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
               </div>
             </div>
           </ion-card-content>

@@ -11,7 +11,7 @@ export class IpfsPage {
   isLoading: boolean = false;
   stdOut: any = '';
   ipfsConfig = {
-    host: '127.0.0.1', // 'http://upload.hjm.bid', // '127.0.0.1',
+    host: 'http://ipfs-sgp.hjm.bid', // 'http://ipfs-sgp.hjm.bid', // '127.0.0.1',
     apiPort: '5001',
     swarmPort: '4001',
     gatewayPort: '8080',
@@ -24,8 +24,8 @@ export class IpfsPage {
   }
   httpApiConfig = {
     // url: 'http://ipfs.hjm.bid:80/api/v0'
-    host: '127.0.0.1',  // 'upload.hjm.bid', // '127.0.0.1',
-    port: 5001, // 80 or 5001
+    host: 'ipfs-sgp.hjm.bid',  // 'ipfs-sgp.hjm.bid', // '127.0.0.1',
+    port: 80, // 80 or 5001
     protocol: 'http',
     apiPath: '/api/v0',
     timeout: '6h'
@@ -36,6 +36,7 @@ export class IpfsPage {
   ) { }
 
   ipfsConnect() {
+    this.stdOut = '';
     this.isLoading = true;
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.send('connect-ipfs', this.isConnected, this.ipfsConfig);

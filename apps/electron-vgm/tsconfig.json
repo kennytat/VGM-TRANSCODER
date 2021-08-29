@@ -5,7 +5,12 @@
     "module": "commonjs",
     "types": ["node", "jest"],
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "lib": [
+      "es2017",
+      "dom",
+      "esnext.asynciterable"
+    ]
   },
   "include": ["src/index.ts"]
 }

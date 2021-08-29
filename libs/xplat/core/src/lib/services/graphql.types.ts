@@ -853,17 +853,34 @@ mutation createLevel7 (
   }
 }`;
 
+
 export const UPDATE_LEVEL_2 = gql`
 mutation updateLevel2 (
   $id: String!,
   $isLeaf: Boolean,
-  $count: Int
+  $count: Int,
+  $location: String,
+  $name: String,
+  $url: String,
+  $keyword: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int
   ) {
   updateLevel2 (
     data:{
       id: $id,
       isLeaf: $isLeaf,
-      count: $count
+      count: $count,
+      location: $location,
+      name: $name,
+      url: $url,
+      keyword: $keyword,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount
   }) {
     id
     pid
@@ -881,13 +898,29 @@ export const UPDATE_LEVEL_3 = gql`
 mutation updateLevel3 (
   $id: String!,
   $isLeaf: Boolean,
-  $count: Int
+  $count: Int,
+  $location: String,
+  $name: String,
+  $url: String,
+  $keyword: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int
   ) {
   updateLevel3 (
     data:{
-      id: $id
+      id: $id,
       isLeaf: $isLeaf,
-      count: $count
+      count: $count,
+      location: $location,
+      name: $name,
+      url: $url,
+      keyword: $keyword,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount
   }) {
     id
     pid
@@ -905,13 +938,29 @@ export const UPDATE_LEVEL_4 = gql`
 mutation updateLevel4 (
   $id: String!,
   $isLeaf: Boolean,
-  $count: Int
+  $count: Int,
+  $location: String,
+  $name: String,
+  $url: String,
+  $keyword: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int
   ) {
   updateLevel4 (
     data:{
-      id: $id
+      id: $id,
       isLeaf: $isLeaf,
-      count: $count
+      count: $count,
+      location: $location,
+      name: $name,
+      url: $url,
+      keyword: $keyword,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount
   }) {
     id
     pid
@@ -929,13 +978,29 @@ export const UPDATE_LEVEL_5 = gql`
 mutation updateLevel5 (
   $id: String!,
   $isLeaf: Boolean,
-  $count: Int
+  $count: Int,
+  $location: String,
+  $name: String,
+  $url: String,
+  $keyword: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int
   ) {
   updateLevel5 (
     data:{
-      id: $id
+      id: $id,
       isLeaf: $isLeaf,
-      count: $count
+      count: $count,
+      location: $location,
+      name: $name,
+      url: $url,
+      keyword: $keyword,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount
   }) {
     id
     pid
@@ -951,15 +1016,31 @@ mutation updateLevel5 (
 
 export const UPDATE_LEVEL_6 = gql`
 mutation updateLevel6 (
-  $id: String!,
+   $id: String!,
   $isLeaf: Boolean,
-  $count: Int
+  $count: Int,
+  $location: String,
+  $name: String,
+  $url: String,
+  $keyword: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int
   ) {
   updateLevel6 (
     data:{
       id: $id,
       isLeaf: $isLeaf,
-      count: $count
+      count: $count,
+      location: $location,
+      name: $name,
+      url: $url,
+      keyword: $keyword,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount
   }) {
     id
     pid
@@ -977,11 +1058,29 @@ export const UPDATE_LEVEL_7 = gql`
 mutation updateLevel7 (
   $id: String!,
   $isLeaf: Boolean,
+  $count: Int,
+  $location: String,
+  $name: String,
+  $url: String,
+  $keyword: String,
+  $hash: String,
+  $audience: Int,
+  $mtime: Int,
+  $viewCount: Int
   ) {
   updateLevel7 (
     data:{
-      id: $id
-      isLeaf: $isLeaf
+      id: $id,
+      isLeaf: $isLeaf,
+      count: $count,
+      location: $location,
+      name: $name,
+      url: $url,
+      keyword: $keyword,
+      hash: $hash,
+      audience: $audience,
+      mtime: $mtime,
+      viewCount: $viewCount
   }) {
     id
     pid
