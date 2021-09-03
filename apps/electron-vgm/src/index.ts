@@ -9,6 +9,10 @@ import { create, globSource, CID } from 'ipfs-http-client'
 import * as CryptoJS from "crypto-js";
 import { slice } from 'ramda';
 
+import * as M3U8FileParser from "m3u8-file-parser";
+import * as bitwise from 'bitwise';
+
+
 
 let serve;
 const args = process.argv.slice(1);
@@ -449,6 +453,23 @@ try {
 
       conversion.on('close', async (code) => {
         if (code == 0) {
+          // encrypt m3u8 key
+          try {
+            // get iv info
+            const reader = new M3U8FileParser();
+            const segment = fs.readFileSync(`${outPath}/480p.m3u8`, { encoding: 'utf-8' });
+            reader.read(segment);
+            const m3u8 = reader.getResult();
+            const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
+            // get buffer from key and iv
+            const code = Buffer.from(secret);
+            const key: Buffer = await fs.readFileSync(`${outPath}/key.vgmk`);
+            const encrypted = bitwise.buffer.xor(key, code, false);
+            fs.writeFileSync(`${outPath}/key.vgmk`, encrypted, { encoding: 'binary' })
+          } catch (error) {
+            console.log('encrypt key error:', error);
+          }
+          // upload ipfs
           if (ipfsClient) {
             try {
               const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
@@ -533,7 +554,37 @@ try {
   })
 
 
-  ipcMain.on('test', async (event) => {
+  ipcMain.on('test', async (event, url: string) => {
+
+
+    try {
+      // get iv info
+      const reader = new M3U8FileParser();
+      const segment = fs.readFileSync(`${url}/480p.m3u8`, { encoding: 'utf-8' });
+      reader.read(segment);
+      const m3u8 = reader.getResult();
+      const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
+      // get buffer from key and iv
+      const code = Buffer.from(secret);
+
+      const key: Buffer = await fs.readFileSync(`${url}/key.vgmk`);
+      const encrypted = bitwise.buffer.xor(key, code, false);
+      console.log(key, '\n', code, '\n', encrypted);
+
+
+      const codeArray = new Uint8Array(code);
+      const keyArray = new Uint8Array(key);
+      const newKeyArray = new Uint8Array(encrypted);
+
+      console.log(keyArray, codeArray, newKeyArray);
+      fs.writeFileSync(`${url}/key.vgmk`, encrypted, { encoding: 'binary' })
+    } catch (error) {
+      console.log('encrypt key error:', error);
+
+    }
+
+
+
     // ipfsClient = create({
     //   url: 'http://ipfs.hjm.bid',
     //   port: 80,
@@ -548,20 +599,22 @@ try {
     // console.log(cid.toString());
 
 
-    try {
-      const now = new Date();
-      const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
-      console.log(timenow);
-      const test = await ipfsClient.add('Hello world');
-      console.log(test);
-      const ci = await ipfsClient.add(globSource('/home/kennytat/Desktop/nestjs', { recursive: true }));
-      console.log(ci);
-      const later = new Date();
-      const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
-      console.log(timelater);
-    } catch (err) {
-      console.log('error', err);
-    }
+    // try {
+    //   const now = new Date();
+    //   const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+    //   console.log(timenow);
+    //   const test = await ipfsClient.add('Hello world');
+    //   console.log(test);
+    //   const ci = await ipfsClient.add(globSource('/home/kennytat/Desktop/master', { recursive: true }));
+    //   console.log(ci);
+    //   const later = new Date();
+    //   const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
+    //   console.log(timelater);
+    // } catch (err) {
+    //   console.log('error QmSjZekBS7RRnq7Bk94uJQYjafkZi7aczPwbQiE8A9eLxQ', err);
+    // }
+
+
     // const ci: any = await ipfsClient.add(globSource('/home/kennytat/Desktop/testfolder', { recursive: true }))
     // console.log(ci);
     // console.log(arg);
@@ -569,10 +622,8 @@ try {
     // console.log(id);
     // const online = await ipfsClient.isOnline();
     // console.log(online)
-
     // const ipfsOut: any = await ipfsClient.add('hello world');
     // console.log(ipfsOut);
-
     // if (ipfsOut) {
     //   const cid: CID = ipfsOut.cid;
     //   console.log(cid);
@@ -582,11 +633,8 @@ try {
 
     // const secretKey = slice(0, 32, 'jashdkfhjkahj4350pdfvkhdv');
     // const test = CryptoJS.AES.encrypt('fileInfo.qm', secretKey).toString();
-
     // console.log('test called');
-
     // // export json for meiliSeasrch from multiple json files
-
     // let meiliSearch: any = [];
     // const apiFolder = '/home/kennytat/Desktop/vgm/API/items/single';
     // fs.promises.readdir(apiFolder).then(files => {

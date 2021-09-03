@@ -11,8 +11,8 @@ import * as _ from 'lodash';
 import { MeiliSearch } from 'meilisearch';
 
 const client = new MeiliSearch({
-  host: 'http://search.vgm.tv',
-  apiKey: 'VGMs3@rch',
+  host: 'http://search.hjm.bid',
+  apiKey: '', // helloworld
 })
 
 interface FileInfo {
@@ -143,16 +143,9 @@ export class DatabasePage implements OnInit {
     try {
       await this.dataService.dbInit();
       this._dbInit = this.dataService._dbInit;
-      const indexes = await client.listIndexes();
-      console.log('asdf', indexes);
-      if (indexes) {
-
-        this.meiliSearch = client.index('VGM')
-        this._searchInit = true;
-      }
+      this.connectSearch();
     } catch (error) {
       console.log(error);
-
     }
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.on('create-database', (event, fileInfo) => {
@@ -209,12 +202,28 @@ export class DatabasePage implements OnInit {
   }
 
   refreshDB() {
-    this.dataService.fetchDB(this.isVideo)
+    this.dataService.fetchDB(this.isVideo);
+    this.connectSearch();
   }
+
+  async connectSearch() {
+    try {
+      const indexes = await client.listIndexes();
+      console.log('meiliSearch', indexes);
+      if (indexes) {
+        this.meiliSearch = client.index('VGM')
+        this._searchInit = true;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
 
   test() {
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('test')
+      this._electronService.ipcRenderer.send('test', '/home/kennytat/Desktop/master')
 
       // this._electronService.ipcRenderer.on('test-response', (event, res) => {
       //   console.log('test-response', res);

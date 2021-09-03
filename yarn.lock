@@ -5760,6 +5760,11 @@ bindings@^1.5.0:
   dependencies:
     file-uri-to-path "1.0.0"
 
+bitwise@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/bitwise/-/bitwise-2.1.0.tgz#1853fac76500c86da01e3819150a4edf92a7abdb"
+  integrity sha512-XKgAhMXCh4H/3oNwAHAsAO0iC89s9cOiumgYwSHjSobGWxYjv62YhkL9QEdvGP151xypCtMlAfKK79GEcd2eRQ==
+
 bl@^4.0.3, bl@^4.1.0:
   version "4.1.0"
   resolved "https://registry.npmjs.org/bl/-/bl-4.1.0.tgz"
@@ -13040,6 +13045,11 @@ lzma-native@^6.0.1:
     node-pre-gyp "^0.11.0"
     readable-stream "^2.3.5"
     rimraf "^2.7.1"
+
+m3u8-file-parser@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/m3u8-file-parser/-/m3u8-file-parser-0.2.4.tgz#a7e9eea5decc25d0b85ce00e6de767b8e24740e7"
+  integrity sha512-l18rzGyfbodX0XDlQsBjZg4HYCqeBKScQq/UzsCyNZginAzCYMTNyzTrw1TTFPrlFI1UkCmmKbpq7FZBAkYljw==
 
 macos-alias@~0.2.5:
   version "0.2.11"
