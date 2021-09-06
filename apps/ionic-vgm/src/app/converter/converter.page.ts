@@ -44,6 +44,9 @@ export class ConverterPage implements OnInit {
   convertedFiles: number = 0;
   totalFiles: number = 0;
   // electronService API for ipcMain and ipcRenderer communication, ngZone for immediately reflect data change from ipcMain sender
+  path = '';
+  level = 0;
+
   constructor(
     private _electronService: ElectronService,
     private zone: NgZone,
@@ -53,7 +56,15 @@ export class ConverterPage implements OnInit {
   }
 
 
-  ngOnInit() { }
+  ngOnInit() {
+    //create large db instant code
+    if (this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.on('create-manual', (event, value) => {
+        this.createNewTopic(this.level, value)
+      })
+    }
+
+  }
 
 
 
@@ -117,41 +128,44 @@ export class ConverterPage implements OnInit {
       variables: {
         pid: pid,
         isLeaf: false,
-        location: `${pItem.location}/${nonVietnamese.replace(/\s/, '')}`,
+        location: `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`,
         url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, ''),
         isVideo: this.isVideo,
         name: value,
       }
     }).subscribe(async ({ data }) => {
-      switch (level) {
-        case 2:
-          this.selectedItem = await _.cloneDeep(data.createLevel2)
-          break;
-        case 3:
-          this.selectedItem = await _.cloneDeep(data.createLevel3)
-          break;
-        case 4:
-          this.selectedItem = await _.cloneDeep(data.createLevel4)
-          break;
-        case 5:
-          this.selectedItem = await _.cloneDeep(data.createLevel5)
-          break;
-        case 6:
-          this.selectedItem = await _.cloneDeep(data.createLevel6)
-          break;
-        default:
-      }
-      await this.selectedTopics[level - 1].options.push(this.selectedItem)
-      await this.dataService.fetchDB(this.isVideo);
-      // console.log(this.selectedItem);
+      // switch (level) {
+      //   case 2:
+      //     this.selectedItem = await _.cloneDeep(data.createLevel2)
+      //     break;
+      //   case 3:
+      //     this.selectedItem = await _.cloneDeep(data.createLevel3)
+      //     break;
+      //   case 4:
+      //     this.selectedItem = await _.cloneDeep(data.createLevel4)
+      //     break;
+      //   case 5:
+      //     this.selectedItem = await _.cloneDeep(data.createLevel5)
+      //     break;
+      //   case 6:
+      //     this.selectedItem = await _.cloneDeep(data.createLevel6)
+      //     break;
+      //   default:
+      // }
+      // await this.selectedTopics[level - 1].options.push(this.selectedItem)
+      // await this.dataService.fetchDB(this.isVideo);
+      // // console.log(this.selectedItem);
 
-      await this.selectOptionChange(level, this.selectedItem.id)
+      // await this.selectOptionChange(level, this.selectedItem.id)
+
+      console.log(data);
+
 
     }, (error) => {
       console.log('there was an error sending the query', error);
-      if (this._electronService.isElectronApp) {
-        this._electronService.ipcRenderer.send('error-message', 'topic-db-error');
-      }
+      // if (this._electronService.isElectronApp) {
+      //   this._electronService.ipcRenderer.invoke('error-message', 'topic-db-error');
+      // }
     });
   }
 
@@ -178,6 +192,7 @@ export class ConverterPage implements OnInit {
     str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
     str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
     str = str.replace(/đ/g, "d");
+    str = str.replace(/Đ/g, "D");
     // Some system encode vietnamese combining accent as individual utf-8 characters
     str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // Huyền sắc hỏi ngã nặng 
     str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
@@ -185,6 +200,11 @@ export class ConverterPage implements OnInit {
   }
 
   test() {
+    console.log(this.path, this.level);
+    if (this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.send('test', this.path);
+    }
+
     // this.updateIsLeaf();
     // console.log(this.level1.options, '\n', this.level2.options, '\n', this.level3.options, '\n', this.level4.options, '\n', this.level5.options);
     //     const data = `/home/kennytat/Downloads/bigbig/BigBuck.mp4
@@ -197,7 +217,7 @@ export class ConverterPage implements OnInit {
     // createDB(raw) {
 
     // if (this._electronService.isElectronApp) {
-    //   this._electronService.ipcRenderer.send('test');
+    //   this._electronService.ipcRenderer.invoke('test');
     // }
     // this.apollo.mutate<any>({
     //   mutation: type.CREATE_LEVEL_2,
@@ -283,10 +303,10 @@ export class ConverterPage implements OnInit {
   Convert() {
     if (this._electronService.isElectronApp) {
       if (this.inputPath === '' || this.outputPath === '' || !this.selectedItem) {
-        this._electronService.ipcRenderer.send('error-message', 'missing-path');
+        this._electronService.ipcRenderer.invoke('error-message', 'missing-path');
       } else {
         this.isConverting = true;
-        this._electronService.ipcRenderer.send('start-convert', this.inputPath, this.outputPath, this.fileCheckbox, this.selectedItem);
+        this._electronService.ipcRenderer.invoke('start-convert', this.inputPath, this.outputPath, this.fileCheckbox, this.selectedItem);
         this._electronService.ipcRenderer.on('exec-done', (event) => {
           this.zone.run(() => {
             this.updateIsLeaf(this.selectedItem, this.totalFiles);
@@ -321,12 +341,13 @@ export class ConverterPage implements OnInit {
 
   Cancel() {
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('stop-convert');
-      this.zone.run(() => {
-        this.isConverting = false;
-        this.inputPath = '';
-        this.outputPath = '';
-        this.dataService.fetchDB(this.isVideo);
+      this._electronService.ipcRenderer.invoke('stop-convert').then((response) => {
+        this.zone.run(() => {
+          this.isConverting = false;
+          this.inputPath = '';
+          this.outputPath = '';
+          this.dataService.fetchDB(this.isVideo);
+        })
       })
     }
   }

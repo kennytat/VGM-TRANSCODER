@@ -123,9 +123,11 @@ export class DatabasePage implements OnInit {
 
       }
     });
-    this.audioTreeSub = this.dataService.videoTree$.subscribe((data) => {
+    this.audioTreeSub = this.dataService.audioTree$.subscribe((data) => {
       if (data.value) {
         this.audioTree = [new TreeviewItem(data)];
+        console.log(data, this.audioTree);
+
 
       }
     });
@@ -143,7 +145,7 @@ export class DatabasePage implements OnInit {
     try {
       await this.dataService.dbInit();
       this._dbInit = this.dataService._dbInit;
-      this.connectSearch();
+      // this.connectSearch();
     } catch (error) {
       console.log(error);
     }
@@ -211,7 +213,7 @@ export class DatabasePage implements OnInit {
       const indexes = await client.listIndexes();
       console.log('meiliSearch', indexes);
       if (indexes) {
-        this.meiliSearch = client.index('VGM')
+        this.meiliSearch = client.index('VGM');
         this._searchInit = true;
       }
     } catch (error) {
@@ -223,7 +225,7 @@ export class DatabasePage implements OnInit {
 
   test() {
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('test', '/home/kennytat/Desktop/master')
+      this._electronService.ipcRenderer.send('test', '/home/kennytat/vgm-origin-audio/VGM-001-PTNS/2011/Thang12-2011');
 
       // this._electronService.ipcRenderer.on('test-response', (event, res) => {
       //   console.log('test-response', res);
@@ -238,12 +240,12 @@ export class DatabasePage implements OnInit {
       this._electronService.ipcRenderer.invoke('save-dialog', 'api').then(async (outpath) => {
         if (outpath[0]) {
           const itemList: any[] = await this.getAllIsLeaf(this.isVideo);
-          await itemList.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'isLeaf') });
+          await itemList.forEach(async item => { await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'isLeaf') });
           const topicList: any[] = await this.getAllNonLeaf(this.isVideo);
-          await topicList.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'nonLeaf') });
+          await topicList.forEach(async item => { await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'nonLeaf') });
           const items: any[] = await this.getAllItem(this.isVideo);
-          await items.forEach(async item => { await this._electronService.ipcRenderer.send('export-database', item, outpath, 'isFile') });
-          await this._electronService.ipcRenderer.send('export-database', items, outpath, 'searchAPI')
+          await items.forEach(async item => { await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'isFile') });
+          await this._electronService.ipcRenderer.invoke('export-database', items, outpath, 'searchAPI')
         }
       })
     }
@@ -379,14 +381,14 @@ export class DatabasePage implements OnInit {
   execDBConfirmation(method) {
     if (this._electronService.isElectronApp) {
       if (this.selectedFilesID[0]) {
-        this._electronService.ipcRenderer.invoke('exec-db-confirmation', method).then(async (result) => {
+        this._electronService.ipcRenderer.invoke('exec-db-confirmation', method).then((result) => {
           if (result.response !== 0) {
             if (result.method === 'updateDB') { this.updateDB(); }
             else if (result.method === 'deleteDB') { this.deleteDB(); }
           }
         })
       } else {
-        this._electronService.ipcRenderer.send('error-message', 'empty-select');
+        this._electronService.ipcRenderer.invoke('error-message', 'empty-select');
       }
     }
   }
@@ -439,7 +441,6 @@ export class DatabasePage implements OnInit {
   }
 
   deleteDB() {
-    console.log('function to delete db');
     let db: any[] = []
     let selected: any = {};
     if (this.isVideo) {
@@ -462,7 +463,8 @@ export class DatabasePage implements OnInit {
         variables: { id: fileID },
       }).subscribe(({ data }) => {
         console.log('deleted local DB', data);
-        this.deleteSearch(fileID);
+
+        // this.deleteSearch(fileID);
       }, (error) => {
         console.log('error deleting files', error);
       });
@@ -496,7 +498,7 @@ export class DatabasePage implements OnInit {
   // Show corresponding message when mutating db done
   execDBDone(message) {
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('exec-db-done', message);
+      this._electronService.ipcRenderer.invoke('exec-db-done', message);
       this.zone.run(() => {
         this.editFn = false;
         this.mainFn = true;

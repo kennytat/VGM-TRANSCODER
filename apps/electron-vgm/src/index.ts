@@ -8,11 +8,19 @@ import { AppModule } from './graphql/app.module'
 import { create, globSource, CID } from 'ipfs-http-client'
 import * as CryptoJS from "crypto-js";
 import { slice } from 'ramda';
-
 import * as M3U8FileParser from "m3u8-file-parser";
 import * as bitwise from 'bitwise';
 
+// import { S3Client, GetObjectCommand, ListObjectsCommand, CopyObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
+// const s3Client = new S3Client({
+//   credentials: {
+//     accessKeyId: "jxneel2dxcx7kpxqesdewjhfsd2q",
+//     secretAccessKey: "j3wgjr6lyvmyl4m37mcdwacnxdizinen2nhfvkbyyqgsbkfctcm3k",
+//   },
+//   endpoint: "https://gateway.ap1.storjshare.io",
+//   region: "ap-east-1"
+// });
 
 let serve;
 const args = process.argv.slice(1);
@@ -117,8 +125,6 @@ function createMenu() {
  * Create main window presentation
  */
 function createWindow() {
-  // get graphql server ready before creating electron window
-  bootstrap();
   // start creating electron window
   const sizes = screen.getPrimaryDisplay().workAreaSize;
   mainWindowSettings.width = 1100;
@@ -169,7 +175,8 @@ function createWindow() {
     win.webContents.openDevTools();
     // client.create(applicationRef);
   }
-
+  // get graphql server ready after creating electron window
+  bootstrap();
 
 }
 
@@ -195,7 +202,7 @@ try {
     win.restore();
   });
 
-  ipcMain.on('connect-ipfs', async (event, isConnected, ipfs) => {
+  ipcMain.handle('connect-ipfs', async (event, isConnected, ipfs) => {
     if (ipfs.host === '127.0.0.1') {
       if (!isConnected) {
         ipfsInfo = ipfs;
@@ -277,48 +284,54 @@ try {
     }
   })
 
-  ipcMain.on('ipfs-ready', async (event, httpApiConfig) => {
+  ipcMain.handle('ipfs-ready', async (event, httpApiConfig) => {
     ipfsClient = await create(httpApiConfig);
   })
 
   // Listen to renderer process and open dialog for input and output path
-  ipcMain.handle('open-dialog', (event, isfile) => {
-    let options = {};
-    if (isfile === true) {
-      options = {
-        title: 'Browse Video Folder',
-        filters: [{ name: 'Media', extensions: ['mkv', 'avi', 'mp4', 'm4a', 'mp3', 'wav', 'wma', 'aac', 'webm'] }],
-        properties: ['openFile', 'multiSelections']
+  ipcMain.handle('open-dialog', async (event, isfile) => {
+    try {
+      let options = {};
+      if (isfile === true) {
+        options = {
+          title: 'Browse Video Folder',
+          filters: [{ name: 'Media', extensions: ['mkv', 'avi', 'mp4', 'm4a', 'mp3', 'wav', 'wma', 'aac', 'webm'] }],
+          properties: ['openFile', 'multiSelections']
+        }
+      } else {
+        options = {
+          title: 'Browse Video Folder',
+          properties: ['openDirectory']
+        }
       }
-    } else {
-      options = {
-        title: 'Browse Video Folder',
-        properties: ['openDirectory']
-      }
-    }
-    const result = dialog.showOpenDialog(win, options).then(result => {
+      const result = await dialog.showOpenDialog(win, options);
       return result.filePaths;
-    }).catch(err => { console.log(err) });
-    return result
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
   })
 
   ipcMain.handle('save-dialog', async (event, type?) => {
-    const result = await dialog.showOpenDialog(win, {
-      title: 'Browse Output Folder',
-      properties: ['openDirectory']
-    }).then(result => {
+    try {
+      const result = await dialog.showOpenDialog(win, {
+        title: 'Browse Output Folder',
+        properties: ['openDirectory']
+      })
+      if (type === 'api') {
+        fs.mkdirSync(`${result[0]}/API/items/list`, { recursive: true });
+        fs.mkdirSync(`${result[0]}/API/items/single`, { recursive: true });
+        fs.mkdirSync(`${result[0]}/API/topics/list`, { recursive: true });
+        fs.mkdirSync(`${result[0]}/API/topics/single`, { recursive: true });
+      }
       return result.filePaths;
-    }).catch(err => { console.log(err) });
-    if (type === 'api') {
-      fs.mkdirSync(`${result[0]}/API/items/list`, { recursive: true });
-      fs.mkdirSync(`${result[0]}/API/items/single`, { recursive: true });
-      fs.mkdirSync(`${result[0]}/API/topics/list`, { recursive: true });
-      fs.mkdirSync(`${result[0]}/API/topics/single`, { recursive: true });
+    } catch (error) {
+      console.log(error);
+      return null;
     }
-    return result
   })
 
-  ipcMain.on('error-message', (event, arg) => {
+  ipcMain.handle('error-message', (event, arg) => {
     if (arg === 'missing-path') {
       const options = {
         type: 'warning',
@@ -347,7 +360,7 @@ try {
   })
 
   // Get input and output path from above and execute sh file
-  ipcMain.on('start-convert', (event, argInPath, argOutPath, fileOnly, pItem) => {
+  ipcMain.handle('start-convert', (event, argInPath, argOutPath, fileOnly, pItem) => {
     let files: string[];
     let totalFiles: number = 0;
     let convertedFiles: number = 0;
@@ -507,7 +520,7 @@ try {
   })
 
   // Stop conversion process when button onclick
-  ipcMain.on('stop-convert', (event) => {
+  ipcMain.handle('stop-convert', (event) => {
     //get ffmpeg-exec.sh PID and run command to kill it then kill ffmpeg
     let child = spawn('pgrep', ['-f', 'ffmpeg-exec.sh'], { detached: true });
     child.stdout.on('data', (data) => {
@@ -551,37 +564,217 @@ try {
       if (signal) console.log(`Process killed with signal: ${signal}`)
       console.log(`Done ✅`)
     });
+
   })
 
+  ipcMain.on('test', async (event, url) => {
 
-  ipcMain.on('test', async (event, url: string) => {
+    // // let body = Buffer.from("");
+    // const abc = 'asd1f2sdhf'
+    // const test1 = Buffer.from(abc);
+    // const reader = new TextEncoder();
+    // const test2 = reader.encode(abc);
+    // test1.forEach(byte => {
+    //   console.log(byte);
 
+    // })
+
+    // test2.forEach(byte => {
+    //   console.log(byte);
+
+    // })
+
+    // console.log(test1, test2);
+    // try {
+    //   let test = 'asdfasdf'
+    //   console.log(test, 'test called');
+    // } catch (error) {
+    //   console.log(error);
+    //   return 'test called'
+    // }
+
+
+
+    // const s3Bucket = 'vgmorigin'
+
+
+    // const listParams = {
+    //   Bucket: s3Bucket,
+    //   Delimiter: '/',
+    //   Prefix: url
+    // }
+    // try {
+    //   // List object from the Amazon S3 bucket
+    //   const data = await s3Client.send(new ListObjectsCommand(listParams))
+    //   console.log(data);
+    // } catch (err) {
+    //   console.log(err);
+
+    // }
+
+    // //copy s3 file
+    // try {
+    //   const parseKey = path.parse(url)
+    //   const newKey = `${parseKey.dir}/testnewkey${parseKey.ext}`
+    //   const source = `${s3Bucket}/${url}`
+    //   const copyParams = {
+    //     Bucket: s3Bucket,
+    //     CopySource: source,
+    //     Key: newKey
+    //   };
+    //   const copy = await s3Client.send(new CopyObjectCommand(copyParams))
+    //   console.log(copy);
+    // } catch (error) {
+    //   console.log(error);
+    // }
+
+
+    // // S3 read single file content
+    // const readS3Object = async (key) => {
+    //   const bucketParams = {
+    //     Bucket: s3Bucket,
+    //     Key: key,
+    //   };
+    //   try {
+    //     // Create a helper function to convert a ReadableStream to a string.
+    //     const streamToString = (stream) =>
+    //       new Promise((resolve, reject) => {
+    //         const chunks = [];
+    //         stream.on("data", (chunk) => chunks.push(chunk));
+    //         stream.on("error", reject);
+    //         stream.on("end", () => {
+    //           resolve(Buffer.concat(chunks).toString("utf8"))
+    //         });
+    //       });
+
+    //     // Get the object} from the Amazon S3 bucket. It is returned as a ReadableStream.
+    //     const data = await s3Client.send(new GetObjectCommand(bucketParams));
+    //     // return data; // For unit tests.
+    //     // Convert the ReadableStream to a string.
+    //     const bodyContents = await streamToString(data.Body);
+    //     console.log(bodyContents);
+    //     return bodyContents;
+    //   } catch (err) {
+    //     console.log("Error", err);
+    //   }
+    // }
+
+    // readS3Object(url);
+
+    // // List files in folder 
+    // const listObject = async (dir) => {
+    //   const listParams = {
+    //     Bucket: s3Bucket,
+    //     Delimiter: '/',
+    //     Prefix: dir
+    //   }
+    //   try {
+    //     // List object from the Amazon S3 bucket
+    //     const data = await s3Client.send(new ListObjectsCommand(listParams)).then((data) => {
+    //       if (data.Contents && data.Contents.length > 1) {
+    //         const ini = data.Contents.filter(file => file.Key.includes('.mp3.ini') && !file.Key.includes('Info.ini'))
+    //         ini.forEach(async (ini) => {
+    //           const iniContent: any = await readS3Object(ini.Key);
+    //           const oldKey = ini.Key.replace('.ini', '');
+    //           const ext = path.parse(oldKey).ext;
+    //           const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
+    //           const copyParams = {
+    //             Bucket: s3Bucket,
+    //             CopySource: `${s3Bucket}/${oldKey}`,
+    //             Key: newKey
+    //           };
+    //           await s3Client.send(new CopyObjectCommand(copyParams)).then(async (data) => {
+    //             const deleteParams = {
+    //               Bucket: s3Bucket,
+    //               Key: oldKey
+    //             };
+    //             await s3Client.send(new DeleteObjectCommand(deleteParams))
+    //           });
+    //         })
+    //       }
+
+    //       // recursively repeat listobject function
+    //       if (data.CommonPrefixes && data.CommonPrefixes.length > 0) {
+    //         data.CommonPrefixes.forEach(async folder => await listObject(folder.Prefix))
+    //       }
+    //     });
+    //     console.log(data);
+    //   } catch (err) {
+    //     console.log("Error", err);
+    //   }
+    // }
+    // listObject(url);
 
     try {
-      // get iv info
-      const reader = new M3U8FileParser();
-      const segment = fs.readFileSync(`${url}/480p.m3u8`, { encoding: 'utf-8' });
-      reader.read(segment);
-      const m3u8 = reader.getResult();
-      const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
-      // get buffer from key and iv
-      const code = Buffer.from(secret);
+      // find VGMA file
+      const list = await execSync(`find "${url}" -type f -name Info.ini`);
+      const listArray = await list.toString().split('\n');
+      // listArray.shift();
+      // listArray.pop();
+      // console.log(listArray, listArray.length);
+      // listArray.forEach((path) => {
+      //   const content = fs.readFileSync(path, { encoding: 'utf8' })
+      //   const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+      //   // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
+      //   event.sender.send('create-manual', name)
+      //   console.log(name);
+      // })
 
-      const key: Buffer = await fs.readFileSync(`${url}/key.vgmk`);
-      const encrypted = bitwise.buffer.xor(key, code, false);
-      console.log(key, '\n', code, '\n', encrypted);
+      const currentLevelArray = await listArray.filter(item => item && item.match(/\//g).length === 6);
+      console.log(currentLevelArray, currentLevelArray.length);
+      if (currentLevelArray) {
+        console.log(currentLevelArray, currentLevelArray.length);
+        currentLevelArray.forEach((path) => {
+          const content = fs.readFileSync(path, { encoding: 'utf8' });
+          const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+          // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
+          if (name) {
+            event.sender.send('create-manual', name)
+          }
+          console.log(name);
+        })
+      }
 
 
-      const codeArray = new Uint8Array(code);
-      const keyArray = new Uint8Array(key);
-      const newKeyArray = new Uint8Array(encrypted);
 
-      console.log(keyArray, codeArray, newKeyArray);
-      fs.writeFileSync(`${url}/key.vgmk`, encrypted, { encoding: 'binary' })
+      // const month = ['Tháng 01', 'Tháng 02', 'Tháng 03', 'Tháng 04', 'Tháng 05', 'Tháng 06', 'Tháng 07', 'Tháng 08', 'Tháng 09', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+
+      // month.forEach((name) => {
+      //   event.sender.send('create-manual', name)
+      //   console.log(name);
+      // })
+      // console.log(listArray);
+
+
     } catch (error) {
-      console.log('encrypt key error:', error);
-
+      console.log('fs promise error:', error);
     }
+
+
+    // try {
+    //   // encrypt key file
+    //   const reader = new M3U8FileParser();
+    //   const segment = fs.readFileSync(`${url}/480p.m3u8`, { encoding: 'utf-8' });
+    //   reader.read(segment);
+    //   const m3u8 = reader.getResult();
+    //   const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
+    //   // get buffer from key and iv
+    //   const code = Buffer.from(secret);
+
+    //   const key: Buffer = await fs.readFileSync(`${url}/key.vgmk`);
+    //   const encrypted = bitwise.buffer.xor(key, code, false);
+    //   console.log(key, '\n', code, '\n', encrypted);
+
+
+    //   const codeArray = new Uint8Array(code);
+    //   const keyArray = new Uint8Array(key);
+    //   const newKeyArray = new Uint8Array(encrypted);
+
+    //   console.log(keyArray, codeArray, newKeyArray);
+    //   fs.writeFileSync(`${url}/key.vgmk`, encrypted, { encoding: 'binary' })
+    // } catch (error) {
+    //   console.log('encrypt key error:', error);
+    // }
 
 
 
@@ -605,13 +798,15 @@ try {
     //   console.log(timenow);
     //   const test = await ipfsClient.add('Hello world');
     //   console.log(test);
-    //   const ci = await ipfsClient.add(globSource('/home/kennytat/Desktop/master', { recursive: true }));
+    //   const ci = await ipfsClient.add(globSource('/home/kennytat/Desktop/BigBuck', { recursive: true }));
     //   console.log(ci);
     //   const later = new Date();
     //   const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
     //   console.log(timelater);
     // } catch (err) {
-    //   console.log('error QmSjZekBS7RRnq7Bk94uJQYjafkZi7aczPwbQiE8A9eLxQ', err);
+    //   console.log(err);
+    //   // https://stream.hjm.bid/ipfs/QmUWngZk4zaFJ6cA8EEHS8GpSytsosadJiGHKJRQH2rcp9/playlist.m3u8
+    //   // console.log('error https://ipfs.hjm.bid/ipfs/QmPY7pn6e3wHrTsudofP2XdD3AQLXuSo7jWxovmp68k7sz/playlist.m3u8', err);
     // }
 
 
@@ -659,10 +854,10 @@ try {
     // });
 
 
+    // })
   })
 
-
-  ipcMain.on('export-database', async (event, item, outpath, isLeaf) => {
+  ipcMain.handle('export-database', async (event, item, outpath, isLeaf) => {
     let path: string;
     let json: string;
     if (isLeaf === 'searchAPI') {
@@ -681,38 +876,41 @@ try {
     await fs.writeFile(path, json, function (err) {
       if (err) throw err;
     });
-
   })
 
   ipcMain.handle('exec-db-confirmation', async (event, method) => {
-    let options;
-    if (method === 'updateDB') {
-      options = {
-        type: 'question',
-        buttons: ['Cancel', 'Update'],
-        defaultId: 0,
-        title: 'Update Confirmation',
-        message: 'Are you sure want to update selected entries',
-        detail: 'Update data will also update entries on network',
+    try {
+      let options;
+      if (method === 'updateDB') {
+        options = {
+          type: 'question',
+          buttons: ['Cancel', 'Update'],
+          defaultId: 0,
+          title: 'Update Confirmation',
+          message: 'Are you sure want to update selected entries',
+          detail: 'Update data will also update entries on network',
+        }
+      } else if (method === 'deleteDB') {
+        options = {
+          type: 'question',
+          buttons: ['Cancel', 'Delete data'],
+          defaultId: 0,
+          title: 'Deletion Confirmation',
+          message: 'Are you sure want to delete selected entries',
+          detail: 'Delete data will also update entries on network',
+        }
       }
-    } else if (method === 'deleteDB') {
-      options = {
-        type: 'question',
-        buttons: ['Cancel', 'Delete data'],
-        defaultId: 0,
-        title: 'Deletion Confirmation',
-        message: 'Are you sure want to delete selected entries',
-        detail: 'Delete data will also update entries on network',
-      }
+      return await dialog.showMessageBox(win, options).then(result => {
+        return { method: method, response: result.response }
+      })
+    } catch (error) {
+      console.log(error);
+      return null
     }
-    const result = dialog.showMessageBox(win, options).then(result => {
-      return { method: method, response: result.response }
-    }).catch(err => { console.log(err) });
-    return result
   })
 
 
-  ipcMain.on('exec-db-done', (event, message) => {
+  ipcMain.handle('exec-db-done', (event, message) => {
     const options = {
       type: 'info',
       title: 'Done',
