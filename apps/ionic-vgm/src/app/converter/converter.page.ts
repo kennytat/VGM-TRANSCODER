@@ -4,7 +4,6 @@ import { Apollo } from 'apollo-angular';
 import * as type from 'libs/xplat/core/src/lib/services/graphql.types';
 import { DataService } from '@vgm-converter/xplat/core';
 import * as _ from 'lodash';
-import { Subscription } from 'rxjs';
 interface SelectedTopic {
   level: number,
   id: string,
@@ -43,9 +42,9 @@ export class ConverterPage implements OnInit {
   progressionStatus: number = 0;
   convertedFiles: number = 0;
   totalFiles: number = 0;
-  // electronService API for ipcMain and ipcRenderer communication, ngZone for immediately reflect data change from ipcMain sender
-  path = '';
-  level = 0;
+  // // instance for adding db manually
+  // path = '';
+  // level = 0;
 
   constructor(
     private _electronService: ElectronService,
@@ -57,12 +56,12 @@ export class ConverterPage implements OnInit {
 
 
   ngOnInit() {
-    //create large db instant code
-    if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.on('create-manual', (event, value) => {
-        this.createNewTopic(this.level, value)
-      })
-    }
+    // // create large db instant code
+    // if (this._electronService.isElectronApp) {
+    //   this._electronService.ipcRenderer.on('create-manual', (event, value) => {
+    //     this.createNewTopic(this.level, value)
+    //   })
+    // }
 
   }
 
@@ -134,38 +133,38 @@ export class ConverterPage implements OnInit {
         name: value,
       }
     }).subscribe(async ({ data }) => {
-      // switch (level) {
-      //   case 2:
-      //     this.selectedItem = await _.cloneDeep(data.createLevel2)
-      //     break;
-      //   case 3:
-      //     this.selectedItem = await _.cloneDeep(data.createLevel3)
-      //     break;
-      //   case 4:
-      //     this.selectedItem = await _.cloneDeep(data.createLevel4)
-      //     break;
-      //   case 5:
-      //     this.selectedItem = await _.cloneDeep(data.createLevel5)
-      //     break;
-      //   case 6:
-      //     this.selectedItem = await _.cloneDeep(data.createLevel6)
-      //     break;
-      //   default:
-      // }
-      // await this.selectedTopics[level - 1].options.push(this.selectedItem)
-      // await this.dataService.fetchDB(this.isVideo);
-      // // console.log(this.selectedItem);
+      switch (level) {
+        case 2:
+          this.selectedItem = await _.cloneDeep(data.createLevel2)
+          break;
+        case 3:
+          this.selectedItem = await _.cloneDeep(data.createLevel3)
+          break;
+        case 4:
+          this.selectedItem = await _.cloneDeep(data.createLevel4)
+          break;
+        case 5:
+          this.selectedItem = await _.cloneDeep(data.createLevel5)
+          break;
+        case 6:
+          this.selectedItem = await _.cloneDeep(data.createLevel6)
+          break;
+        default:
+      }
+      await this.selectedTopics[level - 1].options.push(this.selectedItem)
+      await this.dataService.fetchDB(this.isVideo);
+      console.log(this.selectedItem);
 
-      // await this.selectOptionChange(level, this.selectedItem.id)
+      await this.selectOptionChange(level, this.selectedItem.id)
 
       console.log(data);
 
 
     }, (error) => {
       console.log('there was an error sending the query', error);
-      // if (this._electronService.isElectronApp) {
-      //   this._electronService.ipcRenderer.invoke('error-message', 'topic-db-error');
-      // }
+      if (this._electronService.isElectronApp) {
+        this._electronService.ipcRenderer.invoke('error-message', 'topic-db-error');
+      }
     });
   }
 
@@ -200,10 +199,10 @@ export class ConverterPage implements OnInit {
   }
 
   test() {
-    console.log(this.path, this.level);
-    if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('test', this.path);
-    }
+    // console.log(this.path, this.level);
+    // if (this._electronService.isElectronApp) {
+    //   this._electronService.ipcRenderer.send('test', this.path);
+    // }
 
     // this.updateIsLeaf();
     // console.log(this.level1.options, '\n', this.level2.options, '\n', this.level3.options, '\n', this.level4.options, '\n', this.level5.options);
@@ -239,43 +238,43 @@ export class ConverterPage implements OnInit {
     // });
 
 
+
+
+
+    //   const files = raw.replace(/}[\n,\s]+?{/g, '}splitjson{').split('splitjson');
+    //   files.forEach(item => {
+    //     const file = JSON.parse(item);
+    //     const fileName = file.format.filename.replace(/^(.*[\\\/])/, '');
+    //     const originalPath = file.format.filename.replace(/([^\/]+$)/, '');
+    //     const fileThumb = this.outputPath.concat('/', fileName, '/', 'Thumb_720p/01.jpg');
+
+    //     // console.log(file.format.filename);
+    //     // console.log(file.format.duration);
+    //     // console.log(file.format.size);
+    //     // console.log(fileName);
+    //     // console.log(originalPath);
+    //     // console.log(fileThumb);
+
+
+    //     this.apollo.mutate<CreateContentResult>({
+    //       mutation: CREATE_CONTENT,
+    //       variables: {
+    //         contentName: fileName,
+    //         contentPid: this.selectedTopicID,
+    //         contentDuration: file.format.duration,
+    //         contentSize: file.format.size,
+    //         contentOrigin: originalPath,
+    //         contentFolder: this.outputPath,
+    //         contentThumb: fileThumb,
+    //         contentType: 'video'
+    //       },
+    //     }).subscribe(({ data }) => { console.log(data); }, (error) => {
+    //       console.log('error creating new entries', error);
+    //     });
+
+    //   });
+    // }
   }
-
-
-  //   const files = raw.replace(/}[\n,\s]+?{/g, '}splitjson{').split('splitjson');
-  //   files.forEach(item => {
-  //     const file = JSON.parse(item);
-  //     const fileName = file.format.filename.replace(/^(.*[\\\/])/, '');
-  //     const originalPath = file.format.filename.replace(/([^\/]+$)/, '');
-  //     const fileThumb = this.outputPath.concat('/', fileName, '/', 'Thumb_720p/01.jpg');
-
-  //     // console.log(file.format.filename);
-  //     // console.log(file.format.duration);
-  //     // console.log(file.format.size);
-  //     // console.log(fileName);
-  //     // console.log(originalPath);
-  //     // console.log(fileThumb);
-
-
-  //     this.apollo.mutate<CreateContentResult>({
-  //       mutation: CREATE_CONTENT,
-  //       variables: {
-  //         contentName: fileName,
-  //         contentPid: this.selectedTopicID,
-  //         contentDuration: file.format.duration,
-  //         contentSize: file.format.size,
-  //         contentOrigin: originalPath,
-  //         contentFolder: this.outputPath,
-  //         contentThumb: fileThumb,
-  //         contentType: 'video'
-  //       },
-  //     }).subscribe(({ data }) => { console.log(data); }, (error) => {
-  //       console.log('error creating new entries', error);
-  //     });
-
-  //   });
-  // }
-
 
 
   OpenDialog() {
@@ -302,9 +301,10 @@ export class ConverterPage implements OnInit {
 
   Convert() {
     if (this._electronService.isElectronApp) {
-      if (this.inputPath === '' || this.outputPath === '' || !this.selectedItem) {
+      if (this.inputPath === '' || this.outputPath === '' || !this.selectedItem || this.selectedItem.children[0].isLeaf) {
         this._electronService.ipcRenderer.invoke('error-message', 'missing-path');
       } else {
+
         this.isConverting = true;
         this._electronService.ipcRenderer.invoke('start-convert', this.inputPath, this.outputPath, this.fileCheckbox, this.selectedItem);
         this._electronService.ipcRenderer.on('exec-done', (event) => {
@@ -331,10 +331,6 @@ export class ConverterPage implements OnInit {
             }
           });
         });
-
-        // this._electronService.ipcRenderer.on('create-db', (event, data) => {
-        //   this.createDB(data);
-        // });
       };
     }
   }

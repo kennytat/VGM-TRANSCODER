@@ -12,7 +12,7 @@ import { MeiliSearch } from 'meilisearch';
 
 const client = new MeiliSearch({
   host: 'http://search.hjm.bid',
-  apiKey: '', // helloworld
+  apiKey: 'helloworld', // 'helloworld'
 })
 
 interface FileInfo {
@@ -145,7 +145,7 @@ export class DatabasePage implements OnInit {
     try {
       await this.dataService.dbInit();
       this._dbInit = this.dataService._dbInit;
-      // this.connectSearch();
+      this.connectSearch();
     } catch (error) {
       console.log(error);
     }

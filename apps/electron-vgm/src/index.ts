@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, screen, dialog, Menu, globalShortcut } fro
 import * as path from 'path'
 import * as fs from 'fs'
 import * as url from 'url'
-import { exec, spawn, execSync } from 'child_process'
+import { exec, spawn, execSync, spawnSync } from 'child_process'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './graphql/app.module'
 import { create, globSource, CID } from 'ipfs-http-client'
@@ -175,15 +175,18 @@ function createWindow() {
     win.webContents.openDevTools();
     // client.create(applicationRef);
   }
-  // get graphql server ready after creating electron window
-  bootstrap();
-
 }
 
 try {
-  app.on('ready', () => {
-    createWindow();
-    createMenu();
+  app.on('ready', async () => {
+    try {
+      // get graphql server ready before creating electron window
+      await bootstrap();
+      createWindow();
+      createMenu();
+    } catch (error) {
+      console.log(error);
+    }
   });
 
   app.on('window-all-closed', quit);
@@ -705,51 +708,113 @@ try {
     // }
     // listObject(url);
 
-    try {
-      // find VGMA file
-      const list = await execSync(`find "${url}" -type f -name Info.ini`);
-      const listArray = await list.toString().split('\n');
-      // listArray.shift();
-      // listArray.pop();
-      // console.log(listArray, listArray.length);
-      // listArray.forEach((path) => {
-      //   const content = fs.readFileSync(path, { encoding: 'utf8' })
-      //   const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
-      //   // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
-      //   event.sender.send('create-manual', name)
-      //   console.log(name);
-      // })
+    // // add directory to database
+    // try {
+    //   // find VGMA file
+    //   const list = await execSync(`find "${url}" -type f -name Info.ini`);
+    //   const listArray = await list.toString().split('\n');
+    //   // listArray.shift();
+    //   // listArray.pop();
+    //   // console.log(listArray, listArray.length);
+    //   // listArray.forEach((path) => {
+    //   //   const content = fs.readFileSync(path, { encoding: 'utf8' })
+    //   //   const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+    //   //   // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
+    //   //   event.sender.send('create-manual', name)
+    //   //   console.log(name);
+    //   // })
 
-      const currentLevelArray = await listArray.filter(item => item && item.match(/\//g).length === 6);
-      console.log(currentLevelArray, currentLevelArray.length);
-      if (currentLevelArray) {
-        console.log(currentLevelArray, currentLevelArray.length);
-        currentLevelArray.forEach((path) => {
-          const content = fs.readFileSync(path, { encoding: 'utf8' });
-          const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
-          // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
-          if (name) {
-            event.sender.send('create-manual', name)
-          }
-          console.log(name);
-        })
-      }
+    //   const currentLevelArray = await listArray.filter(item => item && item.match(/\//g).length === 7);
+    //   // console.log(currentLevelArray, currentLevelArray.length);
+    //   if (currentLevelArray) {
+    //     console.log(currentLevelArray, currentLevelArray.length);
+    //     currentLevelArray.forEach((path) => {
+    //       const content = fs.readFileSync(path, { encoding: 'utf8' });
+    //       const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+    //       // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
+    //       if (name) {
+    //         event.sender.send('create-manual', name)
+    //       }
+    //       console.log(name);
+    //     })
+    //   }
+
+    //   // const month = ['Tháng 01', 'Tháng 02', 'Tháng 03', 'Tháng 04', 'Tháng 05', 'Tháng 06', 'Tháng 07', 'Tháng 08', 'Tháng 09', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+    //   // month.forEach((name) => {
+    //   //   event.sender.send('create-manual', name)
+    //   //   console.log(name);
+    //   // })
+    //   // console.log(listArray);
+    // } catch (error) {
+    //   console.log('fs promise error:', error);
+    // }
+
+    // // // rename files
+    // try {
+    //   const renameFile = (file) => {
+    //     return new Promise((resolve, reject) => {
+    //       const content = fs.readFileSync(file, { encoding: 'utf8' })
+    //       const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+    //       const oldPath = path.dirname(file);
+    //       const newPath = `${path.dirname(oldPath)}/${name}`;
+    //       console.log(oldPath, newPath);
+    //       fs.renameSync(oldPath, newPath);
+    //       resolve('done');
+    //     });
+
+    //   }
+    //   // find VGMV file
+    //   const raw = await spawnSync('find', [url, '-type', 'f', '-name', 'Info.ini'], { encoding: 'utf8' });
+    //   if (raw.stdout) {
+    //     const list = raw.stdout.split('\n');
+    //     list.pop();
+    //     let i = 0;
+    //     while (i < list.length) {
+    //       const result = renameFile(list[i]);
+    //       console.log(i);
+    //       if (result) {
+    //         i++;
+    //       }
+    //     }
+    //   }
 
 
+    //   // const listArray = await list.toString().split('\n');
+    //   // // listArray.shift();
+    //   // // listArray.pop();
+    //   // // console.log(listArray, listArray.length);
+    //   // // listArray.forEach((path) => {
+    //   // //   const content = fs.readFileSync(path, { encoding: 'utf8' })
+    //   // //   const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+    //   // //   // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
+    //   // //   event.sender.send('create-manual', name)
+    //   // //   console.log(name);
+    //   // // })
 
-      // const month = ['Tháng 01', 'Tháng 02', 'Tháng 03', 'Tháng 04', 'Tháng 05', 'Tháng 06', 'Tháng 07', 'Tháng 08', 'Tháng 09', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+    //   // const currentLevelArray = await listArray.filter(item => item && item.match(/\//g).length === 6);
+    //   // console.log(currentLevelArray, currentLevelArray.length);
+    //   // if (currentLevelArray) {
+    //   //   console.log(currentLevelArray, currentLevelArray.length);
+    //   //   currentLevelArray.forEach((path) => {
+    //   //     const content = fs.readFileSync(path, { encoding: 'utf8' });
+    //   //     const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+    //   //     // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
+    //   //     if (name) {
+    //   //       event.sender.send('create-manual', name)
+    //   //     }
+    //   //     console.log(name);
+    //   //   })
+    //   // }
 
-      // month.forEach((name) => {
-      //   event.sender.send('create-manual', name)
-      //   console.log(name);
-      // })
-      // console.log(listArray);
-
-
-    } catch (error) {
-      console.log('fs promise error:', error);
-    }
-
+    //   // const month = ['Tháng 01', 'Tháng 02', 'Tháng 03', 'Tháng 04', 'Tháng 05', 'Tháng 06', 'Tháng 07', 'Tháng 08', 'Tháng 09', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+    //   // month.forEach((name) => {
+    //   //   event.sender.send('create-manual', name)
+    //   //   console.log(name);
+    //   // })
+    //   // console.log(listArray);
+    // } catch (error) {
+    //   console.log('fs promise error:', error);
+    // }
 
     // try {
     //   // encrypt key file
