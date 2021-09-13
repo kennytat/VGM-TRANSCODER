@@ -74,7 +74,6 @@ export class DatabasePage implements OnInit {
   videoFiles: any[] = [];
   videoItemList: any[] = [];
   videoTopicList: any[] = [];
-  // audioDB: any[] | null = null;
   audioTree: TreeviewItem[];
   audioFiles: any[] = [];
   audioItemList: any[] = [];
@@ -119,16 +118,14 @@ export class DatabasePage implements OnInit {
     this.videoTreeSub = this.dataService.videoTree$.subscribe((data) => {
       if (data.value) {
         this.videoTree = [new TreeviewItem(data)];
-        console.log(this.videoTree);
+        console.log('video Tree', this.videoTree);
 
       }
     });
     this.audioTreeSub = this.dataService.audioTree$.subscribe((data) => {
       if (data.value) {
         this.audioTree = [new TreeviewItem(data)];
-        console.log(data, this.audioTree);
-
-
+        console.log('audio Tree', this.audioTree);
       }
     });
   }
@@ -213,25 +210,11 @@ export class DatabasePage implements OnInit {
       const indexes = await client.listIndexes();
       console.log('meiliSearch', indexes);
       if (indexes) {
-        this.meiliSearch = client.index('VGM');
+        this.meiliSearch = client.index('VGMDB');
         this._searchInit = true;
       }
     } catch (error) {
       console.log(error);
-    }
-  }
-
-
-
-  test() {
-    if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('test', '/home/kennytat/vgm-origin-audio/VGM-001-PTNS/2011/Thang12-2011');
-
-      // this._electronService.ipcRenderer.on('test-response', (event, res) => {
-      //   console.log('test-response', res);
-
-      // })
-
     }
   }
 
@@ -326,7 +309,7 @@ export class DatabasePage implements OnInit {
     } else {
       this.selectedFileInfo = [];
     };
-    console.log(this.selectedFilesID, this.selectedFileInfo)
+    console.log('selected Files', this.selectedFileInfo)
   }
 
   treeFilterChange(event: string) {

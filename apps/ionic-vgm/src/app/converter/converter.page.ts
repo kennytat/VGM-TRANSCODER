@@ -1,4 +1,4 @@
-import { Component, NgZone, OnInit } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { Apollo } from 'apollo-angular';
 import * as type from 'libs/xplat/core/src/lib/services/graphql.types';
@@ -17,7 +17,7 @@ interface SelectedTopic {
   templateUrl: 'converter.page.html',
   styleUrls: ['converter.page.scss'],
 })
-export class ConverterPage implements OnInit {
+export class ConverterPage {
   isVideo: boolean = true;
   level1: SelectedTopic = {
     level: 1, id: '0', options: [
@@ -51,17 +51,6 @@ export class ConverterPage implements OnInit {
     private zone: NgZone,
     private apollo: Apollo,
     private dataService: DataService) {
-
-  }
-
-
-  ngOnInit() {
-    // // create large db instant code
-    // if (this._electronService.isElectronApp) {
-    //   this._electronService.ipcRenderer.on('create-manual', (event, value) => {
-    //     this.createNewTopic(this.level, value)
-    //   })
-    // }
 
   }
 
@@ -197,85 +186,6 @@ export class ConverterPage implements OnInit {
     str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
     return str;
   }
-
-  test() {
-    // console.log(this.path, this.level);
-    // if (this._electronService.isElectronApp) {
-    //   this._electronService.ipcRenderer.send('test', this.path);
-    // }
-
-    // this.updateIsLeaf();
-    // console.log(this.level1.options, '\n', this.level2.options, '\n', this.level3.options, '\n', this.level4.options, '\n', this.level5.options);
-    //     const data = `/home/kennytat/Downloads/bigbig/BigBuck.mp4
-    // /home/kennytat/Downloads/bigbig/Bigbig-123.mp4`
-    //     console.log(data.split("\n"));
-
-
-    //   console.log(this.level1.options, this.level2.options, this.level3.options, this.level4.options);
-
-    // createDB(raw) {
-
-    // if (this._electronService.isElectronApp) {
-    //   this._electronService.ipcRenderer.invoke('test');
-    // }
-    // this.apollo.mutate<any>({
-    //   mutation: type.CREATE_LEVEL_2,
-    //   variables: {
-    //     pid: "00000000-0000-0000-0000-000000000001",
-    //     isLeaf: true,
-    //     location: "asdfasdf234",
-    //     url: "data.url",
-    //     isVideo: false,
-    //     name: "data 05 moto",
-    //   }
-    // }).subscribe(({ data }) => {
-    //   console.log('got data', data);
-    //   console.log(data.createLevel2.id);
-    //   console.log(videoDB);
-    // }, (error) => {
-
-    //   console.log('there was an error sending the query', error);
-    // });
-
-
-
-
-
-    //   const files = raw.replace(/}[\n,\s]+?{/g, '}splitjson{').split('splitjson');
-    //   files.forEach(item => {
-    //     const file = JSON.parse(item);
-    //     const fileName = file.format.filename.replace(/^(.*[\\\/])/, '');
-    //     const originalPath = file.format.filename.replace(/([^\/]+$)/, '');
-    //     const fileThumb = this.outputPath.concat('/', fileName, '/', 'Thumb_720p/01.jpg');
-
-    //     // console.log(file.format.filename);
-    //     // console.log(file.format.duration);
-    //     // console.log(file.format.size);
-    //     // console.log(fileName);
-    //     // console.log(originalPath);
-    //     // console.log(fileThumb);
-
-
-    //     this.apollo.mutate<CreateContentResult>({
-    //       mutation: CREATE_CONTENT,
-    //       variables: {
-    //         contentName: fileName,
-    //         contentPid: this.selectedTopicID,
-    //         contentDuration: file.format.duration,
-    //         contentSize: file.format.size,
-    //         contentOrigin: originalPath,
-    //         contentFolder: this.outputPath,
-    //         contentThumb: fileThumb,
-    //         contentType: 'video'
-    //       },
-    //     }).subscribe(({ data }) => { console.log(data); }, (error) => {
-    //       console.log('error creating new entries', error);
-    //     });
-
-    //   });
-    // }
-  }
-
 
   OpenDialog() {
     if (this._electronService.isElectronApp) {

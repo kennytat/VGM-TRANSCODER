@@ -6,9 +6,6 @@
           <ion-item>
             <ion-icon name="folder-open-outline" slot="start"></ion-icon>
             <ion-label>M3U8 Streaming Transcoder</ion-label>
-            <ion-button fill="outline" slot="end" (click)="test()"
-              >Test</ion-button
-            >
           </ion-item>
 
           <ion-card-content>
@@ -147,17 +144,6 @@
             </ion-grid>
           </ion-card-content>
           <hr class="new" />
-
-          <!-- <ion-input
-            style="background-color: white; color: black"
-            [(ngModel)]="path"
-          >
-          </ion-input>
-          <ion-input
-            style="background-color: pink; color: black"
-            [(ngModel)]="level"
-          >
-          </ion-input> -->
 
           <ion-card-content *ngIf="!isConverting; else stop_convert">
             <ion-button expand="block" (click)="Convert()"
