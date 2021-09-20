@@ -225,25 +225,27 @@ export class DatabasePage implements OnInit {
 
   test() {
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('test', '/home/kennytat/vgm-origin-audio/VGM-001-PTNS/2011/Thang12-2011');
-
-      // this._electronService.ipcRenderer.on('test-response', (event, res) => {
-      //   console.log('test-response', res);
-
-      // })
-
+      // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
+      const prefixPath = '/home/kennytat/Desktop';
+      const startPoint = 15;
+      const endPoint = 500;
+      this._electronService.ipcRenderer.send('test', prefixPath, startPoint, endPoint);
     }
   }
 
   async downloadDB() {
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.invoke('save-dialog', 'api').then(async (outpath) => {
+      this._electronService.ipcRenderer.invoke('save-dialog').then(async (outpath) => {
         if (outpath[0]) {
+
           const itemList: any[] = await this.getAllIsLeaf(this.isVideo);
+          console.log(itemList);
           await itemList.forEach(async item => { await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'isLeaf') });
           const topicList: any[] = await this.getAllNonLeaf(this.isVideo);
+          console.log(topicList);
           await topicList.forEach(async item => { await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'nonLeaf') });
           const items: any[] = await this.getAllItem(this.isVideo);
+          console.log(items);
           await items.forEach(async item => { await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'isFile') });
           await this._electronService.ipcRenderer.invoke('export-database', items, outpath, 'searchAPI')
         }
@@ -259,12 +261,12 @@ export class DatabasePage implements OnInit {
     } else {
       db = this.dataService.audioDB
     }
-    db.filter(function getItem(item) {
+    db.forEach(function getItem(item) {
       if (item.isLeaf === null) {
         files.push(item)
       }
       if (item.children.length >= 1) {
-        item.children.filter(getItem)
+        item.children.forEach(getItem)
       }
     });
     return files;
@@ -278,12 +280,12 @@ export class DatabasePage implements OnInit {
     } else {
       db = this.dataService.audioDB
     }
-    db.filter(function getItem(item) {
+    db.forEach(function getItem(item) {
       if (item.isLeaf === true) {
         lists.push(item);
       }
       if (item.children.length >= 1) {
-        item.children.filter(getItem)
+        item.children.forEach(getItem)
       }
     });
     return lists;
@@ -297,18 +299,27 @@ export class DatabasePage implements OnInit {
     } else {
       db = this.dataService.audioDB
     }
-    db.filter(function getItem(item) {
-      if (item.isLeaf === false) {
-        item.children.forEach(children => {
-          children.children = []
-        });
 
+    db.forEach(function getItem(item) {
+      if (item.isLeaf === false) {
         lists.push(item);
       }
       if (item.children.length >= 1) {
         item.children.filter(getItem)
       }
     });
+
+    // lists.forEach((item) => {
+    //   if (item.children[0]) {
+    //     item.children.forEach(elem => {
+    //       console.log(elem);
+
+    //       // if (elem.children[0]) {
+    //       //   elem.children = []
+    //       // }
+    //     });
+    //   }
+    // })
     return lists;
   }
 

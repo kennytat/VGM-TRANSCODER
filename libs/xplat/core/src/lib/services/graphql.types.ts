@@ -180,9 +180,11 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          qm
           viewCount
           duration
           size
+          updatedAt
            children {
           id
           pid
@@ -195,9 +197,11 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          qm
           viewCount
           duration
           size
+          updatedAt
            children {
           id
           pid
@@ -210,9 +214,11 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          qm
           viewCount
           duration
           size
+          updatedAt
            children {
           id
           pid
@@ -225,9 +231,11 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          qm
           viewCount
           duration
           size
+          updatedAt
            children {
           id
           pid
@@ -240,9 +248,11 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          qm
           viewCount
           duration
           size
+          updatedAt
            children {
           id
           pid
@@ -255,9 +265,11 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          qm
           viewCount
           duration
           size
+          updatedAt
         }
         }
         }

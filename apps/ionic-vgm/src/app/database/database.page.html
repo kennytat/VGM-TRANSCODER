@@ -237,17 +237,26 @@
                                 [style.pointerEvents]="'none'"
                               ></ion-input>
                             </div>
+                            <div>
+                              <ion-label>Qm</ion-label>
+                              <ion-input
+                                type="text"
+                                placeholder="{{file.qm}}"
+                                value=""
+                                [style.pointerEvents]="'none'"
+                              ></ion-input>
+                            </div>
                           </div>
 
                           <div class="file-info-segment" *ngIf="metaFilter">
                             <div>
                               <ion-label>Updated</ion-label>
-                              <input
+                              <ion-input
                                 type="text"
                                 placeholder="{{file.updatedAt | date }}"
                                 value=""
                                 [style.pointerEvents]="'none'"
-                              />
+                              ></ion-input>
                             </div>
                             <div>
                               <ion-label>Keyword</ion-label>

@@ -42,9 +42,9 @@ export class ConverterPage implements OnInit {
   progressionStatus: number = 0;
   convertedFiles: number = 0;
   totalFiles: number = 0;
-  // // instance for adding db manually
-  // path = '';
-  // level = 0;
+  // instance for adding db manually
+  path = '';
+  level = 0;
 
   constructor(
     private _electronService: ElectronService,
@@ -56,12 +56,12 @@ export class ConverterPage implements OnInit {
 
 
   ngOnInit() {
-    // // create large db instant code
-    // if (this._electronService.isElectronApp) {
-    //   this._electronService.ipcRenderer.on('create-manual', (event, value) => {
-    //     this.createNewTopic(this.level, value)
-    //   })
-    // }
+    // create large db instant code
+    if (this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.on('create-manual', (event, value) => {
+        this.createNewTopic(this.level, value)
+      })
+    }
 
   }
 
@@ -199,10 +199,10 @@ export class ConverterPage implements OnInit {
   }
 
   test() {
-    // console.log(this.path, this.level);
-    // if (this._electronService.isElectronApp) {
-    //   this._electronService.ipcRenderer.send('test', this.path);
-    // }
+    console.log(this.path, this.level);
+    if (this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.send('test', this.path);
+    }
 
     // this.updateIsLeaf();
     // console.log(this.level1.options, '\n', this.level2.options, '\n', this.level3.options, '\n', this.level4.options, '\n', this.level5.options);
