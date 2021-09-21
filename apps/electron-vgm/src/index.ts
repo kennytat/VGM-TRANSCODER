@@ -972,7 +972,7 @@ try {
           fileInfo.dblevel = pItem.dblevel + 1;
           console.log(fileInfo, 'start converting ffmpeg');
 
-          const conversion = spawn('./ffmpeg-exec.sh', [`"${file}"`, `"${outPath}"`, fileType]);
+          const conversion = spawn('sh', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fileType]);
 
           conversion.stdout.on('data', async (data) => {
             console.log(`conversion stdout: ${data}`);
