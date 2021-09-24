@@ -412,7 +412,7 @@ try {
       // fileInfo.name = `${content.split('|')[1]}${path.parse(files[index]).ext}`;
       // process filename
       const nonVietnamese = nonAccentVietnamese(fileInfo.name);
-      fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')}`;
+      fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
       fileInfo.location = `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`;
       const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
       fileInfo.isVideo = pItem.isVideo;
@@ -964,7 +964,7 @@ try {
           fileInfo.name = vName;
           // process filename
           const nonVietnamese = nonAccentVietnamese(vName);
-          fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')}`;
+          fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
           fileInfo.location = `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`;
           const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
           fileInfo.isVideo = pItem.isVideo;
@@ -972,7 +972,7 @@ try {
           fileInfo.dblevel = pItem.dblevel + 1;
           console.log(fileInfo, 'start converting ffmpeg');
 
-          const conversion = spawn('sh', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fileType]);
+          const conversion = spawn('bash', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fileType]);
 
           conversion.stdout.on('data', async (data) => {
             console.log(`conversion stdout: ${data}`);
@@ -1045,7 +1045,7 @@ try {
                 resolve('done');
 
               } catch (error) {
-                console.log('encrypt key error:', error);
+                console.log('error:', error);
               }
             }
           });
@@ -1304,7 +1304,7 @@ try {
     // Some system encode vietnamese combining accent as individual utf-8 characters
     str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // Huyền sắc hỏi ngã nặng 
     str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
-    str = str.replace(/-+-/g, "-"); //thay thế 2- thành 1- 
+    // str = str.replace(/-+-/g, "-"); //thay thế 2- thành 1- 
     return str;
   }
 
