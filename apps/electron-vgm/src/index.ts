@@ -1019,7 +1019,7 @@ try {
                   execSync(`rclone copy "${outPath}/" "${convertedPath}${fileInfo.location}/"`);
                   console.log(`Upload converted file done`);
                   resolve('done');
-                }).then(() => {
+                }).then((result) => {
                   fs.rmdirSync(outPath, { recursive: true });
                   event.sender.send('create-database', fileInfo);
                 })
