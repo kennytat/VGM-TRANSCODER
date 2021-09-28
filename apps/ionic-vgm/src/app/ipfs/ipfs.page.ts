@@ -23,12 +23,12 @@ export class IpfsPage {
     container: 'ipfsContainer'
   }
   httpApiConfig = {
-    // url: 'http://ipfs.hjm.bid:80/api/v0'
-    host: 'ipfs-sgp.hjm.bid',  // 'ipfs-sgp.hjm.bid', // '127.0.0.1',
-    port: 80, // 80 or 5001
-    protocol: 'http',
-    apiPath: '/api/v0',
-    timeout: '6h'
+    url: 'http://ipfs-sgp.hjm.bid/api/v0'
+    // host: 'ipfs-sgp.hjm.bid',  // 'ipfs-sgp.hjm.bid', // '127.0.0.1',
+    // port: 80, // 80 or 5001
+    // protocol: 'http',
+    // apiPath: '/api/v0',
+    // timeout: '6h'
   }
   constructor(
     private _electronService: ElectronService,

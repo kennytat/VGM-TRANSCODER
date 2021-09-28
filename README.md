@@ -36,3 +36,5 @@ docker build -t ipfs/image .
 ### DEV RUN COMMAND
 
 docker run --name ipfsContainer -p 4001:4001 -p 4001:4001/udp -p 127.0.0.1:8080:8080 -p 127.0.0.1:5001:5001 --rm --privileged -e 'AWSACCESSKEYID=jurwqqza4a5feebwaa3ghxgxhqqq' -e 'AWSSECRETACCESSKEY=j2zd5ragcs6ex27enxarxqaihs53adhssajcqkxiyn66xdp3qap6w' -e 'ENDPOINT_URL=https://gateway.ap1.storjshare.io' -e 'S3_BUCKET=vgm-ipfs' -e 'MOUNT_POINT=/var/s3' -e 'IAM_ROLE=none' -v /PATH/TO/YOUR/PROJECT/tv-ipfs-s3/custom:/custom -it ipfs/image
+
+docker run --name ipfsContainer -p 4001:4001 -p 4001:4001/udp -p 127.0.0.1:8080:8080 -p 127.0.0.1:5001:5001 --rm --privileged -e 'AWSACCESSKEYID=jurwqqza4a5feebwaa3ghxgxhqqq' -e 'AWSSECRETACCESSKEY=j2zd5ragcs6ex27enxarxqaihs53adhssajcqkxiyn66xdp3qap6w' -e 'ENDPOINT_URL=https://gateway.ap1.storjshare.io' -e 'S3_BUCKET=vgm-ipfs' -e 'MOUNT_POINT=/var/s3' -e 'IAM_ROLE=none' -it ipfs/image

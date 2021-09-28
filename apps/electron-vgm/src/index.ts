@@ -588,7 +588,7 @@ try {
 
   })
 
-  ipcMain.on('test', async (event, prefix, startPoint, endPoint) => {
+  ipcMain.on('test', async (event, prefix, fileType, startPoint, endPoint) => {
 
     // // let body = Buffer.from("");
     // const abc = 'asd1f2sdhf'
@@ -839,7 +839,7 @@ try {
     //   const copyFile = (file) => {
     //     return new Promise((resolve, reject) => {
     //       const sourceDir = path.parse(file).dir;
-    //       const desDir = sourceDir.replace('vgm-origin-audio', 'Desktop/vgm-origin-audio');
+    //       const desDir = sourceDir.replace('origin', 'renamed');
     //       if (!fs.existsSync(desDir)) {
     //         fs.mkdirSync(desDir, { recursive: true });
     //       }
@@ -851,7 +851,7 @@ try {
     //   }
 
 
-    //   const raw = fs.readFileSync(`${prefix}/Desktop/test.txt`, { encoding: 'utf-8' });
+    //   const raw = fs.readFileSync(`${prefix}/VGMV-backup.txt`, { encoding: 'utf-8' });
     //   // find all ini file
     //   if (raw) {
     //     const list = raw.split('\n');
@@ -885,7 +885,7 @@ try {
     //   }
 
     //   // find VGMV file
-    //   const raw = await spawnSync('find', ['${prefix}/Desktop/vgm-audio-renamed', '-type', 'f', '-name', 'Info.ini'], { encoding: 'utf8' });
+    //   const raw = await spawnSync('find', [`${prefix}/database/renamed/VGMV`, '-type', 'f', '-name', 'Info.ini'], { encoding: 'utf8' });
     //   if (raw.stdout) {
     //     const list = raw.stdout.split('\n');
     //     list.pop();
@@ -906,10 +906,19 @@ try {
     //   console.log('err copy folder', error);
     // }
 
-    // rename folder
+
+
+
+    // start instant code
     try {
-      const txtPath = `${prefix}/database/VGMA.txt`;
-      const renamedFolder = `${prefix}/database/renamed`;
+      let VGM;
+      if (fileType === 'audio') {
+        VGM = 'VGMV';
+      } else if (fileType === 'video') {
+        VGM = 'VGMV';
+      }
+      const txtPath = `${prefix}/database/${VGM}.txt`;
+      const renamedFolder = `${prefix}/database/renamed/${VGM}`;
       const apiPath = `${prefix}/database/API`;
       const localOutPath = `${prefix}/database/converted`;
       const localOrigin = `${prefix}/database/origin`;
@@ -1010,38 +1019,41 @@ try {
                   execSync(`rclone copy "${outPath}/" "${convertedPath}${fileInfo.location}/"`);
                   console.log(`Upload converted file done`);
                   resolve('done');
+                }).then(() => {
+                  fs.rmdirSync(outPath, { recursive: true });
+                  event.sender.send('create-database', fileInfo);
                 })
-                // upload ipfs
-                if (ipfsClient) {
-                  console.log('uploading ipfs');
-                  // monitor ipfs uploading time
-                  const now = new Date();
-                  const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
-                  console.log(timenow);
-                  const test = await ipfsClient.add('Hello world');
-                  if (test) {
-                    console.log('Testing IPFS function: success', test);
-                  }
+                // // upload ipfs
+                // if (ipfsClient) {
+                //   console.log('uploading ipfs');
+                //   // monitor ipfs uploading time
+                //   const now = new Date();
+                //   const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+                //   console.log(timenow);
+                //   const test = await ipfsClient.add('Hello world');
+                //   if (test) {
+                //     console.log('Testing IPFS function: success', test);
+                //   }
 
-                  const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
-                  // got ipfs info
-                  const cid: CID = ipfsOut.cid;
-                  console.log(cid);
-                  fileInfo.qm = cid.toString();
-                  const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
-                  fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
-                  fileInfo.size = ipfsOut.size;
-                  console.log('upload ipfs done', fileInfo);
-                  const later = new Date();
-                  const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
-                  console.log(timelater);
-                  if (cid) {
-                    fs.rmdirSync(outPath, { recursive: true });
-                  }
-                  event.sender.send('create-database', fileInfo);
-                } else {
-                  event.sender.send('create-database', fileInfo);
-                }
+                //   const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
+                //   // got ipfs info
+                //   const cid: CID = ipfsOut.cid;
+                //   console.log(cid);
+                //   fileInfo.qm = cid.toString();
+                //   const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+                //   fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
+                //   fileInfo.size = ipfsOut.size;
+                //   console.log('upload ipfs done', fileInfo);
+                //   const later = new Date();
+                //   const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
+                //   console.log(timelater);
+                //   if (cid) {
+                //     fs.rmdirSync(outPath, { recursive: true });
+                //   }
+                //   event.sender.send('create-database', fileInfo);
+                // } else {
+                //   event.sender.send('create-database', fileInfo);
+                // }
                 resolve('done');
 
               } catch (error) {
@@ -1064,21 +1076,29 @@ try {
         while (i < endPoint) {
           const originalFile = list[i].replace('.ini', '');
           const ext = path.parse(originalFile).ext
-          const fileIni = execSync(`find '${renamedFolder}' -type f -name "${path.basename(list[i])}"`, { encoding: "utf8" }).replace('\n', '');
-          const fileContent = fs.readFileSync(fileIni, { encoding: 'utf8' });
+          const fileIni = execSync(`find '${renamedFolder}' -type f -name "${path.basename(list[i])}"`, { encoding: "utf8" }).split('\n');
+          const fileContent = fs.readFileSync(fileIni[0], { encoding: 'utf8' });
           const fileName = `${fileContent.split('|')[1]}`;
-          const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni).replace(/^.*VGMA\//, ''));
+          let re;
+          if (fileType === 'video') {
+            re = /^.*VGMV\//;
+          } else if (fileType === 'audio') {
+            re = /^.*VGMA\//;
+          }
+          const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
           const pUrl = nonVietnamese.toLowerCase().replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
           const pAPI = execSync(`find '${apiPath}' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).replace('\n', '');
-          const pContent = fs.readFileSync(pAPI, { encoding: 'utf8' });
-          const pItem = JSON.parse(pContent);
-          const warehouseDir = `${path.dirname(fileIni).replace(/^.*renamed/, '')}/${fileName}${ext}`;
-          // const outPath = `${localOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
-          // console.log(originalFile, warehouseDir);
-          await upWarehouse(originalFile, warehouseDir);
-          const localOriginPath = `${localOrigin}${originalFile}`;
-          await convertFile(localOriginPath, fileName, 'audio', pItem, localOutPath);
-          console.log('converted files', i);
+          if (pAPI) {
+            const pContent = fs.readFileSync(pAPI, { encoding: 'utf8' });
+            const pItem = JSON.parse(pContent);
+            const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}/${fileName}${ext}`;
+            console.log('uploading Origin', originalFile, warehouseDir);
+            await upWarehouse(originalFile, warehouseDir);
+            const localOriginPath = `${localOrigin}${originalFile}`;
+            await convertFile(localOriginPath, fileName, fileType, pItem, localOutPath);
+            console.log('converted files', i);
+            await fs.writeFileSync(`${prefix}/database/${fileType}-converted-count.txt`, i);
+          }
           i++;
         }
         // QmdFcsTExrPaEKR3tkE69pP6AMpmZKK98gSBTyx2cRxW7a test QmWhTKbYab3r9rbQ7S5t2PXcMVPRGQeqt6M31Mv2KjPKAh
@@ -1086,6 +1106,10 @@ try {
     } catch (error) {
       console.log('err copy folder', error);
     }
+    // end instant code
+
+
+
 
     // try {
     //   // encrypt key file
@@ -1134,8 +1158,15 @@ try {
     //   console.log(timenow);
     //   const test = await ipfsClient.add('Hello world');
     //   console.log(test);
-    //   const ci = await ipfsClient.add(globSource('${prefix}/Desktop/BigBuck', { recursive: true }));
-    //   console.log(ci);
+    //   const testpath = `${prefix}/paris/stream_480p`;
+    //   console.log(testpath);
+    //   // const ci = await ipfsClient.add(testpath);
+    //   // const ci = await ipfsClient.addAll(globSource(testpath, { recursive: true }));
+    //   for await (const file of ipfsClient.addAll(globSource(testpath, { recursive: true }))) {
+    //     console.log(file)
+    //   }
+    //   // console.log(ci);
+
     //   const later = new Date();
     //   const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
     //   console.log(timelater);
