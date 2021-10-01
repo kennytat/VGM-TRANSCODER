@@ -44,7 +44,7 @@ export class ConverterPage implements OnInit {
   totalFiles: number = 0;
   // instance for adding db manually
   path = '';
-  level = 0;
+  level: number = 0;
 
   constructor(
     private _electronService: ElectronService,
@@ -152,7 +152,7 @@ export class ConverterPage implements OnInit {
         default:
       }
       await this.selectedTopics[level - 1].options.push(this.selectedItem)
-      await this.dataService.fetchDB(this.isVideo);
+      // await this.dataService.fetchDB(this.isVideo);
       console.log(this.selectedItem);
 
       await this.selectOptionChange(level, this.selectedItem.id)
@@ -208,7 +208,7 @@ export class ConverterPage implements OnInit {
   test() {
     console.log(this.path, this.level);
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('test', this.path);
+      this._electronService.ipcRenderer.send('test', this.path, this.level);
     }
 
     // this.updateIsLeaf();

@@ -588,7 +588,9 @@ try {
 
   })
 
-  ipcMain.on('test', async (event, prefix, fileType, startPoint, endPoint) => {
+
+  // ipcMain.on('test', async (event, url, num) => { // instant add to db
+  ipcMain.on('test', async (event, prefix, fileType, startPoint, endPoint) => { // start instant code
 
     // // let body = Buffer.from("");
     // const abc = 'asd1f2sdhf'
@@ -726,9 +728,12 @@ try {
     // }
     // listObject(url);
 
-    // // add directory to database
+    // // add directory to database start
     // try {
     //   // find VGMA file
+    //   const slashNum = parseInt(num) + 6;
+    //   console.log(url, slashNum);
+
     //   const list = await execSync(`find "${url}" -type f -name Info.ini`);
     //   const listArray = await list.toString().split('\n');
     //   // listArray.shift();
@@ -741,14 +746,13 @@ try {
     //   //   event.sender.send('create-manual', name)
     //   //   console.log(name);
     //   // })
-
-    //   const currentLevelArray = await listArray.filter(item => item && item.match(/\//g).length === 7);
+    //   const currentLevelArray = await listArray.filter(item => item && item.match(/\//g).length === slashNum);
     //   // console.log(currentLevelArray, currentLevelArray.length);
     //   if (currentLevelArray) {
     //     console.log(currentLevelArray, currentLevelArray.length);
     //     currentLevelArray.forEach((path) => {
     //       const content = fs.readFileSync(path, { encoding: 'utf8' });
-    //       const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+    //       const name = content.split('|')[1];
     //       // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
     //       if (name) {
     //         event.sender.send('create-manual', name)
@@ -766,6 +770,7 @@ try {
     // } catch (error) {
     //   console.log('fs promise error:', error);
     // }
+    // // add directory to database end
 
     // // // rename files
     // try {
@@ -913,46 +918,101 @@ try {
     try {
       let VGM;
       if (fileType === 'audio') {
-        VGM = 'VGMV';
+        VGM = 'VGMA';
       } else if (fileType === 'video') {
         VGM = 'VGMV';
       }
       const txtPath = `${prefix}/database/${VGM}.txt`;
       const renamedFolder = `${prefix}/database/renamed/${VGM}`;
+      const originalTemp = `${prefix}/database/tmp`;
       const apiPath = `${prefix}/database/API`;
       const localOutPath = `${prefix}/database/converted`;
       const localOrigin = `${prefix}/database/origin`;
-      const originalPath = 'sj://vgmorigin/origin';
-      const warehousePath = 'sj://vgmorigin/warehouse';
+      const originalPath = 'VGM-Origin:vgmorigin/origin';
+      const warehousePath = 'VGM-Origin:vgmorigin/warehouse';
       const convertedPath = 'VGM-Converted:vgmencrypted/encrypted';
 
-      const upWarehouse = async (original, destination) => {
-        console.log(`"${originalPath}${original}"`, `"${warehousePath}${destination}"`);
+      // exec command
+      const downloadLocal = async (filePath) => {
+        console.log('downloading local: ', `"${originalPath}${filePath}"`, `"${originalTemp}"`);
         return new Promise((resolve) => {
-          // exec command
-          execSync(`uplink cp "${originalPath}${original}" "${warehousePath}${destination}"`);
-          console.log(`uplink original successfully`);
-          resolve('done');
-          // const ls = spawn('uplink', ['cp', `"${originalPath}${original}"`, `"${warehousePath}${destination}"`]);
-          // // ls.stdout.on('data', (data) => {
-          // //   console.log(data);
-          // // })
-          // // ls.stderr.on('data', (data) => {
-          // //   console.log(data);
-          // // })
-          // ls.on('close', (code) => {
-          //   if (code == 0) {
-          //     console.log(`copied with code ${code}`);
-          //     resolve('done');
-          //   } else {
-          //     console.log('error with code:', code);
-          //   }
-          // });
+          // const uplink = execSync(`find '/home/kennytat/Desktop/database/origin/VGMA' -type f -name "*.ini" > ~/Desktop/VGMA.txt`);
+          // execSync(`rclone copy "${originalPath}${filePath}" "${originalTemp}"`);
+          const rclone = spawn('rclone', ['copy', '--progress', `${originalPath}${filePath}`, `${originalTemp}`]);
+          rclone.stdout.on('data', async (data) => {
+            console.log(`rclone stdout: ${data}`);
+          });
+          rclone.stderr.on('data', async (data) => {
+            console.log(`Stderr: ${data}`);
+          });
+          rclone.on('close', async (code) => {
+            console.log(`download local successfull with code:`, code);
+            resolve('done');
+          })
+
+          // console.log(`download local successfully`);
           // resolve('done');
         });
       }
 
-      const convertFile = async (file: string, vName: string, fileType: string, pItem, argOutPath) => {
+      const upWarehouse = async (renamedPath, destination) => {
+        console.log('uploading warehouse: ', `"${renamedPath}"`, `"${warehousePath}${destination}/"`);
+        return new Promise((resolve) => {
+          // const rclone = execSync(`find '/home/kennytat/Desktop/database/origin/VGMA' -type f -name "*.ini" > ~/Desktop/VGMA.txt`);
+          // execSync(`rclone copy "${renamedPath}" "${warehousePath}${destination}/"`);
+          // console.log(`upload warehouse successfully`);
+          // resolve('done');
+
+
+          const rclone = spawn('rclone', ['copy', '--progress', `${renamedPath}`, `${warehousePath}${destination}/`]);
+          rclone.stdout.on('data', async (data) => {
+            console.log(`rclone stdout: ${data}`);
+          });
+          rclone.stderr.on('data', async (data) => {
+            console.log(`Stderr: ${data}`);
+          });
+          rclone.on('close', async (code) => {
+            console.log(`upload warehouse successfully with code:`, code);
+            resolve('done');
+          })
+
+
+          // setTimeout(() => {
+          //   console.log(`upload warehouse successfully`);
+          //   resolve('done');
+          // }, 5000);
+        });
+      }
+
+      const upConverted = async (outPath, fileLocation) => {
+        console.log('uploading converted file', `${outPath}/`, `${convertedPath}${fileLocation}/`);
+        return new Promise((resolve) => {
+          // const rclone = execSync(`find '/home/kennytat/Desktop/database/origin/VGMA' -type f -name "*.ini" > ~/Desktop/VGMA.txt`);
+          // execSync(`rclone copy "${outPath}/" "${convertedPath}${fileLocation}/"`);
+          // console.log(`Upload converted file done`);
+          // resolve('done');
+
+          const rclone = spawn('rclone', ['copy', '--progress', `${outPath}/`, `${convertedPath}${fileLocation}/`]);
+          rclone.stdout.on('data', async (data) => {
+            console.log(`rclone stdout: ${data}`);
+          });
+          rclone.stderr.on('data', async (data) => {
+            console.log(`Stderr: ${data}`);
+          });
+          rclone.on('close', async (code) => {
+            console.log(`Upload converted file done with code:`, code);
+            resolve('done');
+          })
+
+
+          // setTimeout(() => {
+          //   console.log(`Upload converted file done`);
+          //   resolve('done');
+          // }, 5000);
+        });
+      }
+
+      const convertFile = async (file: string, vName: string, fType: string, pItem, argOutPath) => {
         return new Promise((resolve) => {
           let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
           let metaData: any = [];
@@ -992,74 +1052,70 @@ try {
           });
 
           conversion.on('close', async (code) => {
-            if (code == 0) {
-              // encrypt m3u8 key
-              try {
-                new Promise((resolve) => {
-                  // get iv info
-                  const reader = new M3U8FileParser();
-                  let keyPath: string;
-                  if (fileType = 'audio') {
-                    keyPath = `${outPath}/128p.m3u8`
-                  } else {
-                    keyPath = `${outPath}/480p.m3u8`
-                  }
-                  const segment = fs.readFileSync(keyPath, { encoding: 'utf-8' });
-                  reader.read(segment);
-                  const m3u8 = reader.getResult();
-                  const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
-                  // get buffer from key and iv
-                  const code = Buffer.from(secret);
-                  const key: Buffer = fs.readFileSync(`${outPath}/key.vgmk`);
-                  const encrypted = bitwise.buffer.xor(key, code, false);
-                  fs.writeFileSync(`${outPath}/key.vgmk`, encrypted, { encoding: 'binary' });
-                  console.log('Encrypt key file done');
-                  // upload converted to s3 instant code
-                  console.log('uploading converted file', `"${outPath}/"`, `"${convertedPath}${fileInfo.location}/"`);
-                  execSync(`rclone copy "${outPath}/" "${convertedPath}${fileInfo.location}/"`);
-                  console.log(`Upload converted file done`);
-                  resolve('done');
-                }).then((result) => {
-                  fs.rmdirSync(outPath, { recursive: true });
-                  event.sender.send('create-database', fileInfo);
-                })
-                // // upload ipfs
-                // if (ipfsClient) {
-                //   console.log('uploading ipfs');
-                //   // monitor ipfs uploading time
-                //   const now = new Date();
-                //   const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
-                //   console.log(timenow);
-                //   const test = await ipfsClient.add('Hello world');
-                //   if (test) {
-                //     console.log('Testing IPFS function: success', test);
-                //   }
-
-                //   const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
-                //   // got ipfs info
-                //   const cid: CID = ipfsOut.cid;
-                //   console.log(cid);
-                //   fileInfo.qm = cid.toString();
-                //   const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
-                //   fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
-                //   fileInfo.size = ipfsOut.size;
-                //   console.log('upload ipfs done', fileInfo);
-                //   const later = new Date();
-                //   const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
-                //   console.log(timelater);
-                //   if (cid) {
-                //     fs.rmdirSync(outPath, { recursive: true });
-                //   }
-                //   event.sender.send('create-database', fileInfo);
-                // } else {
-                //   event.sender.send('create-database', fileInfo);
-                // }
-                resolve('done');
-
-              } catch (error) {
-                console.log('error:', error);
+            console.log('converted file done with code:', code);
+            // encrypt m3u8 key
+            try {
+              // get iv info
+              const reader = new M3U8FileParser();
+              let keyPath: string;
+              if (fType === 'audio') {
+                keyPath = `${outPath}/128p.m3u8`;
+              } else if (fType === 'video') {
+                keyPath = `${outPath}/480p.m3u8`;
               }
+              const segment = await fs.readFileSync(keyPath, { encoding: 'utf-8' });
+              reader.read(segment);
+              const m3u8 = reader.getResult();
+              const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
+              // get buffer from key and iv
+              const code = Buffer.from(secret);
+              const key: Buffer = await fs.readFileSync(`${outPath}/key.vgmk`);
+              const encrypted = bitwise.buffer.xor(key, code, false);
+              await fs.writeFileSync(`${outPath}/key.vgmk`, encrypted, { encoding: 'binary' });
+              console.log('Encrypt key file done');
+              // upload converted to s3 instant code
+              await upConverted(outPath, fileInfo.location);
+              await fs.rmdirSync(outPath, { recursive: true });
+              console.log('removed converted folder');
+
+              // // upload ipfs
+              // if (ipfsClient) {
+              //   console.log('uploading ipfs');
+              //   // monitor ipfs uploading time
+              //   const now = new Date();
+              //   const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+              //   console.log(timenow);
+              //   const test = await ipfsClient.add('Hello world');
+              //   if (test) {
+              //     console.log('Testing IPFS function: success', test);
+              //   }
+
+              //   const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
+              //   // got ipfs info
+              //   const cid: CID = ipfsOut.cid;
+              //   console.log(cid);
+              //   fileInfo.qm = cid.toString();
+              //   const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+              //   fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
+              //   fileInfo.size = ipfsOut.size;
+              //   console.log('upload ipfs done', fileInfo);
+              //   const later = new Date();
+              //   const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
+              //   console.log(timelater);
+              //   if (cid) {
+              //     fs.rmdirSync(outPath, { recursive: true });
+              //   }
+              //   event.sender.send('create-database', fileInfo);
+              // } else {
+              //   event.sender.send('create-database', fileInfo);
+              // }
+              event.sender.send('create-database', fileInfo);
+              resolve('done');
+
+            } catch (error) {
+              console.log('error:', error);
             }
+
           });
 
 
@@ -1069,11 +1125,12 @@ try {
       // find VGMA file
       const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
       if (raw) {
-        const list = raw.split('\n');
+        let list = raw.split('\n');
         list.pop();
+        list.reverse();
         console.log('total files', list.length);
         let i = startPoint;
-        while (i < endPoint) {
+        while (i < list.length) { // list.lenght or endPoint
           const originalFile = list[i].replace('.ini', '');
           const ext = path.parse(originalFile).ext
           const fileIni = execSync(`find '${renamedFolder}' -type f -name "${path.basename(list[i])}"`, { encoding: "utf8" }).split('\n');
@@ -1085,26 +1142,32 @@ try {
           } else if (fileType === 'audio') {
             re = /^.*VGMA\//;
           }
+
           const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
-          const pUrl = nonVietnamese.toLowerCase().replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
+          const pUrl = nonVietnamese.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
+          console.log(pUrl);
           const pAPI = execSync(`find '${apiPath}' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).replace('\n', '');
           if (pAPI) {
             const pContent = fs.readFileSync(pAPI, { encoding: 'utf8' });
             const pItem = JSON.parse(pContent);
-            const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}/${fileName}${ext}`;
-            console.log('uploading Origin', originalFile, warehouseDir);
-            await upWarehouse(originalFile, warehouseDir);
-            const localOriginPath = `${localOrigin}${originalFile}`;
+            await downloadLocal(originalFile);
+            const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
             await convertFile(localOriginPath, fileName, fileType, pItem, localOutPath);
+            const renamedVietnamese = `${originalTemp}/${fileName}${ext}`
+            await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
+            const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
+            console.log('uploading Origin', originalFile, warehouseDir);
+            await upWarehouse(renamedVietnamese, warehouseDir);
+            await fs.unlinkSync(renamedVietnamese);
             console.log('converted files', i);
-            await fs.writeFileSync(`${prefix}/database/${fileType}-converted-count.txt`, i);
+            await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
           }
           i++;
         }
         // QmdFcsTExrPaEKR3tkE69pP6AMpmZKK98gSBTyx2cRxW7a test QmWhTKbYab3r9rbQ7S5t2PXcMVPRGQeqt6M31Mv2KjPKAh
       }
     } catch (error) {
-      console.log('err copy folder', error);
+      console.log('total error', error);
     }
     // end instant code
 
@@ -1338,6 +1401,7 @@ try {
     // str = str.replace(/-+-/g, "-"); //thay thế 2- thành 1- 
     return str;
   }
+
 
 } catch (err) { }
 
