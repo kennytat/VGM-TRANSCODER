@@ -60,6 +60,7 @@ export class DatabasePage implements OnInit {
     type.DELETE_LEVEL_6,
     type.DELETE_LEVEL_7,
   ]
+
   private videoDBSub: Subscription
   private audioDBSub: Subscription
   private videoTreeSub: Subscription
@@ -127,8 +128,6 @@ export class DatabasePage implements OnInit {
       if (data.value) {
         this.audioTree = [new TreeviewItem(data)];
         console.log(data, this.audioTree);
-
-
       }
     });
   }
@@ -151,7 +150,8 @@ export class DatabasePage implements OnInit {
     }
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.on('create-database', (event, fileInfo) => {
-        this.createNewItem(fileInfo)
+        this.updateIsLeaf(fileInfo);
+        this.createNewItem(fileInfo);
       })
     }
   }
@@ -203,6 +203,22 @@ export class DatabasePage implements OnInit {
     });
   }
 
+  updateIsLeaf(item) {
+    this.apollo.mutate<any>({
+      mutation: this.updateGQL[item.dblevel - 3],
+      variables: {
+        id: item.pid,
+        isLeaf: true,
+        count: 0
+      }
+    }).subscribe(({ data }) => {
+      console.log(data);
+    }, (error) => {
+      console.log('error updating isLeaf', error);
+    });
+  }
+
+
   refreshDB() {
     this.dataService.fetchDB(this.isVideo);
     this.connectSearch();
@@ -213,7 +229,7 @@ export class DatabasePage implements OnInit {
       const indexes = await client.listIndexes();
       console.log('meiliSearch', indexes);
       if (indexes) {
-        this.meiliSearch = client.index('VGM');
+        this.meiliSearch = client.index('VGMDB');
         this._searchInit = true;
       }
     } catch (error) {

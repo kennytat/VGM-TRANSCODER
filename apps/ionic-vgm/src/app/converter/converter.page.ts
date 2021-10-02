@@ -62,7 +62,6 @@ export class ConverterPage implements OnInit {
         this.createNewTopic(this.level, value)
       })
     }
-
   }
 
 
@@ -166,6 +165,11 @@ export class ConverterPage implements OnInit {
         this._electronService.ipcRenderer.invoke('error-message', 'topic-db-error');
       }
     });
+  }
+
+  updateLeaf() {
+    const item = { id: this.path, dblevel: this.level }
+    this.updateIsLeaf(item, 0)
   }
 
   updateIsLeaf(item, count) {
