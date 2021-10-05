@@ -89,6 +89,7 @@
     "meilisearch": "^0.20.0",
     "ngx-electron": "^2.2.0",
     "ngx-treeview": "^10.0.2",
+    "p-queue": "^6.6.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "~6.6.0",
     "tslib": "^2.0.0",

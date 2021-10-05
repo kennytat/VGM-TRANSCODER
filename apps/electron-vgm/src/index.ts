@@ -11,6 +11,9 @@ import { slice } from 'ramda';
 import * as M3U8FileParser from "m3u8-file-parser";
 import * as bitwise from 'bitwise';
 
+import PQueue from 'p-queue';
+
+
 // import { S3Client, GetObjectCommand, ListObjectsCommand, CopyObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 // const s3Client = new S3Client({
@@ -589,8 +592,8 @@ try {
   })
 
 
-  ipcMain.on('test', async (event, url, num) => { // instant add to db
-    // ipcMain.on('test', async (event, prefix, fileType, startPoint, endPoint) => { // start instant code
+  // ipcMain.on('test', async (event, url, num) => { // instant add to db
+  ipcMain.on('test', async (event, prefix, fileType, startPoint, endPoint) => { // start instant code
 
     // // let body = Buffer.from("");
     // const abc = 'asd1f2sdhf'
@@ -728,49 +731,49 @@ try {
     // }
     // listObject(url);
 
-    // add directory to database start
-    try {
-      // find VGMA file
-      const slashNum = parseInt(num) + 6;
-      console.log(url, slashNum);
+    // // add directory to database start
+    // try {
+    //   // find VGMA file
+    //   const slashNum = parseInt(num) + 6;
+    //   console.log(url, slashNum);
 
-      const list = await execSync(`find "${url}" -type f -name Info.ini`);
-      const listArray = await list.toString().split('\n');
-      // listArray.shift();
-      // listArray.pop();
-      // console.log(listArray, listArray.length);
-      // listArray.forEach((path) => {
-      //   const content = fs.readFileSync(path, { encoding: 'utf8' })
-      //   const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
-      //   // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
-      //   event.sender.send('create-manual', name)
-      //   console.log(name);
-      // })
-      const currentLevelArray = await listArray.filter(item => item && item.match(/\//g).length === slashNum);
-      // console.log(currentLevelArray, currentLevelArray.length);
-      if (currentLevelArray) {
-        console.log(currentLevelArray, currentLevelArray.length);
-        currentLevelArray.forEach((path) => {
-          const content = fs.readFileSync(path, { encoding: 'utf8' });
-          const name = content.split('|')[1];
-          // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
-          if (name) {
-            event.sender.send('create-manual', name)
-          }
-          console.log(name);
-        })
-      }
+    //   const list = await execSync(`find "${url}" -type f -name Info.ini`);
+    //   const listArray = await list.toString().split('\n');
+    //   // listArray.shift();
+    //   // listArray.pop();
+    //   // console.log(listArray, listArray.length);
+    //   // listArray.forEach((path) => {
+    //   //   const content = fs.readFileSync(path, { encoding: 'utf8' })
+    //   //   const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+    //   //   // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
+    //   //   event.sender.send('create-manual', name)
+    //   //   console.log(name);
+    //   // })
+    //   const currentLevelArray = await listArray.filter(item => item && item.match(/\//g).length === slashNum);
+    //   // console.log(currentLevelArray, currentLevelArray.length);
+    //   if (currentLevelArray) {
+    //     console.log(currentLevelArray, currentLevelArray.length);
+    //     currentLevelArray.forEach((path) => {
+    //       const content = fs.readFileSync(path, { encoding: 'utf8' });
+    //       const name = content.split('|')[1];
+    //       // const newKey = `${iniContent.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '')}${ext}`;
+    //       if (name) {
+    //         event.sender.send('create-manual', name)
+    //       }
+    //       console.log(name);
+    //     })
+    //   }
 
-      // const month = ['Tháng 01', 'Tháng 02', 'Tháng 03', 'Tháng 04', 'Tháng 05', 'Tháng 06', 'Tháng 07', 'Tháng 08', 'Tháng 09', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
-      // month.forEach((name) => {
-      //   event.sender.send('create-manual', name)
-      //   console.log(name);
-      // })
-      // console.log(listArray);
-    } catch (error) {
-      console.log('fs promise error:', error);
-    }
-    // add directory to database end
+    //   // const month = ['Tháng 01', 'Tháng 02', 'Tháng 03', 'Tháng 04', 'Tháng 05', 'Tháng 06', 'Tháng 07', 'Tháng 08', 'Tháng 09', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+    //   // month.forEach((name) => {
+    //   //   event.sender.send('create-manual', name)
+    //   //   console.log(name);
+    //   // })
+    //   // console.log(listArray);
+    // } catch (error) {
+    //   console.log('fs promise error:', error);
+    // }
+    // // add directory to database end
 
     // // // rename files
     // try {
@@ -914,267 +917,320 @@ try {
 
 
 
-    // // start instant code
-    // try {
-    //   let VGM;
-    //   if (fileType === 'audio') {
-    //     VGM = 'VGMA';
-    //   } else if (fileType === 'video') {
-    //     VGM = 'VGMV';
-    //   }
-    //   const txtPath = `${prefix}/database/${VGM}.txt`;
-    //   const renamedFolder = `${prefix}/database/renamed/${VGM}`;
-    //   const originalTemp = `${prefix}/database/tmp`;
-    //   const apiPath = `${prefix}/database/API`;
-    //   const localOutPath = `${prefix}/database/converted`;
-    //   // const localOrigin = `${prefix}/database/origin`;
-    //   const originalPath = 'VGM-Origin:vgmorigin/origin';
-    //   const warehousePath = 'VGM-Origin:vgmorigin/warehouse';
-    //   const convertedPath = 'VGM-Converted:vgmencrypted/encrypted';
+    // start instant code
+    try {
+      let VGM;
+      if (fileType === 'audio') {
+        VGM = 'VGMA';
+      } else if (fileType === 'video') {
+        VGM = 'VGMV';
+      }
+      const txtPath = `${prefix}/database/${VGM}.txt`;
+      const renamedFolder = `${prefix}/database/renamed/${VGM}`;
+      const originalTemp = `${prefix}/database/tmp`;
+      const apiPath = `${prefix}/database/API`;
+      const localOutPath = `${prefix}/database/converted`;
+      // const localOrigin = `${prefix}/database/origin`;
+      const originalPath = 'VGM-Origin:vgmorigin/origin';
+      const warehousePath = 'VGM-Origin:vgmorigin/warehouse';
+      const convertedPath = 'VGM-Converted:vgmencrypted/encrypted';
 
-    //   // exec command
-    //   const downloadLocal = async (filePath) => {
-    //     console.log('downloading local: ', `"${originalPath}${filePath}"`, `"${originalTemp}"`);
-    //     return new Promise((resolve) => {
-    //       // const uplink = execSync(`find '/home/kennytat/Desktop/database/origin/VGMA' -type f -name "*.ini" > ~/Desktop/VGMA.txt`);
-    //       // execSync(`rclone copy "${originalPath}${filePath}" "${originalTemp}"`);
-    //       const rclone = spawn('rclone', ['copy', '--progress', `${originalPath}${filePath}`, `${originalTemp}`]);
-    //       rclone.stdout.on('data', async (data) => {
-    //         console.log(`rclone stdout: ${data}`);
-    //       });
-    //       rclone.stderr.on('data', async (data) => {
-    //         console.log(`Stderr: ${data}`);
-    //       });
-    //       rclone.on('close', async (code) => {
-    //         console.log(`download local successfull with code:`, code);
-    //         resolve('done');
-    //       })
+      // exec command
+      const downloadLocal = async (filePath) => {
+        console.log('downloading local: ', `"${originalPath}${filePath}"`, `"${originalTemp}"`);
+        return new Promise((resolve) => {
+          const rclone = spawn('rclone', ['copy', '--progress', `${originalPath}${filePath}`, `${originalTemp}`]);
+          rclone.stdout.on('data', async (data) => {
+            console.log(`rclone stdout: ${data}`);
+          });
+          rclone.stderr.on('data', async (data) => {
+            console.log(`Stderr: ${data}`);
+          });
+          rclone.on('close', async (code) => {
+            console.log(`download local successfull with code:`, code);
+            resolve('done');
+          })
+        });
+      }
 
-    //       // console.log(`download local successfully`);
-    //       // resolve('done');
-    //     });
-    //   }
+      const upWarehouse = async (renamedPath, destination) => {
+        console.log('uploading warehouse: ', `"${renamedPath}"`, `"${warehousePath}${destination}/"`);
+        return new Promise((resolve) => {
+          const rclone = spawn('rclone', ['copy', '--progress', `${renamedPath}`, `${warehousePath}${destination}/`]);
+          rclone.stdout.on('data', async (data) => {
+            console.log(`rclone stdout: ${data}`);
+          });
+          rclone.stderr.on('data', async (data) => {
+            console.log(`Stderr: ${data}`);
+          });
+          rclone.on('close', async (code) => {
+            console.log(`upload warehouse successfully with code:`, code);
+            resolve('done');
+          })
+        });
+      }
 
-    //   const upWarehouse = async (renamedPath, destination) => {
-    //     console.log('uploading warehouse: ', `"${renamedPath}"`, `"${warehousePath}${destination}/"`);
-    //     return new Promise((resolve) => {
-    //       // const rclone = execSync(`find '/home/kennytat/Desktop/database/origin/VGMA' -type f -name "*.ini" > ~/Desktop/VGMA.txt`);
-    //       // execSync(`rclone copy "${renamedPath}" "${warehousePath}${destination}/"`);
-    //       // console.log(`upload warehouse successfully`);
-    //       // resolve('done');
+      const upConverted = async (outPath, fileLocation) => {
+        console.log('uploading converted file', `${outPath}/`, `${convertedPath}${fileLocation}/`);
+        return new Promise((resolve) => {
+          const rclone = spawn('rclone', ['copy', '--progress', `${outPath}/`, `${convertedPath}${fileLocation}/`]);
+          rclone.stdout.on('data', async (data) => {
+            console.log(`rclone stdout: ${data}`);
+          });
+          rclone.stderr.on('data', async (data) => {
+            console.log(`Stderr: ${data}`);
+          });
+          rclone.on('close', async (code) => {
+            console.log(`Upload converted file done with code:`, code);
+            resolve('done');
+          })
+          // setTimeout(() => {
+          //   console.log(`Upload converted file done`);
+          //   resolve('done');
+          // }, 5000);
+        });
+      }
 
+      const convertFile = async (file: string, vName: string, fType: string, pItem, argOutPath) => {
+        return new Promise((resolve) => {
+          let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
+          let metaData: any = [];
+          // get file Info
+          metaData = execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${file}"`, { encoding: "utf8" }).split('\n');
+          // Then run ffmpeg to start convert
+          const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
+          const duration: number = parseFloat(duration_stat.replace(/duration=/g, ''));
+          const minutes: number = Math.floor(duration / 60);
+          fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
+          fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
 
-    //       const rclone = spawn('rclone', ['copy', '--progress', `${renamedPath}`, `${warehousePath}${destination}/`]);
-    //       rclone.stdout.on('data', async (data) => {
-    //         console.log(`rclone stdout: ${data}`);
-    //       });
-    //       rclone.stderr.on('data', async (data) => {
-    //         console.log(`Stderr: ${data}`);
-    //       });
-    //       rclone.on('close', async (code) => {
-    //         console.log(`upload warehouse successfully with code:`, code);
-    //         resolve('done');
-    //       })
+          // const nameExtPath = files[index].match(/[\w\-\_\(\)\s]+\.[\w\S]{3,4}$/gi).toString();
+          // fileInfo.name = nameExtPath.replace(/\.\w+/g, '');
+          // fileInfo.name = path.parse(file).name;
 
+          // read file.ini for name (instant code)
+          fileInfo.name = vName;
+          // process filename
+          const nonVietnamese = nonAccentVietnamese(vName);
+          fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+          fileInfo.location = `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`;
+          const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
+          fileInfo.isVideo = pItem.isVideo;
+          fileInfo.pid = pItem.id;
+          fileInfo.dblevel = pItem.dblevel + 1;
+          console.log(fileInfo, 'start converting ffmpeg');
 
-    //       // setTimeout(() => {
-    //       //   console.log(`upload warehouse successfully`);
-    //       //   resolve('done');
-    //       // }, 5000);
-    //     });
-    //   }
+          const conversion = spawn('bash', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fileType]);
 
-    //   const upConverted = async (outPath, fileLocation) => {
-    //     console.log('uploading converted file', `${outPath}/`, `${convertedPath}${fileLocation}/`);
-    //     return new Promise((resolve) => {
-    //       // const rclone = execSync(`find '/home/kennytat/Desktop/database/origin/VGMA' -type f -name "*.ini" > ~/Desktop/VGMA.txt`);
-    //       // execSync(`rclone copy "${outPath}/" "${convertedPath}${fileLocation}/"`);
-    //       // console.log(`Upload converted file done`);
-    //       // resolve('done');
+          conversion.stdout.on('data', async (data) => {
+            console.log(`conversion stdout: ${data}`);
+          });
 
-    //       const rclone = spawn('rclone', ['copy', '--progress', `${outPath}/`, `${convertedPath}${fileLocation}/`]);
-    //       rclone.stdout.on('data', async (data) => {
-    //         console.log(`rclone stdout: ${data}`);
-    //       });
-    //       rclone.stderr.on('data', async (data) => {
-    //         console.log(`Stderr: ${data}`);
-    //       });
-    //       rclone.on('close', async (code) => {
-    //         console.log(`Upload converted file done with code:`, code);
-    //         resolve('done');
-    //       })
+          conversion.stderr.on('data', async (data) => {
+            console.log(`Stderr: ${data}`);
+          });
 
+          conversion.on('close', async (code) => {
+            console.log('converted file done with code:', code);
+            // encrypt m3u8 key
+            try {
+              // get iv info
+              const reader = new M3U8FileParser();
+              let keyPath: string;
+              let upConvertedPath: string;
+              if (fType === 'audio') {
+                keyPath = `${outPath}/128p.m3u8`;
+                upConvertedPath = `/VGMA/${fileInfo.url.replace(/\./g, '\/')}`;
+              } else if (fType === 'video') {
+                keyPath = `${outPath}/480p.m3u8`;
+                upConvertedPath = `/VGMV/${fileInfo.url.replace(/\./g, '\/')}`;
+              }
+              const segment = await fs.readFileSync(keyPath, { encoding: 'utf-8' });
+              reader.read(segment);
+              const m3u8 = reader.getResult();
+              const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
+              // get buffer from key and iv
+              const code = Buffer.from(secret);
+              const key: Buffer = await fs.readFileSync(`${outPath}/key.vgmk`);
+              const encrypted = bitwise.buffer.xor(key, code, false);
+              await fs.writeFileSync(`${outPath}/key.vgmk`, encrypted, { encoding: 'binary' });
+              console.log('Encrypt key file done');
+              // upload converted to s3 instant code
+              await upConverted(outPath, upConvertedPath);
+              await fs.rmdirSync(outPath, { recursive: true });
+              console.log('removed converted folder');
 
-    //       // setTimeout(() => {
-    //       //   console.log(`Upload converted file done`);
-    //       //   resolve('done');
-    //       // }, 5000);
-    //     });
-    //   }
+              // // upload ipfs
+              // if (ipfsClient) {
+              //   console.log('uploading ipfs');
+              //   // monitor ipfs uploading time
+              //   const now = new Date();
+              //   const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+              //   console.log(timenow);
+              //   const test = await ipfsClient.add('Hello world');
+              //   if (test) {
+              //     console.log('Testing IPFS function: success', test);
+              //   }
 
-    //   const convertFile = async (file: string, vName: string, fType: string, pItem, argOutPath) => {
-    //     return new Promise((resolve) => {
-    //       let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
-    //       let metaData: any = [];
-    //       // get file Info
-    //       metaData = execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${file}"`, { encoding: "utf8" }).split('\n');
-    //       // Then run ffmpeg to start convert
-    //       const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
-    //       const duration: number = parseFloat(duration_stat.replace(/duration=/g, ''));
-    //       const minutes: number = Math.floor(duration / 60);
-    //       fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
-    //       fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
+              //   const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
+              //   // got ipfs info
+              //   const cid: CID = ipfsOut.cid;
+              //   console.log(cid);
+              //   fileInfo.qm = cid.toString();
+              //   const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+              //   fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
+              //   fileInfo.size = ipfsOut.size;
+              //   console.log('upload ipfs done', fileInfo);
+              //   const later = new Date();
+              //   const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
+              //   console.log(timelater);
+              //   if (cid) {
+              //     fs.rmdirSync(outPath, { recursive: true });
+              //   }
+              //   event.sender.send('create-database', fileInfo);
+              // } else {
+              //   event.sender.send('create-database', fileInfo);
+              // }
+              // event.sender.send('create-database', fileInfo);
+              resolve('done');
 
-    //       // const nameExtPath = files[index].match(/[\w\-\_\(\)\s]+\.[\w\S]{3,4}$/gi).toString();
-    //       // fileInfo.name = nameExtPath.replace(/\.\w+/g, '');
-    //       // fileInfo.name = path.parse(file).name;
+            } catch (error) {
+              console.log('error:', error);
+            }
 
-    //       // read file.ini for name (instant code)
-    //       fileInfo.name = vName;
-    //       // process filename
-    //       const nonVietnamese = nonAccentVietnamese(vName);
-    //       fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
-    //       fileInfo.location = `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`;
-    //       const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
-    //       fileInfo.isVideo = pItem.isVideo;
-    //       fileInfo.pid = pItem.id;
-    //       fileInfo.dblevel = pItem.dblevel + 1;
-    //       console.log(fileInfo, 'start converting ffmpeg');
-
-    //       const conversion = spawn('bash', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fileType]);
-
-    //       conversion.stdout.on('data', async (data) => {
-    //         console.log(`conversion stdout: ${data}`);
-    //       });
-
-    //       conversion.stderr.on('data', async (data) => {
-    //         console.log(`Stderr: ${data}`);
-    //       });
-
-    //       conversion.on('close', async (code) => {
-    //         console.log('converted file done with code:', code);
-    //         // encrypt m3u8 key
-    //         try {
-    //           // get iv info
-    //           const reader = new M3U8FileParser();
-    //           let keyPath: string;
-    //           if (fType === 'audio') {
-    //             keyPath = `${outPath}/128p.m3u8`;
-    //           } else if (fType === 'video') {
-    //             keyPath = `${outPath}/480p.m3u8`;
-    //           }
-    //           const segment = await fs.readFileSync(keyPath, { encoding: 'utf-8' });
-    //           reader.read(segment);
-    //           const m3u8 = reader.getResult();
-    //           const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
-    //           // get buffer from key and iv
-    //           const code = Buffer.from(secret);
-    //           const key: Buffer = await fs.readFileSync(`${outPath}/key.vgmk`);
-    //           const encrypted = bitwise.buffer.xor(key, code, false);
-    //           await fs.writeFileSync(`${outPath}/key.vgmk`, encrypted, { encoding: 'binary' });
-    //           console.log('Encrypt key file done');
-    //           // upload converted to s3 instant code
-    //           await upConverted(outPath, fileInfo.location);
-    //           await fs.rmdirSync(outPath, { recursive: true });
-    //           console.log('removed converted folder');
-
-    //           // // upload ipfs
-    //           // if (ipfsClient) {
-    //           //   console.log('uploading ipfs');
-    //           //   // monitor ipfs uploading time
-    //           //   const now = new Date();
-    //           //   const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
-    //           //   console.log(timenow);
-    //           //   const test = await ipfsClient.add('Hello world');
-    //           //   if (test) {
-    //           //     console.log('Testing IPFS function: success', test);
-    //           //   }
-
-    //           //   const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
-    //           //   // got ipfs info
-    //           //   const cid: CID = ipfsOut.cid;
-    //           //   console.log(cid);
-    //           //   fileInfo.qm = cid.toString();
-    //           //   const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
-    //           //   fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
-    //           //   fileInfo.size = ipfsOut.size;
-    //           //   console.log('upload ipfs done', fileInfo);
-    //           //   const later = new Date();
-    //           //   const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
-    //           //   console.log(timelater);
-    //           //   if (cid) {
-    //           //     fs.rmdirSync(outPath, { recursive: true });
-    //           //   }
-    //           //   event.sender.send('create-database', fileInfo);
-    //           // } else {
-    //           //   event.sender.send('create-database', fileInfo);
-    //           // }
-    //           event.sender.send('create-database', fileInfo);
-    //           resolve('done');
-
-    //         } catch (error) {
-    //           console.log('error:', error);
-    //         }
-
-    //       });
+          });
 
 
-    //     });
-    //   }
-
-    //   // find VGMA file
-    //   const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
-    //   if (raw) {
-    //     let list = raw.split('\n');
-    //     list.pop();
-    //     list.reverse();
-    //     console.log('total files', list.length);
-    //     let i = startPoint;
-    //     while (i < list.length) { // list.lenght or endPoint
-    //       const originalFile = list[i].replace('.ini', '');
-    //       const ext = path.parse(originalFile).ext
-    //       const fileIni = execSync(`find '${renamedFolder}' -type f -name "${path.basename(list[i])}"`, { encoding: "utf8" }).split('\n');
-    //       const fileContent = fs.readFileSync(fileIni[0], { encoding: 'utf8' });
-    //       const fileName = `${fileContent.split('|')[1]}`;
-    //       let re;
-    //       if (fileType === 'video') {
-    //         re = /^.*VGMV\//;
-    //       } else if (fileType === 'audio') {
-    //         re = /^.*VGMA\//;
-    //       }
-    //       const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
-    //       const pUrl = nonVietnamese.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
-    //       console.log(pUrl);
-    //       const pAPI = execSync(`find '${apiPath}' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).replace('\n', '');
-    //       if (pAPI) {
-    //         const pContent = fs.readFileSync(pAPI, { encoding: 'utf8' });
-    //         const pItem = JSON.parse(pContent);
-    //         await downloadLocal(originalFile);
-    //         const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
-    //         if (fs.existsSync(localOriginPath)) {
-    //           await convertFile(localOriginPath, fileName, fileType, pItem, localOutPath);
-    //           const renamedVietnamese = `${originalTemp}/${fileName}${ext}`
-    //           await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
-    //           const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
-    //           console.log('uploading Origin', originalFile, warehouseDir);
-    //           await upWarehouse(renamedVietnamese, warehouseDir);
-    //           await fs.unlinkSync(renamedVietnamese);
-    //           console.log('converted files', i);
-    //           await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
-    //         }
-    //       }
-    //       i++;
-    //     }
-    //     // QmdFcsTExrPaEKR3tkE69pP6AMpmZKK98gSBTyx2cRxW7a test QmWhTKbYab3r9rbQ7S5t2PXcMVPRGQeqt6M31Mv2KjPKAh
-    //   }
-    // } catch (error) {
-    //   console.log('total error', error);
-    // }
-    // // end instant code
+        });
+      }
 
 
+      const processFile = async (file: string, fType: string) => {
+        return new Promise(async (resolve) => {
+
+          const originalFile = file.replace('.ini', '');
+          const ext = path.parse(originalFile).ext
+          const fileIni = execSync(`find '${renamedFolder}' -type f -name "${path.basename(file)}"`, { encoding: "utf8" }).split('\n');
+          const fileContent = fs.readFileSync(fileIni[0], { encoding: 'utf8' });
+          const fileName = `${fileContent.split('|')[1]}`;
+          let re;
+          if (fType === 'video') {
+            re = /^.*VGMV\//;
+          } else if (fType === 'audio') {
+            re = /^.*VGMA\//;
+          }
+          const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
+          const pUrl = nonVietnamese.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
+          console.log(pUrl);
+          const pAPI = execSync(`find '${apiPath}/topics' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).replace('\n', '');
+          if (pAPI) {
+            const pContent = fs.readFileSync(pAPI, { encoding: 'utf8' });
+            const pItem = JSON.parse(pContent);
+            await downloadLocal(originalFile);
+            const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
+            if (fs.existsSync(localOriginPath)) {
+              await convertFile(localOriginPath, fileName, fType, pItem, localOutPath);
+              const renamedVietnamese = `${originalTemp}/${fileName}${ext}`;
+              await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
+              const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
+              console.log('uploading Origin', originalFile, warehouseDir);
+              // await upWarehouse(renamedVietnamese, warehouseDir);
+              await fs.unlinkSync(renamedVietnamese);
+            }
+          }
+          resolve('done');
+        })
+      };
+
+      // find VGMA file
+      const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
+      if (raw) {
+        let list = raw.split('\n');
+        list.pop();
+        list.reverse();
+        console.log('total files', list.length);
+        let i = startPoint;
+
+        // // p-queue start
+        // const queue = new PQueue({ concurrency: 3 });
+        // queue.on('add', () => {
+        //   console.log(`Task is added.  Size: ${queue.size}  Pending: ${queue.pending}`);
+        // });
+
+        // queue.on('next', () => {
+        //   console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
+        // });
+
+        // queue.on('idle', () => {
+        //   console.log(`Queue is idle.  Size: ${queue.size}  Pending: ${queue.pending}`);
+        // });
+        // (async () => {
+        //   queue.add(async () => await processFile(list[0], fileType));
+        //   console.log('Done 1 file');
+        // })();
+        // (async () => {
+        //   queue.add(async () => await processFile(list[1], fileType));
+        //   console.log('Done 1 file');
+        // })();
+        // (async () => {
+        //   queue.add(async () => await processFile(list[2], fileType));
+        //   console.log('Done 1 file');
+        // })();
+        //  // p-queue end
+
+        while (i < list.length) { // list.lenght or endPoint
+
+          await processFile(list[i], fileType);
 
 
+          // const originalFile = list[i].replace('.ini', '');
+          // const ext = path.parse(originalFile).ext
+          // const fileIni = execSync(`find '${renamedFolder}' -type f -name "${path.basename(list[i])}"`, { encoding: "utf8" }).split('\n');
+          // const fileContent = fs.readFileSync(fileIni[0], { encoding: 'utf8' });
+          // const fileName = `${fileContent.split('|')[1]}`;
+          // let re;
+          // if (fileType === 'video') {
+          //   re = /^.*VGMV\//;
+          // } else if (fileType === 'audio') {
+          //   re = /^.*VGMA\//;
+          // }
+          // const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
+          // const pUrl = nonVietnamese.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
+          // console.log(pUrl);
+          // const pAPI = execSync(`find '${apiPath}/topics' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).replace('\n', '');
+          // if (pAPI) {
+          //   const pContent = fs.readFileSync(pAPI, { encoding: 'utf8' });
+          //   const pItem = JSON.parse(pContent);
+          //   await downloadLocal(originalFile);
+          //   const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
+          //   if (fs.existsSync(localOriginPath)) {
+          //     await convertFile(localOriginPath, fileName, fileType, pItem, localOutPath);
+          //     // const renamedVietnamese = `${originalTemp}/${fileName}${ext}`;
+          //     // await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
+          //     // const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
+          //     // console.log('uploading Origin', originalFile, warehouseDir);
+          //     // await upWarehouse(renamedVietnamese, warehouseDir);
+          //     // await fs.unlinkSync(renamedVietnamese);
+          //     // console.log('converted files', i);
+          //     // await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
+          //   }
+          // }
+
+          console.log('converted files', i);
+          await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
+
+          i++;
+        }
+        // QmdFcsTExrPaEKR3tkE69pP6AMpmZKK98gSBTyx2cRxW7a test QmWhTKbYab3r9rbQ7S5t2PXcMVPRGQeqt6M31Mv2KjPKAh
+      }
+    } catch (error) {
+      console.log('total error', error);
+    }
+    // end instant code
+
+
+
+    // // encrypte && decrypte key start
     // try {
     //   // encrypt key file
     //   const reader = new M3U8FileParser();
@@ -1199,7 +1255,7 @@ try {
     // } catch (error) {
     //   console.log('encrypt key error:', error);
     // }
-
+    // // encrypte && decrypte key end
 
 
     // ipfsClient = create({
