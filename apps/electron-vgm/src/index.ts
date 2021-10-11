@@ -13,6 +13,19 @@ import * as bitwise from 'bitwise';
 
 import PQueue from 'p-queue';
 
+// const { createLogger, transports } = require("winston");
+// const LokiTransport = require("winston-loki");
+// const options = {
+//   transports: [
+//     new LokiTransport({
+//       host: "http://127.0.0.1:3100"
+//     })
+//   ]
+// };
+// const logger = createLogger(options);
+
+
+
 
 // import { S3Client, GetObjectCommand, ListObjectsCommand, CopyObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
@@ -457,8 +470,6 @@ try {
         }
 
       });
-
-
 
       conversion.stderr.on('data', async (data) => {
         const options = {
@@ -926,7 +937,7 @@ try {
         VGM = 'VGMV';
       }
       const txtPath = `${prefix}/database/${VGM}.txt`;
-      const renamedFolder = `${prefix}/database/renamed/${VGM}`;
+      const renamedFolder = `${prefix}/database/renamed/${VGM}/05-Ngôn Ngữ Ký Hiệu/Hoạt Hình/Little Bible Heroes`;
       const originalTemp = `${prefix}/database/tmp`;
       const apiPath = `${prefix}/database/API`;
       const localOutPath = `${prefix}/database/converted`;
@@ -941,7 +952,7 @@ try {
         return new Promise((resolve) => {
           const rclone = spawn('rclone', ['copy', '--progress', `${originalPath}${filePath}`, `${originalTemp}`]);
           rclone.stdout.on('data', async (data) => {
-            console.log(`rclone stdout: ${data}`);
+            console.log(`rclone download stdout: ${data}`);
           });
           rclone.stderr.on('data', async (data) => {
             console.log(`Stderr: ${data}`);
@@ -958,7 +969,7 @@ try {
         return new Promise((resolve) => {
           const rclone = spawn('rclone', ['copy', '--progress', `${renamedPath}`, `${warehousePath}${destination}/`]);
           rclone.stdout.on('data', async (data) => {
-            console.log(`rclone stdout: ${data}`);
+            console.log(`rclone upload stdout: ${data}`);
           });
           rclone.stderr.on('data', async (data) => {
             console.log(`Stderr: ${data}`);
@@ -975,7 +986,7 @@ try {
         return new Promise((resolve) => {
           const rclone = spawn('rclone', ['copy', '--progress', `${outPath}/`, `${convertedPath}${fileLocation}/`]);
           rclone.stdout.on('data', async (data) => {
-            console.log(`rclone stdout: ${data}`);
+            console.log(`rclone upconvert stdout: ${data}`);
           });
           rclone.stderr.on('data', async (data) => {
             console.log(`Stderr: ${data}`);
@@ -992,6 +1003,8 @@ try {
       }
 
       const convertFile = async (file: string, vName: string, fType: string, pItem, argOutPath) => {
+        console.log('convertFile args:', file, vName, fType, argOutPath);
+
         return new Promise((resolve) => {
           let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
           let metaData: any = [];
@@ -1020,7 +1033,7 @@ try {
           fileInfo.dblevel = pItem.dblevel + 1;
           console.log(fileInfo, 'start converting ffmpeg');
 
-          const conversion = spawn('bash', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fileType]);
+          const conversion = spawn('bash', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fType]);
 
           conversion.stdout.on('data', async (data) => {
             console.log(`conversion stdout: ${data}`);
@@ -1041,7 +1054,7 @@ try {
               if (fType === 'audio') {
                 keyPath = `${outPath}/128p.m3u8`;
                 upConvertedPath = `/VGMA/${fileInfo.url.replace(/\./g, '\/')}`;
-              } else if (fType === 'video') {
+              } else if (fType === 'video' || fType === 'videoSilence') {
                 keyPath = `${outPath}/480p.m3u8`;
                 upConvertedPath = `/VGMV/${fileInfo.url.replace(/\./g, '\/')}`;
               }
@@ -1091,7 +1104,7 @@ try {
               // } else {
               //   event.sender.send('create-database', fileInfo);
               // }
-              // event.sender.send('create-database', fileInfo);
+              event.sender.send('create-database', fileInfo);
               resolve('done');
 
             } catch (error) {
@@ -1104,6 +1117,36 @@ try {
         });
       }
 
+      const checkMP4 = async (tmpPath) => {
+        console.log('checking downloaded file', `${tmpPath}`);
+        return new Promise(async (resolve) => {
+          const info = execSync(`ffprobe -v quiet -print_format json -show_streams ${tmpPath}`, { encoding: 'utf8' });
+          const jsonInfo = JSON.parse(info);
+          console.log(jsonInfo.streams[0].codec_long_name);
+
+          if (jsonInfo.streams[0].codec_long_name === 'MPEG-4 part 2') {
+            const tmpName = path.parse(tmpPath).name;
+            const mp4Tmp = tmpPath.replace(tmpName, `${tmpName}1`);
+            await execSync(`mv "${tmpPath}" "${mp4Tmp}"`);
+            const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-c:a', 'aac', `${tmpPath}`]);
+            // ffmpeg -vsync 0 -i '/home/vgm/Desktop/test.mp4' -c:v h264_nvenc -c:a aac '/home/vgm/Desktop/test2.mp4'
+            mp4.stdout.on('data', async (data) => {
+              console.log(`converting to mp4 stdout: ${data}`);
+            });
+            mp4.stderr.on('data', async (data) => {
+              console.log(`Stderr: ${data}`);
+            });
+            mp4.on('close', async (code) => {
+              console.log(`Converted to mp4 done with code:`, code);
+              await fs.unlinkSync(mp4Tmp);
+              resolve('done');
+            })
+          } else {
+            console.log('mp4 h264 file ok');
+            resolve(tmpPath);
+          }
+        });
+      }
 
       const processFile = async (file: string, fType: string) => {
         return new Promise(async (resolve) => {
@@ -1129,13 +1172,22 @@ try {
             await downloadLocal(originalFile);
             const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
             if (fs.existsSync(localOriginPath)) {
-              await convertFile(localOriginPath, fileName, fType, pItem, localOutPath);
+              await checkMP4(localOriginPath);
+              let fStat: string;
+              const checkNonSilence = await execSync(`ffmpeg -i "${localOriginPath}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
+              if (checkNonSilence) {
+                fStat = fType;
+              } else {
+                fStat = 'videoSilence';
+              }
+              await convertFile(localOriginPath, fileName, fStat, pItem, localOutPath);
               const renamedVietnamese = `${originalTemp}/${fileName}${ext}`;
               await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
               const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
               console.log('uploading Origin', originalFile, warehouseDir);
-              // await upWarehouse(renamedVietnamese, warehouseDir);
+              await upWarehouse(renamedVietnamese, warehouseDir);
               await fs.unlinkSync(renamedVietnamese);
+              await fs.unlinkSync(fileIni[0]);
             }
           }
           resolve('done');
@@ -1147,7 +1199,7 @@ try {
       if (raw) {
         let list = raw.split('\n');
         list.pop();
-        list.reverse();
+        // list.reverse();
         console.log('total files', list.length);
         let i = startPoint;
 
@@ -1164,21 +1216,20 @@ try {
         // queue.on('idle', () => {
         //   console.log(`Queue is idle.  Size: ${queue.size}  Pending: ${queue.pending}`);
         // });
-        // (async () => {
-        //   queue.add(async () => await processFile(list[0], fileType));
-        //   console.log('Done 1 file');
-        // })();
-        // (async () => {
-        //   queue.add(async () => await processFile(list[1], fileType));
-        //   console.log('Done 1 file');
-        // })();
-        // (async () => {
-        //   queue.add(async () => await processFile(list[2], fileType));
-        //   console.log('Done 1 file');
-        // })();
-        //  // p-queue end
 
-        while (i < list.length) { // list.lenght or endPoint
+        // for (let i = 0; i < 10; i++) { // list.length or endPoint
+        //   (async () => {
+        //     queue.add(async () => {
+        //       await processFile(list[i], fileType);
+        //       await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
+        //       console.log('converted files', i);
+        //     });
+        //     console.log('Done 1 file');
+        //   })();
+        // }
+        // // p-queue end
+
+        while (i < list.length) { // list.length or endPoint
 
           await processFile(list[i], fileType);
 
