@@ -326,7 +326,7 @@ export class ConverterPage implements OnInit {
             this.progressionStatus = 0;
             this.outputPath = '';
             this.inputPath = '';
-            this.dataService.fetchDB(this.isVideo);
+            this.dataService.dbRefresh(this.isVideo);
           });
         });
 
@@ -353,7 +353,7 @@ export class ConverterPage implements OnInit {
           this.isConverting = false;
           this.inputPath = '';
           this.outputPath = '';
-          this.dataService.fetchDB(this.isVideo);
+          this.dataService.dbRefresh(this.isVideo);
         })
       })
     }

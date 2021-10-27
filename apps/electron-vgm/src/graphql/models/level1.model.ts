@@ -26,6 +26,9 @@ export class Level1 {
   @Field((type) => Boolean)
   isLeaf: boolean
 
+  @Field((type) => String)
+  url: string
+
   @Field((type) => Boolean)
   isVideo: boolean
 

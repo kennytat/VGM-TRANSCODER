@@ -72,12 +72,12 @@ export class DatabasePage implements OnInit {
   isVideo = true;
   // Declare variable and setting for mapping GQL data to ngx-Tree
   videoTree: TreeviewItem[];
-  videoFiles: any[] = [];
+  videoFiles: any = [];
   videoItemList: any[] = [];
   videoTopicList: any[] = [];
   // audioDB: any[] | null = null;
   audioTree: TreeviewItem[];
-  audioFiles: any[] = [];
+  audioFiles: any = [];
   audioItemList: any[] = [];
   audioTopicList: any[] = [];
 
@@ -106,30 +106,40 @@ export class DatabasePage implements OnInit {
     private apollo: Apollo,
     private dataService: DataService) {
 
-    this.videoDBSub = this.dataService.videoDB$.subscribe((data) => {
-      if (data[0]) {
-        this.videoFiles = this.getAllItem(true);
-      }
-    });
+    // this.videoDBSub = this.dataService.videoDB$.subscribe((data) => {
+    //   if (data[0]) {
+    //     this.videoFiles = this.getAllItem(true);
+    //   }
+    // });
 
-    this.audioDBSub = this.dataService.audioDB$.subscribe((data) => {
-      if (data[0]) {
-        this.audioFiles = this.getAllItem(false);
-      }
-    });
-    this.videoTreeSub = this.dataService.videoTree$.subscribe((data) => {
+    // this.audioDBSub = this.dataService.audioDB$.subscribe((data) => {
+    //   if (data[0]) {
+    //     this.audioFiles = this.getAllItem(false);
+    //   }
+    // });
+
+    this.videoTreeSub = this.dataService.videoTree$.subscribe(async (data) => {
       if (data.value) {
         this.videoTree = [new TreeviewItem(data)];
+        this.videoFiles = await this.getAllItem(true);
         console.log(this.videoTree);
-
       }
     });
-    this.audioTreeSub = this.dataService.audioTree$.subscribe((data) => {
+
+    this.audioTreeSub = this.dataService.audioTree$.subscribe(async (data) => {
       if (data.value) {
         this.audioTree = [new TreeviewItem(data)];
+        this.audioFiles = await this.getAllItem(false);
         console.log(data, this.audioTree);
       }
     });
+
+    if (this._electronService.isElectronApp) {
+      this._electronService.ipcRenderer.on('create-database', (event, fileInfo) => {
+        this.updateIsLeaf(fileInfo);
+        this.createNewItem(fileInfo);
+      })
+    }
   }
 
   showDiv(divVal: string) {
@@ -148,12 +158,7 @@ export class DatabasePage implements OnInit {
     } catch (error) {
       console.log(error);
     }
-    if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.on('create-database', (event, fileInfo) => {
-        this.updateIsLeaf(fileInfo);
-        this.createNewItem(fileInfo);
-      })
-    }
+
   }
 
   ngOnDestroy(): void {
@@ -177,50 +182,55 @@ export class DatabasePage implements OnInit {
       }
     }).subscribe(async ({ data }) => {
       console.log('created local DB', data);
-      switch (item.dblevel) {
-        case 2:
-          this.addSearch([data.createLevel2]);
-          break;
-        case 3:
-          this.addSearch([data.createLevel3]);
-          break;
-        case 4:
-          this.addSearch([data.createLevel4]);
-          break;
-        case 5:
-          this.addSearch([data.createLevel5]);
-          break;
-        case 6:
-          this.addSearch([data.createLevel6]);
-          break;
-        case 7:
-          this.addSearch([data.createLevel7]);
-          break;
-        default:
-      }
+      this.addSearch([data[Object.keys(data)[0]]]);
+      // switch (item.dblevel) {
+      //   case 2:
+      //     this.addSearch([data.createLevel2]);
+      //     break;
+      //   case 3:
+      //     this.addSearch([data.createLevel3]);
+      //     break;
+      //   case 4:
+      //     this.addSearch([data.createLevel4]);
+      //     break;
+      //   case 5:
+      //     this.addSearch([data.createLevel5]);
+      //     break;
+      //   case 6:
+      //     this.addSearch([data.createLevel6]);
+      //     break;
+      //   case 7:
+      //     this.addSearch([data.createLevel7]);
+      //     break;
+      //   default:
+      // }
     }, (error) => {
       console.log('error creating new item', error);
     });
   }
 
-  updateIsLeaf(item) {
-    this.apollo.mutate<any>({
-      mutation: this.updateGQL[item.dblevel - 3],
-      variables: {
-        id: item.pid,
-        isLeaf: true,
-        count: 0
-      }
-    }).subscribe(({ data }) => {
-      console.log(data);
-    }, (error) => {
-      console.log('error updating isLeaf', error);
-    });
+  async updateIsLeaf(item) {
+    return new Promise((resolve) => {
+      this.apollo.mutate<any>({
+        mutation: this.updateGQL[item.dblevel - 3],
+        variables: {
+          id: item.pid,
+          isLeaf: true,
+          count: 0
+        },
+        fetchPolicy: 'network-only',
+      }).subscribe(({ data }) => {
+        console.log(data);
+        resolve('done');
+      }, (error) => {
+        console.log('error updating isLeaf', error);
+      });
+    })
   }
 
 
   refreshDB() {
-    this.dataService.fetchDB(this.isVideo);
+    this.dataService.dbRefresh(this.isVideo);
     this.connectSearch();
   }
 
@@ -239,106 +249,164 @@ export class DatabasePage implements OnInit {
 
 
 
-  test() {
-    if (this._electronService.isElectronApp) {
-      // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
-      const prefixPath = '/home/vgm/Desktop';
-      const startPoint = 0; // audio 05NV-13DS, video 02,04,05 done
-      const endPoint = 500;
-      const fileType = 'video';
-      this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint);
-    }
+
+  async test() {
+    // const items: any = await this.getAllItem(this.isVideo);
+    // console.log(items);
+    // let i = 0;
+    // while (i < items.length) {
+    //   const result = await this.updateIsLeaf(items[i]);
+    //   if (result) {
+    //     i++
+    //   }
+    // }
+    const itemList: any = await this.getAllIsLeaf(this.isVideo);
+    console.log(itemList);
+
+    // test instant update item 
+    // const item = {
+    //   "dblevel": 4,
+    //   "pid": "3d54f517-3db5-49e0-b786-b7d9a4796f9c",
+    // }
+    // await this.updateIsLeaf(item);
+
+
+    // // convert intance code
+    // if (this._electronService.isElectronApp) {
+    //   // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
+    //   const prefixPath = '/home/vgm/Desktop';
+    //   const startPoint = 83; // audio 05NV-13DS, video 02,04,05 done
+    //   const endPoint = 10000;
+    //   const fileType = 'video';
+    //   this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint);
+    // }
   }
 
   async downloadDB() {
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.invoke('save-dialog').then(async (outpath) => {
         if (outpath[0]) {
-
-          const itemList: any[] = await this.getAllIsLeaf(this.isVideo);
-          console.log(itemList);
-          await itemList.forEach(async item => { await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'isLeaf') });
-          const topicList: any[] = await this.getAllNonLeaf(this.isVideo);
-          console.log(topicList);
-          await topicList.forEach(async item => { await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'nonLeaf') });
-          const items: any[] = await this.getAllItem(this.isVideo);
-          console.log(items);
-          await items.forEach(async item => { await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'isFile') });
-          await this._electronService.ipcRenderer.invoke('export-database', items, outpath, 'searchAPI')
+          // // export itemList
+          const itemList: any = await this.getAllIsLeaf(this.isVideo);
+          await itemList.forEach(async item => {
+            await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'itemList');
+          });
+          // // export itemSingle
+          const itemSingle: any = await this.getAllItem(this.isVideo);
+          await itemSingle.forEach(async item => {
+            await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'itemSingle')
+          });
+          // export topicList
+          const nonLeafList: any = await this.getAllNonLeaf(this.isVideo);
+          const topicList = nonLeafList.concat(itemList);
+          await topicList.forEach(async item => {
+            await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'topicList');
+          });
+          // export topicSingle
+          await topicList.forEach(async item => {
+            const topic = _.cloneDeep(item);
+            delete topic.children;
+            await this._electronService.ipcRenderer.invoke('export-database', topic, outpath, 'topicSingle');
+          });
+          // export searchAPI
+          await this._electronService.ipcRenderer.invoke('export-database', itemSingle, outpath, 'searchAPI', this.isVideo);
         }
       })
     }
   }
 
-  getAllItem(isVideo) {
-    let files: any[] = [];
-    let db: any[] = [];
-    if (isVideo) {
-      db = this.dataService.videoDB
-    } else {
-      db = this.dataService.audioDB
-    }
-    db.forEach(function getItem(item) {
-      if (item.isLeaf === null) {
-        files.push(item)
-      }
-      if (item.children.length >= 1) {
-        item.children.forEach(getItem)
+  async getAllItem(isVideo) {
+    return new Promise(async (resolve) => {
+      let files: any[] = [];
+      for (let i = 0; i < this.updateGQL.length; i++) {
+        await this.dataService.fetchLevelDB(i + 2, isVideo, null).then((list) => {
+          files = files.concat(list);
+          if (i === this.updateGQL.length - 1) {
+            resolve(files);
+          }
+        })
       }
     });
-    return files;
   }
 
-  getAllIsLeaf(isVideo) {
-    let lists: any[] = [];
-    let db: any[];
-    if (isVideo) {
-      db = this.dataService.videoDB
-    } else {
-      db = this.dataService.audioDB
-    }
-    db.forEach(function getItem(item) {
-      if (item.isLeaf === true) {
-        lists.push(item);
-      }
-      if (item.children.length >= 1) {
-        item.children.forEach(getItem)
+  async getAllIsLeaf(isVideo) {
+    return new Promise(async (resolve) => {
+      let files: any[] = [];
+      for (let i = 1; i < 8; i++) {
+        await this.dataService.fetchLevelDB(i + 1, isVideo, true).then((list) => {
+          files = files.concat(list);
+          if (i === 7) {
+            resolve(files);
+          }
+        })
       }
     });
-    return lists;
   }
 
-  getAllNonLeaf(isVideo) {
-    let lists: any[] = [];
-    let db: any[];
-    if (isVideo) {
-      db = this.dataService.videoDB
-    } else {
-      db = this.dataService.audioDB
-    }
-
-    db.forEach(function getItem(item) {
-      if (item.isLeaf === false) {
-        lists.push(item);
-      }
-      if (item.children.length >= 1) {
-        item.children.filter(getItem)
+  async getAllNonLeaf(isVideo) {
+    return new Promise(async (resolve) => {
+      let files: any[] = [];
+      for (let i = 1; i < 8; i++) {
+        await this.dataService.fetchLevelDB(i, isVideo, false).then((list) => {
+          files = files.concat(list);
+          if (i === 7) {
+            resolve(files);
+          }
+        })
       }
     });
-
-    // lists.forEach((item) => {
-    //   if (item.children[0]) {
-    //     item.children.forEach(elem => {
-    //       console.log(elem);
-
-    //       // if (elem.children[0]) {
-    //       //   elem.children = []
-    //       // }
-    //     });
-    //   }
-    // })
-    return lists;
   }
+
+  // async getAllIsLeaf(isVideo) {
+  //   let lists: any[] = [];
+  //   let db: any[];
+  //   if (isVideo) {
+  //     db = this.dataService.videoDB;
+  //   } else {
+  //     db = this.dataService.audioDB;
+  //   }
+  //   db.forEach(function getItem(item) {
+  //     if (item.isLeaf === true) {
+  //       lists.push(item);
+  //     }
+  //     if (item.children.length >= 1) {
+  //       item.children.forEach(getItem)
+  //     }
+  //   });
+  //   return lists;
+  // }
+
+  // getAllNonLeaf(isVideo) {
+  //   let lists: any[] = [];
+  //   let db: any[];
+  //   if (isVideo) {
+  //     db = this.dataService.videoDB
+  //   } else {
+  //     db = this.dataService.audioDB
+  //   }
+
+  //   db.forEach(function getItem(item) {
+  //     if (item.isLeaf === false) {
+  //       lists.push(item);
+  //     }
+  //     if (item.children.length >= 1) {
+  //       item.children.filter(getItem)
+  //     }
+  //   });
+
+  //   // lists.forEach((item) => {
+  //   //   if (item.children[0]) {
+  //   //     item.children.forEach(elem => {
+  //   //       console.log(elem);
+
+  //   //       // if (elem.children[0]) {
+  //   //       //   elem.children = []
+  //   //       // }
+  //   //     });
+  //   //   }
+  //   // })
+  //   return lists;
+  // }
 
   treeSelectedChange(ids) {
     this.selectedFilesID = ids;
@@ -472,9 +540,9 @@ export class DatabasePage implements OnInit {
     let db: any[] = []
     let selected: any = {};
     if (this.isVideo) {
-      db = this.dataService.videoDB
+      db = this.dataService.videoDB;
     } else {
-      db = this.dataService.audioDB
+      db = this.dataService.audioDB;
     }
     this.selectedFilesID.forEach(fileID => {
       db.filter(function getItem(item) {
@@ -498,7 +566,7 @@ export class DatabasePage implements OnInit {
       });
     });
 
-    this.dataService.fetchDB(this.isVideo);
+    this.dataService.treeRefresh(this.isVideo);
     const execDoneMessage: string = `Total ${this.selectedFilesID.length} items has been deleted`;
     this.execDBDone(execDoneMessage);
   }

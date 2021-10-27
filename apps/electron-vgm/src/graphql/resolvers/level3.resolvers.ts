@@ -145,17 +145,19 @@ export class Level3Resolver {
     @Args('isLeaf', { nullable: true }) isLeaf: boolean,
     @Args('id', { nullable: true }) id: string,
     @Context() ctx) {
-    const or = isVideo
-      ? {
-        OR: [{
-          isVideo: isVideo,
-          isLeaf: isLeaf,
-          id: id
-        }],
-      } : {}
+    // const or = isVideo
+    //   ? {
+    //     OR: [{
+    //       isVideo: isVideo,
+    //       isLeaf: isLeaf,
+    //       id: id
+    //     }],
+    //   } : {}
     return this.prismaService.level3.findMany({
       where: {
-        ...or,
+        isVideo: isVideo,
+        isLeaf: isLeaf,
+        id: id
       },
     })
   }

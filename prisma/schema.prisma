@@ -27,6 +27,7 @@ model Level1 {
   location  String
   isLeaf    Boolean  @default(false)
   isVideo   Boolean
+  url       String   @default("")
   name      String
   count     Int      @default(0)
   // parent children list

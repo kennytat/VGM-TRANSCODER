@@ -164,6 +164,7 @@ type Level1 {
   updatedAt: DateTime!
   location: String!
   isLeaf: Boolean!
+  url: String!
   isVideo: Boolean!
   name: String!
   count: Int!

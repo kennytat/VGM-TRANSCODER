@@ -311,6 +311,38 @@ export const LEVEL_1_TREE = gql`
   }
 }`;
 
+export const LEVEL_1_QUERIES = gql`
+  query level1Unique($id:String!){
+    level1Unique(id:$id)
+      {
+        id
+        pid
+        dblevel
+        location
+        isVideo
+        name
+        count
+        isLeaf
+        url
+        children {
+          id
+          pid
+          dblevel
+          location
+          isVideo
+          url
+          name
+          count
+          isLeaf
+          keyword
+          hash
+          viewCount
+          duration
+          size
+        }
+      }
+}`;
+
 export const LEVEL_2_QUERIES = gql`
   query level2Queries(
       $isVideo:Boolean!,
