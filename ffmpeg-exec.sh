@@ -41,10 +41,10 @@ mkdir -p "$outPath" && cd "$outPath" &&
 			-master_pl_name playlist.m3u8 \
 			-hls_segment_filename %v/data%01d.vgmx "$outPath"/%v.m3u8 &&
 			mkdir -p "$outPath"/{1080,720,480} &&
-			ffmpeg -v quiet -y -ss 00:00:10 -hwaccel cuda -hwaccel_output_format cuda -i "${inPath}" \
-				-vf select='eq(pict_type\,I)',scale_npp=1920:1080,hwdownload,format=nv12,fps=1/7 -frames:v 7 -vsync vfr -q:v 2 -f image2 "$outPath"/1080/%01d.jpg \
-				-vf select='eq(pict_type\,I)',scale_npp=1280:720,hwdownload,format=nv12,fps=1/7 -frames:v 7 -vsync vfr -q:v 2 -f image2 "$outPath"/720/%01d.jpg \
-				-vf select='eq(pict_type\,I)',scale_npp=854:480,hwdownload,format=nv12,fps=1/7 -frames:v 7 -vsync vfr -q:v 2 -f image2 "$outPath"/480/%01d.jpg
+			ffmpeg -v quiet -y -ss 00:00:10 -hwaccel cuvid -c:v h264_cuvid -threads 1 -skip_frame nokey -i "${inPath}" \
+				-vf select='not(mod(n\,5))',scale_npp=1920:1080,hwdownload,format=nv12,fps=1/7 -r 0.1 -frames:v 7 -vsync vfr -q:v 2 -f image2 "$outPath"/1080/%01d.jpg \
+				-vf select='not(mod(n\,5))',scale_npp=1280:720,hwdownload,format=nv12,fps=1/7 -r 0.1 -frames:v 7 -vsync vfr -q:v 2 -f image2 "$outPath"/720/%01d.jpg \
+				-vf select='not(mod(n\,5))',scale_npp=854:480,hwdownload,format=nv12,fps=1/7 -r 0.1 -frames:v 7 -vsync vfr -q:v 2 -f image2 "$outPath"/480/%01d.jpg
 	else
 		ffmpeg -progress pipe:1 -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
 			-map 0:a -c:a aac -b:a:0 192k -ac 2 \

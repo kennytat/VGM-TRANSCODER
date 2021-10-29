@@ -260,8 +260,8 @@ export class DatabasePage implements OnInit {
     //     i++
     //   }
     // }
-    const itemList: any = await this.getAllIsLeaf(this.isVideo);
-    console.log(itemList);
+    // const itemList: any = await this.getAllIsLeaf(this.isVideo);
+    // console.log(itemList);
 
     // test instant update item 
     // const item = {
@@ -271,15 +271,15 @@ export class DatabasePage implements OnInit {
     // await this.updateIsLeaf(item);
 
 
-    // // convert intance code
-    // if (this._electronService.isElectronApp) {
-    //   // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
-    //   const prefixPath = '/home/vgm/Desktop';
-    //   const startPoint = 83; // audio 05NV-13DS, video 02,04,05 done
-    //   const endPoint = 10000;
-    //   const fileType = 'video';
-    //   this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint);
-    // }
+    // convert intance code
+    if (this._electronService.isElectronApp) {
+      // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
+      const prefixPath = '/home/vgm/Desktop';
+      const startPoint = 0; // audio 05NV-13DS, video 02,04,05 done
+      const endPoint = 10000;
+      const fileType = 'video';
+      this._electronService.ipcRenderer.send('fastly', prefixPath, fileType, startPoint, endPoint); // 'test' 'fastly' 
+    }
   }
 
   async downloadDB() {

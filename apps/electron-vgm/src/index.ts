@@ -194,6 +194,8 @@ function createWindow() {
 }
 
 try {
+
+  app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096');
   app.on('ready', async () => {
     try {
       // get graphql server ready before creating electron window
@@ -602,6 +604,92 @@ try {
 
   })
 
+  ipcMain.on('fastly', async (event, prefix, fileType, startPoint, endPoint) => {
+    let VGM;
+    let itemSingle
+    if (fileType === 'audio') {
+      itemSingle = 'audioSingle';
+      VGM = 'VGMA';
+    } else if (fileType === 'video') {
+      itemSingle = 'videoSingle';
+      VGM = 'VGMV';
+    }
+    const txtPath = `${prefix}/database/${itemSingle}.txt`;
+    const gateway = `https://cdn.vgm.tv/encrypted/${VGM}`;
+    const originalTemp = `${prefix}/database/tmp`;
+    const downloadCache = async (url: string, filename: string) => {
+      return new Promise(async (resolve) => {
+        const tmp = `${originalTemp}/${filename}`;
+        const child = exec(`curl --output '${tmp}' --fail '${url}'`);
+        child.on('exit', async () => {
+          await fs.unlinkSync(tmp);
+          console.log('exec done');
+          resolve('done');
+        })
+      })
+    };
+
+    const processFile = async (urlDir: string) => {
+      const quality = ['1080p', '720p', '480p'];
+      const queue = new PQueue({ concurrency: 20 });
+      return new Promise(async (resolve) => {
+        for (let i = 0; i < quality.length; i++) {
+          exec(`curl --fail '${urlDir}/${quality[i]}.m3u8'`, (error, stdout, stderr) => {
+            if (error) console.log('err', error);
+            if (stderr) console.log('stderr', stderr);
+            if (stdout) {
+              const reader = new M3U8FileParser();
+              reader.read(stdout);
+              const segmentData = reader.getResult();
+              console.log(`stdout: ${segmentData.segments[0].url}`);
+              for (let e = 0; e < segmentData.segments.length; e++) { // list.length or endPoint
+                (async () => {
+                  queue.add(async () => {
+                    const segmentUrl = `${urlDir}/${segmentData.segments[e].url}`;
+                    await downloadCache(segmentUrl, segmentData.segments[e].url);
+                  });
+                })();
+                if (i === quality.length - 1 && e === segmentData.segments.length - 1) {
+                  queue.on('idle', () => {
+                    console.log('7. Queue is empty');
+                    resolve('done');
+                  })
+                }
+              }
+            }
+          });
+        }
+
+      })
+    };
+
+    try {
+      // start script here
+      const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
+      if (raw) {
+        let list = raw.split('\n');
+        list.pop();
+        // list.reverse();
+        console.log('total files', list.length);
+        let i = startPoint;
+
+        // process download caching loops
+        while (i < 1) { // list.length or endPoint
+          const urlDir = `${gateway}${list[i].replace(/\./g, '/')}`
+          const result = await processFile(urlDir);
+          await fs.appendFileSync(`${prefix}/database/${fileType}-download-count.txt`, `\n${i}`);
+          if (result) {
+            console.log('processed files', i, result);
+            i++;
+          }
+        }
+        // process download caching loops end
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  })
+
 
   // ipcMain.on('test', async (event, url, num) => { // instant add to db
   ipcMain.on('test', async (event, prefix, fileType, startPoint, endPoint) => { // start instant code
@@ -937,10 +1025,11 @@ try {
         VGM = 'VGMV';
       }
       const txtPath = `${prefix}/database/${VGM}.txt`;
-      const renamedFolder = `${prefix}/database/renamed/${VGM}/01-Bài Giảng/Mục sư Nguyễn Thỉ`;
+      const renamedFolder = `${prefix}/database/renamed/${VGM}/01-Bài Giảng/Học Theo Sách Trong Kinh Thánh`;
       const originalTemp = `${prefix}/database/tmp`;
       const apiPath = `${prefix}/database/API`;
       const localOutPath = `${prefix}/database/converted`;
+      const gateway = `https://cdn.vgm.tv/encrypted/${VGM}`;
       // const mountedEncrypted = `${prefix}/database/encrypted`;
       // const mountedOrigin = `${prefix}/database/origin`;
       const originalPath = 'VGM-Origin:vgmorigin/origin';
@@ -1002,6 +1091,7 @@ try {
           // }, 5000);
         });
       }
+
 
       const convertFile = async (file: string, vName: string, fType: string, pItem, argOutPath) => {
         console.log('convertFile args:', file, vName, fType, argOutPath);
@@ -1118,6 +1208,7 @@ try {
         });
       }
 
+
       const storeDB = async (file: string, vName: string, pItem) => {
         return new Promise((resolve) => {
           let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
@@ -1140,6 +1231,20 @@ try {
           fileInfo.dblevel = pItem.dblevel + 1;
           event.reply('create-database', fileInfo);
           resolve('done');
+        });
+      }
+
+      const checkThumb = async (vName: string, pUrl) => {
+        return new Promise((resolve) => {
+          // process filename
+          const nonVietnamese = nonAccentVietnamese(vName);
+          const api = `${pUrl}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+          const fileUrl = api.replace(/\./, '/')
+          exec(`curl --silent --head --fail ${gateway}/${fileUrl}/480/1.jpg`, (error, stdout, stderr) => {
+            if (error) resolve(false)
+            if (stderr) console.log('stderr', stderr);
+            if (stdout) resolve(true);
+          });
         });
       }
 
@@ -1191,40 +1296,47 @@ try {
           const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
           const pUrl = nonVietnamese.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
           console.log(pUrl);
-          const pAPI = execSync(`find '${apiPath}/topics' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).replace('\n', '');
+          const pAPI = execSync(`find '${apiPath}/topics' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).split('\n');
           if (pAPI) {
-            const pContent = fs.readFileSync(pAPI, { encoding: 'utf8' });
+            const pContent = fs.readFileSync(pAPI[0], { encoding: 'utf8' });
             const pItem = JSON.parse(pContent);
+            //check if thumbnail exist
 
-            await downloadLocal(originalFile);
-            const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
-            if (fs.existsSync(localOriginPath)) {
-              await checkMP4(localOriginPath);
-              let fStat: string;
-              const checkNonSilence = await execSync(`ffmpeg -i "${localOriginPath}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
-              if (checkNonSilence) {
-                fStat = fType;
-              } else {
-                fStat = 'videoSilence';
-              }
-              await convertFile(localOriginPath, fileName, fStat, pItem, localOutPath);
-              const renamedVietnamese = `${originalTemp}/${fileName}${ext}`;
-              if (!fs.existsSync(renamedVietnamese)) {
-                await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
-              }
-              const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
-              console.log('uploading Origin', originalFile, warehouseDir);
-              await upWarehouse(renamedVietnamese, warehouseDir);
-              await fs.unlinkSync(renamedVietnamese);
-              await fs.unlinkSync(fileIni[0]);
-            }
+            const thumb = await checkThumb(fileName, pItem.url);
+            console.log(thumb);
+
+            // await downloadLocal(originalFile);
+            // const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
+            // if (fs.existsSync(localOriginPath)) {
+            //   await checkMP4(localOriginPath);
+            //   let fStat: string;
+            //   const checkNonSilence = await execSync(`ffmpeg -i "${localOriginPath}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
+            //   if (checkNonSilence) {
+            //     fStat = fType;
+            //   } else {
+            //     fStat = 'videoSilence';
+            //   }
+            //   await convertFile(localOriginPath, fileName, fStat, pItem, localOutPath);
+            //   const renamedVietnamese = `${originalTemp}/${fileName}${ext}`;
+            //   if (!fs.existsSync(renamedVietnamese)) {
+            //     await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
+            //   }
+            //   const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
+            //   console.log('uploading Origin', originalFile, warehouseDir);
+            //   await upWarehouse(renamedVietnamese, warehouseDir);
+            //   await fs.unlinkSync(renamedVietnamese);
+            //   await fs.unlinkSync(fileIni[0]);
+            // }
 
             // // store instant db code start 
             // const mountedOriginPath = `${mountedOrigin}${originalFile}`;
             // await storeDB(mountedOriginPath, fileName, pItem);
             // await fs.unlinkSync(fileIni[0]);
             // // store instant db code end 
-            resolve('done');
+            if (thumb) {
+
+              resolve('done');
+            }
           }
         })
       };
@@ -1268,7 +1380,7 @@ try {
         // // // convert audio loops end
 
         // convert video loops
-        while (i < list.length) { // list.length or endPoint
+        while (i < 1) { // list.length or endPoint
           await processFile(list[i], fileType);
           await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
           console.log('processed files', i);
@@ -1398,7 +1510,7 @@ try {
     // })
   })
 
-  ipcMain.handle('export-database', async (event, item, outpath, fileType, isVideo?) => {
+  ipcMain.handle('export-database', async (event, item, outpath, fileType, isVideo?: boolean) => {
     let filePath: string;
     let json: string;
     // handle json file
