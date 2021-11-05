@@ -622,8 +622,10 @@ try {
         const tmp = `${originalTemp}/${filename}`;
         const child = exec(`curl --output '${tmp}' --fail '${url}'`);
         child.on('exit', async () => {
-          await fs.unlinkSync(tmp);
-          console.log('exec done');
+          if (fs.existsSync(tmp)) {
+            await fs.unlinkSync(tmp);
+            resolve('done');
+          }
           resolve('done');
         })
       })
@@ -674,7 +676,7 @@ try {
         let i = startPoint;
 
         // process download caching loops
-        while (i < 1) { // list.length or endPoint
+        while (i < endPoint) { // list.length or endPoint
           const urlDir = `${gateway}${list[i].replace(/\./g, '/')}`
           const result = await processFile(urlDir);
           await fs.appendFileSync(`${prefix}/database/${fileType}-download-count.txt`, `\n${i}`);
@@ -690,6 +692,45 @@ try {
     }
   })
 
+
+  ipcMain.on('renamedFolder', async (event, prefix, fileType, startPoint, endPoint) => { // start instant code
+    // // copy ini file to local then rename folder
+    const txtPath = `${prefix}/database/VGMVDir.txt`;
+    const copyFile = (file) => {
+      return new Promise((resolve, reject) => {
+        const sourceDir = path.parse(file).dir;
+        const desDir = sourceDir.replace('origin', 'renamed');
+        if (!fs.existsSync(desDir)) {
+          fs.mkdirSync(desDir, { recursive: true });
+        }
+        const copy = execSync(`cp '${file}' '${desDir}'`);
+        if (copy) {
+          resolve('done');
+        }
+      });
+    }
+
+    try {
+      const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
+      if (raw) {
+        let list = raw.split('\n');
+        list.pop();
+        // list.reverse();
+        console.log('total files', list.length);
+        let i = startPoint;
+
+        // convert video loops
+        while (i < 1) { // list.length or endPoint
+          await copyFile(list[i]);
+          console.log('processed files', i);
+          i++;
+        }
+      }
+    } catch (error) {
+      console.log(error);
+
+    }
+  })
 
   // ipcMain.on('test', async (event, url, num) => { // instant add to db
   ipcMain.on('test', async (event, prefix, fileType, startPoint, endPoint) => { // start instant code
@@ -1025,7 +1066,7 @@ try {
         VGM = 'VGMV';
       }
       const txtPath = `${prefix}/database/${VGM}.txt`;
-      const renamedFolder = `${prefix}/database/renamed/${VGM}/01-Bài Giảng/Học Theo Sách Trong Kinh Thánh`;
+      const renamedFolder = `${prefix}/database/renamed/${VGM}`;
       const originalTemp = `${prefix}/database/tmp`;
       const apiPath = `${prefix}/database/API`;
       const localOutPath = `${prefix}/database/converted`;
@@ -1085,13 +1126,43 @@ try {
             console.log(`Upload converted file done with code:`, code);
             resolve('done');
           })
-          // setTimeout(() => {
-          //   console.log(`Upload converted file done`);
-          //   resolve('done');
-          // }, 5000);
         });
       }
 
+      const checkMP4 = async (tmpPath) => {
+        console.log('checking downloaded file', `${tmpPath}`);
+        return new Promise(async (resolve) => {
+          let info;
+          try {
+            info = await execSync(`ffprobe -v quiet -print_format json -show_streams "${tmpPath}"`, { encoding: 'utf8' });
+          } catch (error) {
+            resolve(false);
+          }
+          const jsonInfo = JSON.parse(info);
+          console.log(jsonInfo.streams[0].codec_long_name);
+          if (jsonInfo.streams[0].codec_long_name === 'MPEG-4 part 2') {
+            const tmpName = path.parse(tmpPath).name;
+            const mp4Tmp = tmpPath.replace(tmpName, `${tmpName}1`);
+            await execSync(`mv "${tmpPath}" "${mp4Tmp}"`);
+            const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-c:a', 'aac', `${tmpPath}`]);
+            // ffmpeg -vsync 0 -i '/home/vgm/Desktop/test.mp4' -c:v h264_nvenc -c:a aac '/home/vgm/Desktop/test2.mp4'
+            mp4.stdout.on('data', async (data) => {
+              console.log(`converting to mp4 stdout: ${data}`);
+            });
+            mp4.stderr.on('data', async (data) => {
+              console.log(`Stderr: ${data}`);
+            });
+            mp4.on('close', async (code) => {
+              console.log(`Converted to mp4 done with code:`, code);
+              await fs.unlinkSync(mp4Tmp);
+              resolve(true);
+            })
+          } else {
+            console.log('mp4 h264 file ok');
+            resolve(true);
+          }
+        });
+      }
 
       const convertFile = async (file: string, vName: string, fType: string, pItem, argOutPath) => {
         console.log('convertFile args:', file, vName, fType, argOutPath);
@@ -1234,13 +1305,15 @@ try {
         });
       }
 
-      const checkThumb = async (vName: string, pUrl) => {
+      const checkFileExists = async (vName: string, pUrl) => {
         return new Promise((resolve) => {
           // process filename
           const nonVietnamese = nonAccentVietnamese(vName);
           const api = `${pUrl}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
-          const fileUrl = api.replace(/\./, '/')
-          exec(`curl --silent --head --fail ${gateway}/${fileUrl}/480/1.jpg`, (error, stdout, stderr) => {
+          const fileUrl = api.replace(/\./g, '/');
+          const url = `${gateway}/${fileUrl}/480p/data0.vgmx`;
+          console.log('checkURL', url);
+          exec(`curl --silent --head --fail ${url}`, (error, stdout, stderr) => {
             if (error) resolve(false)
             if (stderr) console.log('stderr', stderr);
             if (stdout) resolve(true);
@@ -1248,34 +1321,41 @@ try {
         });
       }
 
-      const checkMP4 = async (tmpPath) => {
-        console.log('checking downloaded file', `${tmpPath}`);
-        return new Promise(async (resolve) => {
-          const info = execSync(`ffprobe -v quiet -print_format json -show_streams "${tmpPath}"`, { encoding: 'utf8' });
-          const jsonInfo = JSON.parse(info);
-          console.log(jsonInfo.streams[0].codec_long_name);
+      const extractThumb = async (file: string, vName: string, pItem, argOutPath) => {
+        console.log('convertFile args:', file, vName, argOutPath);
 
-          if (jsonInfo.streams[0].codec_long_name === 'MPEG-4 part 2') {
-            const tmpName = path.parse(tmpPath).name;
-            const mp4Tmp = tmpPath.replace(tmpName, `${tmpName}1`);
-            await execSync(`mv "${tmpPath}" "${mp4Tmp}"`);
-            const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-c:a', 'aac', `${tmpPath}`]);
-            // ffmpeg -vsync 0 -i '/home/vgm/Desktop/test.mp4' -c:v h264_nvenc -c:a aac '/home/vgm/Desktop/test2.mp4'
-            mp4.stdout.on('data', async (data) => {
-              console.log(`converting to mp4 stdout: ${data}`);
-            });
-            mp4.stderr.on('data', async (data) => {
-              console.log(`Stderr: ${data}`);
-            });
-            mp4.on('close', async (code) => {
-              console.log(`Converted to mp4 done with code:`, code);
-              await fs.unlinkSync(mp4Tmp);
+        return new Promise((resolve) => {
+          const nonVietnamese = nonAccentVietnamese(vName);
+          const urlPath = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+          const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
+          console.log('start extracting thumbnail');
+
+          const conversion = spawn('bash', ['ffmpeg-thumb.sh', `"${file}"`, `"${outPath}"`]);
+
+          conversion.stdout.on('data', async (data) => {
+            console.log(`conversion stdout: ${data}`);
+          });
+
+          conversion.stderr.on('data', async (data) => {
+            console.log(`Stderr: ${data}`);
+          });
+
+          conversion.on('close', async (code) => {
+            console.log('extract thumbnail done with code:', code);
+            // encrypt m3u8 key
+            try {
+              // get iv info
+              const upConvertedPath = `/VGMV/${urlPath.replace(/\./g, '\/')}`;
+              await upConverted(outPath, upConvertedPath);
+              await fs.rmdirSync(outPath, { recursive: true });
+              await fs.unlinkSync(file);
+              console.log('removed converted folder');
               resolve('done');
-            })
-          } else {
-            console.log('mp4 h264 file ok');
-            resolve(tmpPath);
-          }
+            } catch (error) {
+              console.log('error:', error);
+            }
+
+          });
         });
       }
 
@@ -1283,60 +1363,75 @@ try {
         return new Promise(async (resolve) => {
 
           const originalFile = file.replace('.ini', '');
-          const ext = path.parse(originalFile).ext
+          const ext = path.parse(originalFile).ext;
           const fileIni = execSync(`find '${renamedFolder}' -type f -name "${path.basename(file)}"`, { encoding: "utf8" }).split('\n');
-          const fileContent = fs.readFileSync(fileIni[0], { encoding: 'utf8' });
-          const fileName = `${fileContent.split('|')[1]}`;
-          let re;
-          if (fType === 'video') {
-            re = /^.*VGMV\//;
-          } else if (fType === 'audio') {
-            re = /^.*VGMA\//;
-          }
-          const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
-          const pUrl = nonVietnamese.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
-          console.log(pUrl);
-          const pAPI = execSync(`find '${apiPath}/topics' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).split('\n');
-          if (pAPI) {
-            const pContent = fs.readFileSync(pAPI[0], { encoding: 'utf8' });
-            const pItem = JSON.parse(pContent);
-            //check if thumbnail exist
-
-            const thumb = await checkThumb(fileName, pItem.url);
-            console.log(thumb);
-
-            // await downloadLocal(originalFile);
-            // const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
-            // if (fs.existsSync(localOriginPath)) {
-            //   await checkMP4(localOriginPath);
-            //   let fStat: string;
-            //   const checkNonSilence = await execSync(`ffmpeg -i "${localOriginPath}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
-            //   if (checkNonSilence) {
-            //     fStat = fType;
-            //   } else {
-            //     fStat = 'videoSilence';
-            //   }
-            //   await convertFile(localOriginPath, fileName, fStat, pItem, localOutPath);
-            //   const renamedVietnamese = `${originalTemp}/${fileName}${ext}`;
-            //   if (!fs.existsSync(renamedVietnamese)) {
-            //     await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
-            //   }
-            //   const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
-            //   console.log('uploading Origin', originalFile, warehouseDir);
-            //   await upWarehouse(renamedVietnamese, warehouseDir);
-            //   await fs.unlinkSync(renamedVietnamese);
-            //   await fs.unlinkSync(fileIni[0]);
-            // }
-
-            // // store instant db code start 
-            // const mountedOriginPath = `${mountedOrigin}${originalFile}`;
-            // await storeDB(mountedOriginPath, fileName, pItem);
-            // await fs.unlinkSync(fileIni[0]);
-            // // store instant db code end 
-            if (thumb) {
-
-              resolve('done');
+          if (fileIni[0]) {
+            const fileContent = fs.readFileSync(fileIni[0], { encoding: 'utf8' });
+            const fileName = `${fileContent.split('|')[1]}`;
+            let re;
+            if (fType === 'video') {
+              re = /^.*VGMV\//;
+            } else if (fType === 'audio') {
+              re = /^.*VGMA\//;
             }
+            const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
+            const pUrl = nonVietnamese.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
+            const pAPI = execSync(`find '${apiPath}/topics' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).split('\n');
+            if (pAPI) {
+              const pContent = fs.readFileSync(pAPI[0], { encoding: 'utf8' });
+              const pItem = JSON.parse(pContent);
+              //check if thumbnail exist
+              const fileExist = await checkFileExists(fileName, pItem.url);
+              console.log('file exist', fileExist);
+
+              if (!fileExist) {
+                await downloadLocal(originalFile);
+                const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
+                if (fs.existsSync(localOriginPath)) {
+                  // // // extract thumbnail instance code start
+                  // await extractThumb(localOriginPath, fileName, pItem, localOutPath);
+                  // // // extract thumbnail instance code end
+
+                  // check and convert mp4 to m3u8
+                  const fileOk = await checkMP4(localOriginPath);
+                  if (fileOk) {
+                    let fStat: string;
+                    const checkNonSilence = await execSync(`ffmpeg -i "${localOriginPath}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
+                    if (checkNonSilence) fStat = fType; else fStat = 'videoSilence';
+                    await convertFile(localOriginPath, fileName, fStat, pItem, localOutPath);
+                    // rename and up vietnamese warehouse
+                    const renamedVietnamese = `${originalTemp}/${fileName}${ext}`;
+                    if (!fs.existsSync(renamedVietnamese)) {
+                      await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
+                    }
+                    const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
+                    console.log('uploading Origin', originalFile, warehouseDir);
+                    await upWarehouse(renamedVietnamese, warehouseDir);
+
+                    // remove downloaded file when done
+                    await fs.unlinkSync(renamedVietnamese);
+                    await fs.unlinkSync(fileIni[0]);
+                    resolve('done');
+                  } else {
+                    await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n ${fileIni[0]} broken`);
+                    await fs.unlinkSync(fileIni[0]);
+                    resolve('done');
+                  }
+                }
+              } else {
+                await fs.unlinkSync(fileIni[0]);
+                resolve('done');
+              }
+
+              // // store instant db code start 
+              // const mountedOriginPath = `${mountedOrigin}${originalFile}`;
+              // await storeDB(mountedOriginPath, fileName, pItem);
+              // await fs.unlinkSync(fileIni[0]);
+              // // store instant db code end 
+            }
+
+          } else {
+            resolve('done');
           }
         })
       };
@@ -1352,7 +1447,7 @@ try {
 
         // // // convert audio loops
         // // p-queue start
-        // const queue = new PQueue({ concurrency: 8 });
+        // const queue = new PQueue({ concurrency: 20 });
         // queue.on('add', () => {
         //   console.log(`Task is added.  Size: ${queue.size}  Pending: ${queue.pending}`);
         // });
@@ -1380,7 +1475,7 @@ try {
         // // // convert audio loops end
 
         // convert video loops
-        while (i < 1) { // list.length or endPoint
+        while (i < list.length) { // list.length or endPoint
           await processFile(list[i], fileType);
           await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
           console.log('processed files', i);
