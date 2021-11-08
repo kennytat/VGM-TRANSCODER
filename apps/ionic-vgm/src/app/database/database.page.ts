@@ -275,7 +275,7 @@ export class DatabasePage implements OnInit {
     if (this._electronService.isElectronApp) {
       // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
       const prefixPath = '/home/vgm/Desktop';
-      const startPoint = 529; // audio 05NV-13DS, video 02,04,05 done
+      const startPoint = 592; // audio 05NV-13DS, video 02,04,05 done
       const endPoint = 1000;
       const fileType = 'video';
       this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint); // 'test' 'fastly' 

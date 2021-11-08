@@ -999,7 +999,7 @@ try {
     //   }
 
 
-    //   const raw = fs.readFileSync(`${prefix}/VGMV-backup.txt`, { encoding: 'utf-8' });
+    //   const raw = fs.readFileSync(`${prefix}/database/VGMV-backup.txt`, { encoding: 'utf-8' });
     //   // find all ini file
     //   if (raw) {
     //     const list = raw.split('\n');
@@ -1012,10 +1012,8 @@ try {
     //       }
     //     }
     //   }
-
     // } catch (error) {
     //   console.log('err copy folder', error);
-
     // }
 
     // // rename folder
@@ -1023,7 +1021,8 @@ try {
     //   const renameFolder = (folder) => {
     //     return new Promise((resolve, reject) => {
     //       const content = fs.readFileSync(folder, { encoding: 'utf8' })
-    //       const newName = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+    //       // const newName = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+    //       const newName = content.split('\|')[1];
     //       const oldPath = path.dirname(folder);
     //       const newPath = `${path.dirname(oldPath)}/${newName}`;
     //       console.log(oldPath, newPath);
@@ -1312,11 +1311,18 @@ try {
           const api = `${pUrl}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
           const fileUrl = api.replace(/\./g, '/');
           const url = `${gateway}/${fileUrl}/480p/data0.vgmx`;
-          console.log('checkURL', url);
+          console.log('checkURL curl --silent --head --fail', url);
           exec(`curl --silent --head --fail ${url}`, (error, stdout, stderr) => {
-            if (error) resolve(false)
+            if (error) {
+              console.log('file exist:', false);
+              resolve(false)
+            };
             if (stderr) console.log('stderr', stderr);
-            if (stdout) resolve(true);
+            if (stdout) {
+              console.log('file exist:', true);
+              resolve(true);
+
+            };
           });
         });
       }
