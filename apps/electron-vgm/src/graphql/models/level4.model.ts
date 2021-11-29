@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { ObjectType, Field, Int } from '@nestjs/graphql'
+import { ObjectType, Field, Int, Float } from '@nestjs/graphql'
 import { Level3 } from './level3.model'
 import { Level5 } from './level5.model'
 
@@ -62,7 +62,7 @@ export class Level4 {
   @Field((type) => String, { nullable: true })
   duration?: string
 
-  @Field((type) => Int, { nullable: true })
+  @Field((type) => Float, { nullable: true })
   size?: number
 
   @Field((type) => [Level3])

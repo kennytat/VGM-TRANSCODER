@@ -12,7 +12,14 @@ import * as M3U8FileParser from "m3u8-file-parser";
 import * as bitwise from 'bitwise';
 
 import PQueue from 'p-queue';
+const queue = new PQueue();
 
+const rcloneConfig = {
+  gateway: 'https://cdn.vgm.tv/encrypted/',
+  origin: 'VGM-Origin:vgmorigin/origin',
+  warehouse: 'VGM-Origin:vgmorigin/warehouse',
+  encrypted: 'VGM-Converted:vgmencrypted/encrypted'
+}
 // const { createLogger, transports } = require("winston");
 // const LokiTransport = require("winston-loki");
 // const options = {
@@ -310,10 +317,10 @@ try {
   })
 
   // Listen to renderer process and open dialog for input and output path
-  ipcMain.handle('open-dialog', async (event, isfile) => {
+  ipcMain.handle('open-dialog', async (event, isFile) => {
     try {
       let options = {};
-      if (isfile === true) {
+      if (isFile) {
         options = {
           title: 'Browse Video Folder',
           filters: [{ name: 'Media', extensions: ['mkv', 'avi', 'mp4', 'm4a', 'mp3', 'wav', 'wma', 'aac', 'webm'] }],
@@ -375,7 +382,175 @@ try {
   })
 
   // Get input and output path from above and execute sh file
-  ipcMain.handle('start-convert', (event, argInPath, argOutPath, fileOnly, pItem) => {
+  ipcMain.handle('start-convert', async (event, argInPath, argOutPath, fileOnly, pItem) => {
+    // console.log('args', argInPath, argOutPath, fileOnly, pItem);
+
+    const upConverted = async (convertedTemp, uploadPath) => {
+      console.log('uploading converted file', `${convertedTemp}/`, `${uploadPath}/`);
+      return new Promise((resolve) => {
+        const rclone = spawn('rclone', ['copy', '--progress', `${convertedTemp}/`, `${uploadPath}/`]);
+        rclone.stdout.on('data', async (data) => {
+          console.log(`rclone upconvert stdout: ${data}`);
+        });
+        rclone.stderr.on('data', async (data) => {
+          console.log(`Stderr: ${data}`);
+        });
+        rclone.on('close', async (code) => {
+          console.log(`Upload converted file done with code:`, code);
+          resolve('done');
+        })
+      });
+    }
+
+    const convertFile = async (file: string, fType: string, pItem, argOutPath) => {
+      return new Promise((resolve) => {
+        let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
+        let metaData: any = [];
+        // get file Info
+        metaData = execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${file}"`, { encoding: "utf8" }).split('\n');
+        // Then run ffmpeg to start convert
+        const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
+        const duration: number = parseFloat(duration_stat.replace(/duration=/g, ''));
+        const minutes: number = Math.floor(duration / 60);
+        fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
+        fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
+        fileInfo.name = path.parse(file).name;
+        // process filename
+        const nonVietnamese = nonAccentVietnamese(fileInfo.name);
+        fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+        fileInfo.location = `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`;
+        const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
+        fileInfo.isVideo = pItem.isVideo;
+        fileInfo.pid = pItem.id;
+        fileInfo.dblevel = pItem.dblevel + 1;
+        console.log(fileInfo, 'start converting ffmpeg');
+        console.log(`'bash', ['ffmpeg-exec.sh', "${file}", "${outPath}", ${fType}]`);
+        const conversion = spawn('bash', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fType]);
+        conversion.stdout.on('data', async (data) => {
+          console.log(`conversion stdout: ${data}`, totalFiles, convertedFiles);
+          const ffmpeg_progress_stat: string[] = data.toString().split('\n');
+          if (ffmpeg_progress_stat && fileType === 'video') {
+            // get fps and total duration
+            const fps_stat: string = metaData.filter(name => name.includes("avg_frame_rate=")).toString();
+            const converted_frames: string = ffmpeg_progress_stat.filter(name => name.includes("frame=")).toString();
+            if (fps_stat && duration_stat && converted_frames) {
+              const fps: number = parseInt(fps_stat.match(/\d+/g)[0]) / parseInt(fps_stat.match(/\d+/g)[1]);
+              // calculate total frames
+              if (fps && duration) {
+                const total_frames: number = Math.round(duration * fps);
+                const converted_frames_num: number = parseInt(converted_frames.match(/\d+/)[0])
+                if (converted_frames_num && total_frames) {
+                  progression_status = converted_frames_num / total_frames;
+                }
+              }
+            }
+            event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+          } else if (ffmpeg_progress_stat && fileType === 'audio') {
+            // get converted time
+            const time_stat: string = ffmpeg_progress_stat.filter(time => time.includes('out_time_ms=')).toString();
+            if (time_stat && duration_stat) {
+              const converted_time: number = parseInt(time_stat.replace(/[(out_time_ms=)\.]/g, ''));
+              const audio_duration: number = parseInt(duration_stat.replace(/[(duration=)\.]/g, ''));
+              // calculate progress
+              if (converted_time && audio_duration) {
+                progression_status = converted_time / audio_duration;
+              }
+            }
+            event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+          }
+        });
+
+        conversion.stderr.on('data', async (data) => {
+          const options = {
+            type: 'warning',
+            title: 'stdError',
+            message: data.toString(),
+            detail: 'None expected standard errors occurred, please try again.',
+          };
+          showMessageBox(options);
+          event.sender.send('exec-done');
+          console.log(`Stderr: ${data}`);
+        });
+
+        conversion.on('close', async (code) => {
+          console.log('converted file done with code:', code);
+          // encrypt m3u8 key
+          try {
+            // get iv info
+            const reader = new M3U8FileParser();
+            let keyPath: string;
+            let VGM: string;
+            if (fType === 'audio') {
+              keyPath = `${outPath}/128p.m3u8`;
+              VGM = 'VGMA';
+            } else if (fType === 'video' || fType === 'videoSilence') {
+              keyPath = `${outPath}/480p.m3u8`;
+              VGM = 'VGMV';
+            }
+            const segment = await fs.readFileSync(keyPath, { encoding: 'utf-8' });
+            reader.read(segment);
+            const m3u8 = reader.getResult();
+            const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
+            // get buffer from key and iv
+            const code = Buffer.from(secret);
+            const key: Buffer = await fs.readFileSync(`${outPath}/key.vgmk`);
+            const encrypted = bitwise.buffer.xor(key, code, false);
+            await fs.writeFileSync(`${outPath}/key.vgmk`, encrypted, { encoding: 'binary' });
+            console.log('Encrypt key file done');
+            // upload converted to s3
+            const upConvertedPath = `${rcloneConfig.encrypted}/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`;
+            await upConverted(`${outPath}`, upConvertedPath);
+            convertedFiles++;
+            // await upConverted(outPath, upConvertedPath);
+            // await fs.rmdirSync(outPath, { recursive: true });
+            // console.log('removed converted folder');
+
+            // // upload ipfs
+            // if (ipfsClient) {
+            //   console.log('uploading ipfs');
+            //   // monitor ipfs uploading time
+            //   const now = new Date();
+            //   const timenow = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+            //   console.log(timenow);
+            //   const test = await ipfsClient.add('Hello world');
+            //   if (test) {
+            //     console.log('Testing IPFS function: success', test);
+            //   }
+
+            //   const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
+            //   // got ipfs info
+            //   const cid: CID = ipfsOut.cid;
+            //   console.log(cid);
+            //   fileInfo.qm = cid.toString();
+            //   const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+            //   fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
+            //   fileInfo.size = ipfsOut.size;
+            //   console.log('upload ipfs done', fileInfo);
+            //   const later = new Date();
+            //   const timelater = later.getHours() + ":" + later.getMinutes() + ":" + later.getSeconds();
+            //   console.log(timelater);
+            //   if (cid) {
+            //     fs.rmdirSync(outPath, { recursive: true });
+            //   }
+            //   event.sender.send('create-database', fileInfo);
+            // } else {
+            //   event.sender.send('create-database', fileInfo);
+            // }
+            // console.log('fileInfo before create database', fileInfo);
+
+            event.sender.send('create-database', fileInfo);
+            resolve(fileInfo);
+
+          } catch (error) {
+            console.log('error:', error);
+          }
+
+        });
+
+
+      });
+    }
+
     let files: string[];
     let totalFiles: number = 0;
     let convertedFiles: number = 0;
@@ -385,17 +560,36 @@ try {
     if (fileOnly) {
       files = argInPath;
     } else {
-      files = execSync(`find ${argInPath} -regextype posix-extended -regex '.*.(mkv|mp4)'`, { encoding: "utf8" }).split('\n');
+      files = execSync(`find ${argInPath} -regextype posix-extended -regex '.*.(mp4|mp3)'`, { encoding: "utf8" }).split('\n');
       files.pop();
     }
     totalFiles = files.length;
-    if (totalFiles > 0 && convertedFiles < totalFiles) {
+    if (files && totalFiles > 0 && convertedFiles < totalFiles) {
       if (pItem.isVideo) {
         fileType = 'video';
+        queue.concurrency = 1;
       } else {
         fileType = 'audio';
+        queue.concurrency = 20;
       }
-      startConvert(files, 0, fileType);
+
+      let tasks = [];
+      files.forEach(file => {
+        tasks.push(async () => {
+          await convertFile(file, fileType, pItem, argOutPath);
+        })
+      });
+      await Promise.all(tasks.map(task => queue.add(task))).then(async () => {
+        const options = {
+          type: 'info',
+          title: 'Done',
+          message: 'Congratulations',
+          detail: 'Your files have been converted sucessfully',
+        };
+        showMessageBox(options);
+        event.sender.send('exec-done');
+      });
+
     } else {
       const options = {
         type: 'warning',
@@ -408,152 +602,160 @@ try {
     }
 
 
-    async function startConvert(files: string[], index: number, fileType: string) {
+    // async function startConvert(files: string[], index: number, fileType: string, pItem, argOutPath) {
 
-      let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
-      let metaData: any = [];
-      // get file Info
-      metaData = await execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${files[index]}"`, { encoding: "utf8" }).split('\n');
-      // Then run ffmpeg to start convert
-      const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
-      const duration: number = parseFloat(duration_stat.replace(/duration=/g, ''));
-      const minutes: number = Math.floor(duration / 60);
-      fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
-      fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
+    //   let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
+    //   let metaData: any = [];
+    //   // get file Info
+    //   metaData = await execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${files[index]}"`, { encoding: "utf8" }).split('\n');
+    //   // Then run ffmpeg to start convert
+    //   const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
+    //   const duration: number = parseFloat(duration_stat.replace(/duration=/g, ''));
+    //   const minutes: number = Math.floor(duration / 60);
+    //   fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
+    //   fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
 
-      // const nameExtPath = files[index].match(/[\w\-\_\(\)\s]+\.[\w\S]{3,4}$/gi).toString();
-      // fileInfo.name = nameExtPath.replace(/\.\w+/g, '');
-      fileInfo.name = path.parse(files[index]).name;
+    //   // const nameExtPath = files[index].match(/[\w\-\_\(\)\s]+\.[\w\S]{3,4}$/gi).toString();
+    //   // fileInfo.name = nameExtPath.replace(/\.\w+/g, '');
+    //   fileInfo.name = path.parse(files[index]).name;
 
-      // read file.ini for name (instant code)
-      // const content = await fs.readFileSync(`"${files[index]}.ini"`, { encoding: "utf8" });
-      // fileInfo.name = `${content.split('|')[1]}${path.parse(files[index]).ext}`;
-      // process filename
-      const nonVietnamese = nonAccentVietnamese(fileInfo.name);
-      fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
-      fileInfo.location = `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`;
-      const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
-      fileInfo.isVideo = pItem.isVideo;
-      fileInfo.pid = pItem.id;
-      fileInfo.dblevel = pItem.dblevel + 1;
-      const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${outPath}"`, fileType]);
+    //   // read file.ini for name (instant code)
+    //   // const content = await fs.readFileSync(`"${files[index]}.ini"`, { encoding: "utf8" });
+    //   // fileInfo.name = `${content.split('|')[1]}${path.parse(files[index]).ext}`;
+    //   // process filename
+    //   const nonVietnamese = nonAccentVietnamese(fileInfo.name);
+    //   fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+    //   fileInfo.location = `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`;
+    //   const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
+    //   fileInfo.isVideo = pItem.isVideo;
+    //   fileInfo.pid = pItem.id;
+    //   fileInfo.dblevel = pItem.dblevel + 1;
+    //   console.log('fileInfo', fileInfo);
+    //   console.log('outPath', outPath);
 
-      conversion.stdout.on('data', async (data) => {
-        // console.log(`conversion stdout: ${data}`, totalFiles, convertedFiles);
-        const ffmpeg_progress_stat: string[] = data.toString().split('\n');
-        if (ffmpeg_progress_stat && fileType === 'video') {
-          // get fps and total duration
-          const fps_stat: string = metaData.filter(name => name.includes("avg_frame_rate=")).toString();
-          const converted_frames: string = ffmpeg_progress_stat.filter(name => name.includes("frame=")).toString();
-          if (fps_stat && duration_stat && converted_frames) {
-            const fps: number = parseInt(fps_stat.match(/\d+/g)[0]) / parseInt(fps_stat.match(/\d+/g)[1]);
-            // calculate total frames
-            if (fps && duration) {
-              const total_frames: number = Math.round(duration * fps);
-              const converted_frames_num: number = parseInt(converted_frames.match(/\d+/)[0])
-              if (converted_frames_num && total_frames) {
-                progression_status = converted_frames_num / total_frames;
-              }
-            }
-          }
-          event.sender.send('progression', progression_status, convertedFiles, totalFiles);
-        } else if (ffmpeg_progress_stat && fileType === 'audio') {
-          // get converted time
-          const time_stat: string = ffmpeg_progress_stat.filter(time => time.includes('out_time_ms=')).toString();
-          if (time_stat && duration_stat) {
-            const converted_time: number = parseInt(time_stat.replace(/[(out_time_ms=)\.]/g, ''));
-            const audio_duration: number = parseInt(duration_stat.replace(/[(duration=)\.]/g, ''));
-            // calculate progress
-            if (converted_time && audio_duration) {
-              progression_status = converted_time / audio_duration;
-            }
-          }
-          event.sender.send('progression', progression_status, convertedFiles, totalFiles);
-        }
 
-      });
+    //   const conversion = await spawn('./ffmpeg-exec.sh', [`"${files[index]}"`, `"${outPath}"`, fileType]);
 
-      conversion.stderr.on('data', async (data) => {
-        const options = {
-          type: 'warning',
-          title: 'Stderror',
-          message: data.toString(),
-          detail: 'None expected standard errors occured, please try again.',
-        };
-        showMessageBox(options);
-        event.sender.send('exec-done');
-        console.log(`Stderr: ${data}`);
-      });
+    //   conversion.stdout.on('data', async (data) => {
+    //     // console.log(`conversion stdout: ${data}`, totalFiles, convertedFiles);
+    //     const ffmpeg_progress_stat: string[] = data.toString().split('\n');
+    //     if (ffmpeg_progress_stat && fileType === 'video') {
+    //       // get fps and total duration
+    //       const fps_stat: string = metaData.filter(name => name.includes("avg_frame_rate=")).toString();
+    //       const converted_frames: string = ffmpeg_progress_stat.filter(name => name.includes("frame=")).toString();
+    //       if (fps_stat && duration_stat && converted_frames) {
+    //         const fps: number = parseInt(fps_stat.match(/\d+/g)[0]) / parseInt(fps_stat.match(/\d+/g)[1]);
+    //         // calculate total frames
+    //         if (fps && duration) {
+    //           const total_frames: number = Math.round(duration * fps);
+    //           const converted_frames_num: number = parseInt(converted_frames.match(/\d+/)[0])
+    //           if (converted_frames_num && total_frames) {
+    //             progression_status = converted_frames_num / total_frames;
+    //           }
+    //         }
+    //       }
+    //       event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+    //     } else if (ffmpeg_progress_stat && fileType === 'audio') {
+    //       // get converted time
+    //       const time_stat: string = ffmpeg_progress_stat.filter(time => time.includes('out_time_ms=')).toString();
+    //       if (time_stat && duration_stat) {
+    //         const converted_time: number = parseInt(time_stat.replace(/[(out_time_ms=)\.]/g, ''));
+    //         const audio_duration: number = parseInt(duration_stat.replace(/[(duration=)\.]/g, ''));
+    //         // calculate progress
+    //         if (converted_time && audio_duration) {
+    //           progression_status = converted_time / audio_duration;
+    //         }
+    //       }
+    //       event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+    //     }
 
-      conversion.on('close', async (code) => {
-        if (code == 0) {
-          // encrypt m3u8 key
-          try {
-            new Promise((resolve) => {
-              // get iv info
-              const reader = new M3U8FileParser();
-              const segment = fs.readFileSync(`${outPath}/480p.m3u8`, { encoding: 'utf-8' });
-              reader.read(segment);
-              const m3u8 = reader.getResult();
-              const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
-              // get buffer from key and iv
-              const code = Buffer.from(secret);
-              const key: Buffer = fs.readFileSync(`${outPath}/key.vgmk`);
-              const encrypted = bitwise.buffer.xor(key, code, false);
-              fs.writeFileSync(`${outPath}/key.vgmk`, encrypted, { encoding: 'binary' });
-              console.log('Encryption key file done');
-              // // upload origin to s3 instant code
-              // const ini = execSync(`find ${prefix}/Desktop/renamed -type f -name "${path.basename(files[index])}.ini"`, { encoding: "utf8" })
-              // const warehouseFolder = path.parse(ini.replace(/^.*VGMA/, '')).dir;
+    //   });
 
-              // spawnSync('uplink', ['cp', "sj://vgmorigin/origin/VGMA/VGM-000-HN/Nam-01/Thang01/Ngay01/01b-KPKT_0101.mp3", "sj://vgmorigin/warehouse/VGMA/02-Mỗi Ngày Với Lời Chúa/Năm-01/Tháng 01/Ngày 01/02_ Khám Phá Kinh Thánh - Tháng 01 Ngày 01.mp3"
-              // ]);
+    //   conversion.stderr.on('data', async (data) => {
+    //     const options = {
+    //       type: 'warning',
+    //       title: 'Stderror',
+    //       message: data.toString(),
+    //       detail: 'None expected standard errors occured, please try again.',
+    //     };
+    //     showMessageBox(options);
+    //     event.sender.send('exec-done');
+    //     console.log(`Stderr: ${data}`);
+    //   });
 
-              // console.log('Upload Origin Done');
-              // spawnSync(`rclone copy --progress ${outPath} 'VGM-Converted:vgmencrypted/converted${fileInfo.location}/'`);
-              // console.log('Upload Converted Done');
-              // // instant code done
-              resolve(null);
-            })
-          } catch (error) {
-            console.log('encrypt key error:', error);
-          }
-          // upload ipfs
-          if (ipfsClient) {
-            try {
-              const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
-              const cid: CID = ipfsOut.cid;
-              console.log(cid);
-              fileInfo.qm = cid.toString();
-              const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
-              fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
-              fileInfo.size = ipfsOut.size;
-              console.log(fileInfo);
-              event.sender.send('create-database', fileInfo);
-            } catch (err) {
-              console.log('ipfs add error', err);
-            }
-          } else {
-            event.sender.send('create-database', fileInfo);
-          }
+    //   conversion.on('close', async (code) => {
+    //     if (code == 0) {
+    //       // encrypt m3u8 key
+    //       try {
+    //         new Promise((resolve) => {
+    //           // get iv info
+    //           const reader = new M3U8FileParser();
+    //           const segment = fs.readFileSync(`${outPath}/480p.m3u8`, { encoding: 'utf-8' });
+    //           reader.read(segment);
+    //           const m3u8 = reader.getResult();
+    //           const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
+    //           // get buffer from key and iv
+    //           const code = Buffer.from(secret);
+    //           const key: Buffer = fs.readFileSync(`${outPath}/key.vgmk`);
+    //           const encrypted = bitwise.buffer.xor(key, code, false);
+    //           fs.writeFileSync(`${outPath}/key.vgmk`, encrypted, { encoding: 'binary' });
+    //           console.log('Encryption key file done');
+    //           // // upload origin to s3 instant code
+    //           // const ini = execSync(`find ${prefix}/Desktop/renamed -type f -name "${path.basename(files[index])}.ini"`, { encoding: "utf8" })
+    //           // const warehouseFolder = path.parse(ini.replace(/^.*VGMA/, '')).dir;
 
-          convertedFiles++;
-          if (convertedFiles === totalFiles) {
-            const options = {
-              type: 'info',
-              title: 'Done',
-              message: 'Congratulations',
-              detail: 'Your files have been converted sucessfully',
-            };
-            showMessageBox(options);
-            event.sender.send('exec-done');
-          } else {
-            startConvert(files, index + 1, fileType);
-          }
-        }
-        console.log(`child process exited with code ${code}`, convertedFiles);
-      });
-    }
+    //           // spawnSync('uplink', ['cp', "sj://vgmorigin/origin/VGMA/VGM-000-HN/Nam-01/Thang01/Ngay01/01b-KPKT_0101.mp3", "sj://vgmorigin/warehouse/VGMA/02-Mỗi Ngày Với Lời Chúa/Năm-01/Tháng 01/Ngày 01/02_ Khám Phá Kinh Thánh - Tháng 01 Ngày 01.mp3"
+    //           // ]);
+
+    //           // console.log('Upload Origin Done');
+    //           // spawnSync(`rclone copy --progress ${outPath} 'VGM-Converted:vgmencrypted/converted${fileInfo.location}/'`);
+    //           // console.log('Upload Converted Done');
+    //           // // instant code done
+    //           resolve(null);
+    //         })
+    //       } catch (error) {
+    //         console.log('encrypt key error:', error);
+    //       }
+    //       // // upload ipfs
+    //       // if (ipfsClient) {
+    //       //   try {
+    //       //     const ipfsOut: any = await ipfsClient.add(globSource(outPath, { recursive: true }));
+    //       //     const cid: CID = ipfsOut.cid;
+    //       //     console.log(cid);
+    //       //     fileInfo.qm = cid.toString();
+    //       //     const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+    //       //     fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
+    //       //     fileInfo.size = ipfsOut.size;
+    //       //     console.log(fileInfo);
+    //       //     event.sender.send('create-database', fileInfo);
+    //       //   } catch (err) {
+    //       //     console.log('ipfs add error', err);
+    //       //   }
+    //       // } else {
+    //       //   event.sender.send('create-database', fileInfo);
+    //       // }
+
+    //       convertedFiles++;
+    //       if (convertedFiles === totalFiles) {
+    //         const options = {
+    //           type: 'info',
+    //           title: 'Done',
+    //           message: 'Congratulations',
+    //           detail: 'Your files have been converted sucessfully',
+    //         };
+    //         showMessageBox(options);
+    //         event.sender.send('exec-done');
+    //       } else {
+    //         startConvert(files, index + 1, fileType);
+    //       }
+    //     }
+    //     console.log(`child process exited with code ${code}`, convertedFiles);
+    //   });
+    // }
+
+
+
+
   })
 
   // Stop conversion process when button onclick
@@ -602,94 +804,6 @@ try {
       console.log(`Done ✅`)
     });
 
-  })
-
-  ipcMain.on('fastly', async (event, prefix, fileType, startPoint, endPoint) => {
-    let VGM;
-    let itemSingle
-    if (fileType === 'audio') {
-      itemSingle = 'audioSingle';
-      VGM = 'VGMA';
-    } else if (fileType === 'video') {
-      itemSingle = 'videoSingle';
-      VGM = 'VGMV';
-    }
-    const txtPath = `${prefix}/database/${itemSingle}.txt`;
-    const gateway = `https://cdn.vgm.tv/encrypted/${VGM}`;
-    const originalTemp = `${prefix}/database/tmp`;
-    const downloadCache = async (url: string, filename: string) => {
-      return new Promise(async (resolve) => {
-        const tmp = `${originalTemp}/${filename}`;
-        const child = exec(`curl --output '${tmp}' --fail '${url}'`);
-        child.on('exit', async () => {
-          if (fs.existsSync(tmp)) {
-            await fs.unlinkSync(tmp);
-            resolve('done');
-          }
-          resolve('done');
-        })
-      })
-    };
-
-    const processFile = async (urlDir: string) => {
-      const quality = ['1080p', '720p', '480p'];
-      const queue = new PQueue({ concurrency: 20 });
-      return new Promise(async (resolve) => {
-        for (let i = 0; i < quality.length; i++) {
-          exec(`curl --fail '${urlDir}/${quality[i]}.m3u8'`, (error, stdout, stderr) => {
-            if (error) console.log('err', error);
-            if (stderr) console.log('stderr', stderr);
-            if (stdout) {
-              const reader = new M3U8FileParser();
-              reader.read(stdout);
-              const segmentData = reader.getResult();
-              console.log(`stdout: ${segmentData.segments[0].url}`);
-              for (let e = 0; e < segmentData.segments.length; e++) { // list.length or endPoint
-                (async () => {
-                  queue.add(async () => {
-                    const segmentUrl = `${urlDir}/${segmentData.segments[e].url}`;
-                    await downloadCache(segmentUrl, segmentData.segments[e].url);
-                  });
-                })();
-                if (i === quality.length - 1 && e === segmentData.segments.length - 1) {
-                  queue.on('idle', () => {
-                    console.log('7. Queue is empty');
-                    resolve('done');
-                  })
-                }
-              }
-            }
-          });
-        }
-
-      })
-    };
-
-    try {
-      // start script here
-      const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
-      if (raw) {
-        let list = raw.split('\n');
-        list.pop();
-        // list.reverse();
-        console.log('total files', list.length);
-        let i = startPoint;
-
-        // process download caching loops
-        while (i < endPoint) { // list.length or endPoint
-          const urlDir = `${gateway}${list[i].replace(/\./g, '/')}`
-          const result = await processFile(urlDir);
-          await fs.appendFileSync(`${prefix}/database/${fileType}-download-count.txt`, `\n${i}`);
-          if (result) {
-            console.log('processed files', i, result);
-            i++;
-          }
-        }
-        // process download caching loops end
-      }
-    } catch (error) {
-      console.log(error);
-    }
   })
 
 
@@ -982,78 +1096,6 @@ try {
     //   console.log('fs promise error:', error);
     // }
 
-    // // copy ini file to local then rename folder
-    // try {
-    //   const copyFile = (file) => {
-    //     return new Promise((resolve, reject) => {
-    //       const sourceDir = path.parse(file).dir;
-    //       const desDir = sourceDir.replace('origin', 'renamed');
-    //       if (!fs.existsSync(desDir)) {
-    //         fs.mkdirSync(desDir, { recursive: true });
-    //       }
-    //       const copy = execSync(`cp '${file}' '${desDir}'`);
-    //       if (copy) {
-    //         resolve('done');
-    //       }
-    //     });
-    //   }
-
-
-    //   const raw = fs.readFileSync(`${prefix}/database/VGMV-backup.txt`, { encoding: 'utf-8' });
-    //   // find all ini file
-    //   if (raw) {
-    //     const list = raw.split('\n');
-    //     let i = 0;
-    //     while (i < list.length) {
-    //       const result = copyFile(list[i]);
-    //       console.log(i);
-    //       if (result) {
-    //         i++;
-    //       }
-    //     }
-    //   }
-    // } catch (error) {
-    //   console.log('err copy folder', error);
-    // }
-
-    // // rename folder
-    // try {
-    //   const renameFolder = (folder) => {
-    //     return new Promise((resolve, reject) => {
-    //       const content = fs.readFileSync(folder, { encoding: 'utf8' })
-    //       // const newName = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
-    //       const newName = content.split('\|')[1];
-    //       const oldPath = path.dirname(folder);
-    //       const newPath = `${path.dirname(oldPath)}/${newName}`;
-    //       console.log(oldPath, newPath);
-    //       fs.renameSync(oldPath, newPath);
-    //       resolve('done');
-    //     });
-    //   }
-
-    //   // find VGMV file
-    //   const raw = await spawnSync('find', [`${prefix}/database/renamed/VGMV`, '-type', 'f', '-name', 'Info.ini'], { encoding: 'utf8' });
-    //   if (raw.stdout) {
-    //     const list = raw.stdout.split('\n');
-    //     list.pop();
-    //     list.sort(function compare(a, b) {
-    //       return b.match(/\//g).length - a.match(/\//g).length;
-    //     })
-    //     console.log(list.length);
-    //     let i = 0;
-    //     while (i < list.length) {
-    //       const result = renameFolder(list[i]);
-    //       console.log(i);
-    //       if (result) {
-    //         i++;
-    //       }
-    //     }
-    //   }
-    // } catch (error) {
-    //   console.log('err copy folder', error);
-    // }
-
-
 
 
     // start instant code
@@ -1065,19 +1107,23 @@ try {
         VGM = 'VGMV';
       }
       const txtPath = `${prefix}/database/${VGM}.txt`;
-      const renamedFolder = `${prefix}/database/renamed/${VGM}`;
+      const renamedFolder = `${prefix}/database/renamed/${VGM}/06-Phim`; // /06-Phim
       const originalTemp = `${prefix}/database/tmp`;
-      const apiPath = `${prefix}/database/API`;
+      const apiPath = `${prefix}/database/API`; // APIPhim
       const localOutPath = `${prefix}/database/converted`;
-      const gateway = `https://cdn.vgm.tv/encrypted/${VGM}`;
       // const mountedEncrypted = `${prefix}/database/encrypted`;
-      // const mountedOrigin = `${prefix}/database/origin`;
-      const originalPath = 'VGM-Origin:vgmorigin/origin';
+      const mountedOrigin = `${prefix}/database/origin`;
+      const gateway = `https://cdn.vgm.tv/encrypted/${VGM}`;
+      const originalPath = 'VGM-Movies:'; // from onedrive: VGM-Movies: from origin: 'VGM-Origin:vgmorigin/origin';
       const warehousePath = 'VGM-Origin:vgmorigin/warehouse';
       const convertedPath = 'VGM-Converted:vgmencrypted/encrypted';
 
       // exec command
       const downloadLocal = async (filePath) => {
+        if (originalPath.includes('Movies')) {
+          filePath = filePath.replace(/\//, '');
+        };
+
         console.log('downloading local: ', `"${originalPath}${filePath}"`, `"${originalTemp}"`);
         return new Promise((resolve) => {
           const rclone = spawn('rclone', ['copy', '--progress', `${originalPath}${filePath}`, `${originalTemp}`]);
@@ -1128,36 +1174,46 @@ try {
         });
       }
 
-      const checkMP4 = async (tmpPath) => {
+      const checkMP4 = async (tmpPath, fType) => {
         console.log('checking downloaded file', `${tmpPath}`);
         return new Promise(async (resolve) => {
           let info;
           try {
             info = await execSync(`ffprobe -v quiet -print_format json -show_streams "${tmpPath}"`, { encoding: 'utf8' });
           } catch (error) {
+            await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${tmpPath} --fileError cannot read`);
             resolve(false);
           }
-          const jsonInfo = JSON.parse(info);
-          console.log(jsonInfo.streams[0].codec_long_name);
-          if (jsonInfo.streams[0].codec_long_name === 'MPEG-4 part 2') {
-            const tmpName = path.parse(tmpPath).name;
-            const mp4Tmp = tmpPath.replace(tmpName, `${tmpName}1`);
-            await execSync(`mv "${tmpPath}" "${mp4Tmp}"`);
-            const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-c:a', 'aac', `${tmpPath}`]);
-            // ffmpeg -vsync 0 -i '/home/vgm/Desktop/test.mp4' -c:v h264_nvenc -c:a aac '/home/vgm/Desktop/test2.mp4'
-            mp4.stdout.on('data', async (data) => {
-              console.log(`converting to mp4 stdout: ${data}`);
-            });
-            mp4.stderr.on('data', async (data) => {
-              console.log(`Stderr: ${data}`);
-            });
-            mp4.on('close', async (code) => {
-              console.log(`Converted to mp4 done with code:`, code);
-              await fs.unlinkSync(mp4Tmp);
+          if (fType === 'video') {
+            const jsonInfo = JSON.parse(info);
+            const displayRatio = (jsonInfo.streams[0].width / jsonInfo.streams[0].height).toFixed(2);
+            console.log(jsonInfo.streams[0].codec_long_name, displayRatio);
+            await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${tmpPath} ${jsonInfo.streams[0].codec_long_name} ${displayRatio}`);
+            if (jsonInfo.streams[0].codec_long_name === 'MPEG-4 part 2' || displayRatio === (4 / 3).toFixed(2)) {
+              const tmpName = path.parse(tmpPath).name;
+              const mp4Tmp = tmpPath.replace(tmpName, `${tmpName}1`);
+              await execSync(`mv "${tmpPath}" "${mp4Tmp}"`);
+              console.log(mp4Tmp, tmpPath);
+
+              const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-filter:v', 'pad=ih*16/9:ih:(ow-iw)/2:(oh-ih)/2', '-c:a', 'copy', `${tmpPath}`]);
+              // ffmpeg -vsync 0 -i '/home/vgm/Desktop/test.mp4' -c:v h264_nvenc -c:a aac '/home/vgm/Desktop/test2.mp4'
+              mp4.stdout.on('data', async (data) => {
+                console.log(`converting to mp4 stdout: ${data}`);
+              });
+              mp4.stderr.on('data', async (data) => {
+                console.log(`Stderr: ${data}`);
+              });
+              mp4.on('close', async (code) => {
+                console.log(`Converted to mp4 done with code:`, code);
+                await fs.unlinkSync(mp4Tmp);
+                resolve(true);
+              })
+            } else {
+              console.log('mp4 h264 file ok');
               resolve(true);
-            })
+            }
           } else {
-            console.log('mp4 h264 file ok');
+            console.log('mp3 file ok');
             resolve(true);
           }
         });
@@ -1193,7 +1249,7 @@ try {
           fileInfo.pid = pItem.id;
           fileInfo.dblevel = pItem.dblevel + 1;
           console.log(fileInfo, 'start converting ffmpeg');
-
+          console.log(`'bash', ['ffmpeg-exec.sh', "${file}", "${outPath}", ${fType}]`);
           const conversion = spawn('bash', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fType]);
 
           conversion.stdout.on('data', async (data) => {
@@ -1280,11 +1336,18 @@ try {
 
 
       const storeDB = async (file: string, vName: string, pItem) => {
-        return new Promise((resolve) => {
+        console.log('proccessing:', file, vName, pItem.url);
+
+        return new Promise(async (resolve) => {
           let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
           let metaData: any = [];
           // get file Info
-          metaData = execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${file}"`, { encoding: "utf8" }).split('\n');
+          try {
+            metaData = execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${file}"`, { encoding: "utf8" }).split('\n');
+          } catch (error) {
+            await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${file} --fileError cannot read`);
+            resolve('done');
+          }
           // Then run ffmpeg to start convert
           const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
           const duration: number = parseFloat(duration_stat.replace(/duration=/g, ''));
@@ -1299,31 +1362,58 @@ try {
           fileInfo.isVideo = pItem.isVideo;
           fileInfo.pid = pItem.id;
           fileInfo.dblevel = pItem.dblevel + 1;
-          event.reply('create-database', fileInfo);
-          resolve('done');
+          console.log('send', fileInfo);
+          event.sender.send('create-database', fileInfo);
+          await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n ${file} db new`);
+          setTimeout(() => {
+            resolve('done');
+          }, 1000);
         });
       }
 
-      const checkFileExists = async (vName: string, pUrl) => {
+      const checkFileExists = async (vName: string, pUrl, fType) => {
         return new Promise((resolve) => {
           // process filename
           const nonVietnamese = nonAccentVietnamese(vName);
           const api = `${pUrl}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
           const fileUrl = api.replace(/\./g, '/');
-          const url = `${gateway}/${fileUrl}/480p/data0.vgmx`;
-          console.log('checkURL curl --silent --head --fail', url);
-          exec(`curl --silent --head --fail ${url}`, (error, stdout, stderr) => {
+          let quality;
+          if (fType === 'video') quality = '480p'; else quality = '128p';
+          const url = `${gateway}/${fileUrl}/${quality}.m3u8`; // if video 480p.m3u8 audio 128p.m3u8
+          // console.log('checkURL curl --silent --head --fail', url);
+          exec(`curl --silent --head --fail ${url}`, async (error, stdout, stderr) => {
             if (error) {
               console.log('file exist:', false);
+              await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${url} --fileMissing`);
               resolve(false)
             };
             if (stderr) console.log('stderr', stderr);
             if (stdout) {
               console.log('file exist:', true);
+              await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${url} --fileExist`);
               resolve(true);
-
             };
           });
+        });
+      }
+
+      const checkDBExists = async (vName: string, pUrl) => {
+        return new Promise((resolve) => {
+          // process filename
+          const nonVietnamese = nonAccentVietnamese(vName);
+          const api = `${pUrl}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+          // const fileUrl = api.replace(/\./g, '/');
+          // const url = `${gateway}/${fileUrl}/128p.m3u8`; // if video 480p/data0.vgmx audio 128p.m3u8
+          const itemAPIPath = `${apiPath}/items/single/${api}.json`;
+          console.log('checking api exist', itemAPIPath);
+
+          if (fs.existsSync(itemAPIPath)) {
+            console.log('db exist:', true);
+            resolve(true);
+          } else {
+            console.log('db exist:', false);
+            resolve(false)
+          }
         });
       }
 
@@ -1382,14 +1472,14 @@ try {
             }
             const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
             const pUrl = nonVietnamese.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
-            const pAPI = execSync(`find '${apiPath}/topics' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).split('\n');
-            if (pAPI) {
+            const pAPI = execSync(`find '${apiPath}/topics/single' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).split('\n');
+            console.log('pAPI', pAPI);
+
+            if (pAPI && pAPI[0]) {
               const pContent = fs.readFileSync(pAPI[0], { encoding: 'utf8' });
               const pItem = JSON.parse(pContent);
-              //check if thumbnail exist
-              const fileExist = await checkFileExists(fileName, pItem.url);
-              console.log('file exist', fileExist);
-
+              // check if file exist
+              const fileExist = await checkFileExists(fileName, pItem.url, fType);
               if (!fileExist) {
                 await downloadLocal(originalFile);
                 const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
@@ -1399,7 +1489,7 @@ try {
                   // // // extract thumbnail instance code end
 
                   // check and convert mp4 to m3u8
-                  const fileOk = await checkMP4(localOriginPath);
+                  const fileOk = await checkMP4(localOriginPath, fType); // audio dont need check MP4
                   if (fileOk) {
                     let fStat: string;
                     const checkNonSilence = await execSync(`ffmpeg -i "${localOriginPath}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
@@ -1429,14 +1519,23 @@ try {
                 resolve('done');
               }
 
-              // // store instant db code start 
-              // const mountedOriginPath = `${mountedOrigin}${originalFile}`;
-              // await storeDB(mountedOriginPath, fileName, pItem);
-              // await fs.unlinkSync(fileIni[0]);
+              // // // store instant db code start 
+              // const dataExist = await checkDBExists(fileName, pItem.url);
+              // if (!dataExist) {
+              //   const mountedOriginPath = `${mountedOrigin}${originalFile}`;
+              //   console.log('store new api', fileIni[0]);
+              //   await storeDB(mountedOriginPath, fileName, pItem);
+              //   await fs.unlinkSync(fileIni[0]);
+              // } else {
+              //   await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n ${fileIni[0]} db exist`);
+              //   console.log('api exist', fileIni[0]);
+              //   await fs.unlinkSync(fileIni[0]);
+              // }
               // // store instant db code end 
             }
-
+            resolve('done');
           } else {
+            await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n ${fileIni[0]} --err no pAPI found`);
             resolve('done');
           }
         })
@@ -1453,7 +1552,8 @@ try {
 
         // // // convert audio loops
         // // p-queue start
-        // const queue = new PQueue({ concurrency: 20 });
+        // // const queue = new PQueue({ concurrency: 20 });
+        queue.concurrency = 20;
         // queue.on('add', () => {
         //   console.log(`Task is added.  Size: ${queue.size}  Pending: ${queue.pending}`);
         // });
@@ -1470,9 +1570,13 @@ try {
         // for (let i = startPoint; i < list.length; i++) { // list.length or endPoint
         //   (async () => {
         //     queue.add(async () => {
-        //       await processFile(list[i], fileType);
-        //       await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
-        //       console.log('processed files', i);
+        //       if (!list[i].includes('Info.ini')) {
+        //         await processFile(list[i], fileType);
+        //         await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
+        //         console.log('processed files', i);
+        //       } else {
+        //         await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i} --skip Info.ini`);
+        //       }
         //     });
         //     // console.log('Done 1 file');
         //   })();
@@ -1482,9 +1586,13 @@ try {
 
         // convert video loops
         while (i < list.length) { // list.length or endPoint
-          await processFile(list[i], fileType);
-          await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
-          console.log('processed files', i);
+          if (!list[i].includes('Info.ini')) {
+            await processFile(list[i], fileType);
+            await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
+            console.log('processed files', i);
+          } else {
+            await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i} --skip Info.ini`);
+          }
           i++;
         }
         // // QmdFcsTExrPaEKR3tkE69pP6AMpmZKK98gSBTyx2cRxW7a test QmWhTKbYab3r9rbQ7S5t2PXcMVPRGQeqt6M31Mv2KjPKAh
@@ -1612,6 +1720,8 @@ try {
   })
 
   ipcMain.handle('export-database', async (event, item, outpath, fileType, isVideo?: boolean) => {
+    console.log('export-database called');
+
     let filePath: string;
     let json: string;
     // handle json file

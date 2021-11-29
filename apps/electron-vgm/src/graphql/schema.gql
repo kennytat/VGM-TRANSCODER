@@ -22,7 +22,7 @@ type Level7 {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
   parent: [Level6!]!
 }
 
@@ -51,7 +51,7 @@ type Level6 {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
   parent: [Level5!]!
   children: [Level7!]!
 }
@@ -76,7 +76,7 @@ type Level5 {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
   parent: [Level4!]!
   children: [Level6!]!
 }
@@ -101,7 +101,7 @@ type Level4 {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
   parent: [Level3!]!
   children: [Level5!]!
 }
@@ -126,7 +126,7 @@ type Level3 {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
   parent: [Level2!]!
   children: [Level4!]!
 }
@@ -151,7 +151,7 @@ type Level2 {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
   parent: [Level1!]!
   children: [Level3!]!
 }
@@ -235,7 +235,7 @@ input Level2CreateInput {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
 }
 
 input Level2UpdateInput {
@@ -268,7 +268,7 @@ input Level3CreateInput {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
 }
 
 input Level3UpdateInput {
@@ -301,7 +301,7 @@ input Level4CreateInput {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
 }
 
 input Level4UpdateInput {
@@ -334,7 +334,7 @@ input Level5CreateInput {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
 }
 
 input Level5UpdateInput {
@@ -367,7 +367,7 @@ input Level6CreateInput {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
 }
 
 input Level6UpdateInput {
@@ -400,7 +400,7 @@ input Level7CreateInput {
   mtime: Int
   viewCount: Int
   duration: String
-  size: Int
+  size: Float
 }
 
 input Level7UpdateInput {

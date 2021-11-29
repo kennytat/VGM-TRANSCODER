@@ -602,7 +602,7 @@ mutation createLevel2 (
   $mtime: Int,
   $viewCount: Int,
   $duration: String,
-  $size: Int,
+  $size: Float,
   ) {
   createLevel2 (
     data:{
@@ -654,7 +654,7 @@ mutation createLevel3 (
   $mtime: Int,
   $viewCount: Int,
   $duration: String,
-  $size: Int,
+  $size: Float,
   ) {
   createLevel3 (
     data:{
@@ -706,7 +706,7 @@ mutation createLevel4 (
   $mtime: Int,
   $viewCount: Int,
   $duration: String,
-  $size: Int,
+  $size: Float,
   ) {
   createLevel4 (
     data:{
@@ -758,7 +758,7 @@ mutation createLevel5 (
   $mtime: Int,
   $viewCount: Int,
   $duration: String,
-  $size: Int,
+  $size: Float,
   ) {
   createLevel5 (
     data:{
@@ -810,7 +810,7 @@ mutation createLevel6 (
   $mtime: Int,
   $viewCount: Int,
   $duration: String,
-  $size: Int,
+  $size: Float,
   ) {
   createLevel6 (
     data:{
@@ -862,7 +862,7 @@ mutation createLevel7 (
   $mtime: Int,
   $viewCount: Int,
   $duration: String,
-  $size: Int,
+  $size: Float,
   ) {
   createLevel7 (
     data:{

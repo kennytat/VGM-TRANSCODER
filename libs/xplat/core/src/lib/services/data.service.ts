@@ -139,17 +139,20 @@ export class DataService {
   }
 
 
-  async fetchLevelDB(level: number, isVideo: boolean, isLeaf?): Promise<any> {
+  async fetchLevelDB(level: number, isVideo: boolean, isLeaf?, id?: string): Promise<any> {
     return new Promise((resolve) => {
       this.levelSub = this.apollo.watchQuery<any>({
         query: this.queryGQL[level - 1],
         variables: {
           isVideo: isVideo,
-          isLeaf: isLeaf
+          isLeaf: isLeaf,
+          id: id
         },
-        fetchPolicy: 'network-only',
+        fetchPolicy: 'cache-and-network',
       }).valueChanges.subscribe(({ data }) => {
         const list = data[Object.keys(data)[0]];
+        // console.log(level, list);
+
         if (list) resolve(list);
       });
 

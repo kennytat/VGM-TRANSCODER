@@ -18,7 +18,7 @@ mkdir -p "$outPath" && cd "$outPath" &&
 	echo key.vgmk >>file.keyinfo &&
 	openssl rand -hex 16 >>file.keyinfo &&
 	if [[ $fileType == 'video' || $fileType == 'videoSilence' ]]; then
-		ffmpeg -progress pipe:1 -stats_period 0.5 -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
+		ffmpeg -progress pipe:1 -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
 			-filter_complex \
 			"[0:v]split=3[v1][v2][v3]; \
 [v1]scale_npp=w=1920:h=1080:force_original_aspect_ratio=decrease[v1out]; \
@@ -31,7 +31,7 @@ mkdir -p "$outPath" && cd "$outPath" &&
 			-map "0:a?" -c:a aac -b:a:1 128k -ac 2 \
 			-map "0:a?" -c:a aac -b:a:2 96k -ac 2 \
 			-f hls \
-			-hls_time 10 \
+			-hls_time 3 \
 			-hls_key_info_file file.keyinfo \
 			-hls_playlist_type vod \
 			-hls_flags independent_segments \
@@ -49,7 +49,7 @@ mkdir -p "$outPath" && cd "$outPath" &&
 		ffmpeg -progress pipe:1 -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
 			-map 0:a -c:a aac -b:a:0 192k -ac 2 \
 			-f hls \
-			-hls_time 10 \
+			-hls_time 5 \
 			-preset slow \
 			-hls_key_info_file file.keyinfo \
 			-hls_playlist_type vod \

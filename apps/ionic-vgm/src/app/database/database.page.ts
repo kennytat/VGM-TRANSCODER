@@ -11,8 +11,8 @@ import * as _ from 'lodash';
 import { MeiliSearch } from 'meilisearch';
 
 const client = new MeiliSearch({
-  host: 'http://search.hjm.bid',
-  apiKey: '', // 'helloworld'
+  host: 'http://search.hjm.bid', // 'http://search.hjm.bid'
+  apiKey: '', // 'KYV2oMHSE5G2p9ZXwUGH3CfWpaXB1CF5'
 })
 
 interface FileInfo {
@@ -121,7 +121,7 @@ export class DatabasePage implements OnInit {
     this.videoTreeSub = this.dataService.videoTree$.subscribe(async (data) => {
       if (data.value) {
         this.videoTree = [new TreeviewItem(data)];
-        this.videoFiles = await this.getAllItem(true);
+        this.videoFiles = await this.getAllDB(true, null);
         console.log(this.videoTree);
       }
     });
@@ -129,13 +129,14 @@ export class DatabasePage implements OnInit {
     this.audioTreeSub = this.dataService.audioTree$.subscribe(async (data) => {
       if (data.value) {
         this.audioTree = [new TreeviewItem(data)];
-        this.audioFiles = await this.getAllItem(false);
+        this.audioFiles = await this.getAllDB(false, null);
         console.log(data, this.audioTree);
       }
     });
 
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.on('create-database', (event, fileInfo) => {
+        console.log('createDB called', fileInfo);
         this.updateIsLeaf(fileInfo);
         this.createNewItem(fileInfo);
       })
@@ -154,7 +155,7 @@ export class DatabasePage implements OnInit {
     try {
       await this.dataService.dbInit();
       this._dbInit = this.dataService._dbInit;
-      this.connectSearch();
+      // this.connectSearch();
     } catch (error) {
       console.log(error);
     }
@@ -171,6 +172,7 @@ export class DatabasePage implements OnInit {
       mutation: this.createGQL[item.dblevel - 2],
       variables: {
         pid: item.pid,
+        isLeaf: null,
         location: item.location,
         url: item.url,
         isVideo: item.isVideo,
@@ -179,34 +181,15 @@ export class DatabasePage implements OnInit {
         hash: item.hash,
         duration: item.duration,
         size: item.size
+
       }
     }).subscribe(async ({ data }) => {
       console.log('created local DB', data);
-      this.addSearch([data[Object.keys(data)[0]]]);
-      // switch (item.dblevel) {
-      //   case 2:
-      //     this.addSearch([data.createLevel2]);
-      //     break;
-      //   case 3:
-      //     this.addSearch([data.createLevel3]);
-      //     break;
-      //   case 4:
-      //     this.addSearch([data.createLevel4]);
-      //     break;
-      //   case 5:
-      //     this.addSearch([data.createLevel5]);
-      //     break;
-      //   case 6:
-      //     this.addSearch([data.createLevel6]);
-      //     break;
-      //   case 7:
-      //     this.addSearch([data.createLevel7]);
-      //     break;
-      //   default:
-      // }
+      // this.addSearch([data[Object.keys(data)[0]]]);
     }, (error) => {
       console.log('error creating new item', error);
     });
+
   }
 
   async updateIsLeaf(item) {
@@ -260,8 +243,16 @@ export class DatabasePage implements OnInit {
     //     i++
     //   }
     // }
-    // const itemList: any = await this.getAllIsLeaf(this.isVideo);
-    // console.log(itemList);
+    // try {
+    //   const itemList: any = await this.getAllDB(this.isVideo, true);
+    //   console.log('itemlist', itemList);
+    //   const topicList: any = await this.getAllDB(this.isVideo, false);
+    //   console.log('topiclist', topicList);
+    //   const items: any = await this.getAllDB(this.isVideo, null);
+    //   console.log('itemSingle', items);
+    // } catch (error) {
+    //   console.log(error);
+    // }
 
     // test instant update item 
     // const item = {
@@ -275,11 +266,27 @@ export class DatabasePage implements OnInit {
     if (this._electronService.isElectronApp) {
       // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
       const prefixPath = '/home/vgm/Desktop';
-      const startPoint = 592; // audio 05NV-13DS, video 02,04,05 done
-      const endPoint = 1000;
-      const fileType = 'video';
+      const startPoint = 0; // audio 05NV-13DS, video 02,04,05 done
+      const endPoint = 2000;
+      const fileType = 'audio';
       this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint); // 'test' 'fastly' 
     }
+
+    // const fileInfo = {
+    //   pid: '193f4b25-1d46-4d15-8d87-d181de0a93bf',
+    //   location: '/VGMV/01_BaiGiang/HocTheoChuDe/11-ThanLeThat-traiTN2017/01-DucThanhLinhCoNguTrongToiKhongP1',
+    //   name: '01-Đức Thánh Linh Có Ngự Trong Tôi Không P1',
+    //   size: 2258434926,
+    //   duration: '76:44',
+    //   qm: '',
+    //   url: '01-bai-giang.hoc-theo-chu-de.11-than-le-that---trai-tn2017.01-duc-thanh-linh-co-ngu-trong-toi-khong-p1',
+    //   hash: '',
+    //   isVideo: true,
+    //   dblevel: 5
+    // }
+
+    // this.updateIsLeaf(fileInfo);
+    // this.createNewItem(fileInfo);
   }
 
   async downloadDB() {
@@ -287,17 +294,17 @@ export class DatabasePage implements OnInit {
       this._electronService.ipcRenderer.invoke('save-dialog').then(async (outpath) => {
         if (outpath[0]) {
           // // export itemList
-          const itemList: any = await this.getAllIsLeaf(this.isVideo);
+          const itemList: any = await this.getAllDB(this.isVideo, true);
           await itemList.forEach(async item => {
             await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'itemList');
           });
           // // export itemSingle
-          const itemSingle: any = await this.getAllItem(this.isVideo);
+          const itemSingle: any = await this.getAllDB(this.isVideo, null);
           await itemSingle.forEach(async item => {
             await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'itemSingle')
           });
           // export topicList
-          const nonLeafList: any = await this.getAllNonLeaf(this.isVideo);
+          const nonLeafList: any = await this.getAllDB(this.isVideo, false);
           const topicList = nonLeafList.concat(itemList);
           await topicList.forEach(async item => {
             await this._electronService.ipcRenderer.invoke('export-database', item, outpath, 'topicList');
@@ -309,17 +316,18 @@ export class DatabasePage implements OnInit {
             await this._electronService.ipcRenderer.invoke('export-database', topic, outpath, 'topicSingle');
           });
           // export searchAPI
-          await this._electronService.ipcRenderer.invoke('export-database', itemSingle, outpath, 'searchAPI', this.isVideo);
+          const searchList = itemSingle.filter(el => !/^(06-phim)/.test(el.url));
+          await this._electronService.ipcRenderer.invoke('export-database', searchList, outpath, 'searchAPI', this.isVideo);
         }
       })
     }
   }
 
-  async getAllItem(isVideo) {
+  async getAllDB(isVideo, isLeaf) {
     return new Promise(async (resolve) => {
       let files: any[] = [];
       for (let i = 0; i < this.updateGQL.length; i++) {
-        await this.dataService.fetchLevelDB(i + 2, isVideo, null).then((list) => {
+        await this.dataService.fetchLevelDB(i + 2, isVideo, isLeaf).then((list) => {
           files = files.concat(list);
           if (i === this.updateGQL.length - 1) {
             resolve(files);
@@ -329,33 +337,49 @@ export class DatabasePage implements OnInit {
     });
   }
 
-  async getAllIsLeaf(isVideo) {
-    return new Promise(async (resolve) => {
-      let files: any[] = [];
-      for (let i = 1; i < 8; i++) {
-        await this.dataService.fetchLevelDB(i + 1, isVideo, true).then((list) => {
-          files = files.concat(list);
-          if (i === 7) {
-            resolve(files);
-          }
-        })
-      }
-    });
-  }
+  // async getAllItem(isVideo) {
+  //   return new Promise(async (resolve) => {
+  //     let files: any[] = [];
+  //     for (let i = 0; i < this.updateGQL.length; i++) {
+  //       await this.dataService.fetchLevelDB(i + 2, isVideo, null).then((list) => {
+  //         files = files.concat(list);
+  //         if (i === this.updateGQL.length - 1) {
+  //           resolve(files);
+  //         }
+  //       })
+  //     }
+  //   });
+  // }
 
-  async getAllNonLeaf(isVideo) {
-    return new Promise(async (resolve) => {
-      let files: any[] = [];
-      for (let i = 1; i < 8; i++) {
-        await this.dataService.fetchLevelDB(i, isVideo, false).then((list) => {
-          files = files.concat(list);
-          if (i === 7) {
-            resolve(files);
-          }
-        })
-      }
-    });
-  }
+  // async getAllIsLeaf(isVideo) {
+  //   return new Promise(async (resolve) => {
+  //     let files: any[] = [];
+  //     for (let i = 0; i < this.updateGQL.length; i++) {
+  //       await this.dataService.fetchLevelDB(i + 2, isVideo, true).then((list) => {
+  //         // console.log(i, list);
+  //         files = files.concat(list);
+  //         if (i === this.updateGQL.length - 1) {
+  //           // console.log(i);
+  //           resolve(files);
+  //         }
+  //       })
+  //     }
+  //   });
+  // }
+
+  // async getAllNonLeaf(isVideo) {
+  //   return new Promise(async (resolve) => {
+  //     let files: any[] = [];
+  //     for (let i = 0; i < this.updateGQL.length; i++) {
+  //       await this.dataService.fetchLevelDB(i + 2, isVideo, false).then((list) => {
+  //         files = files.concat(list);
+  //         if (i === this.updateGQL.length - 1) {
+  //           resolve(files);
+  //         }
+  //       })
+  //     }
+  //   });
+  // }
 
   // async getAllIsLeaf(isVideo) {
   //   let lists: any[] = [];
@@ -508,28 +532,9 @@ export class DatabasePage implements OnInit {
           viewCount: item.viewCount
         },
       }).subscribe(({ data }) => {
+        const result = data[Object.keys(data)[0]];
+        this.addSearch([result]);
         console.log('updated local DB', data);
-        switch (item.dblevel) {
-          case 2:
-            this.addSearch([data.updateLevel2]);
-            break;
-          case 3:
-            this.addSearch([data.updateLevel3]);
-            break;
-          case 4:
-            this.addSearch([data.updateLevel4]);
-            break;
-          case 5:
-            this.addSearch([data.updateLevel5]);
-            break;
-          case 6:
-            this.addSearch([data.updateLevel6]);
-            break;
-          case 7:
-            this.addSearch([data.updateLevel7]);
-            break;
-          default:
-        }
       }, (error) => {
         console.log('error deleting files', error);
       });

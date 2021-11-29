@@ -60,7 +60,7 @@ model Level2 {
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   // children list
   // parent children list
   parent    Level1   @relation(fields: [pid], references: [id])
@@ -92,7 +92,7 @@ model Level3 {
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   parent    Level2   @relation(fields: [pid], references: [id])
   children  Level4[]
 
@@ -122,7 +122,7 @@ model Level4 {
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   parent    Level3   @relation(fields: [pid], references: [id])
   children  Level5[]
 
@@ -152,7 +152,7 @@ model Level5 {
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   parent    Level4   @relation(fields: [pid], references: [id])
   children  Level6[]
 
@@ -182,7 +182,7 @@ model Level6 {
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   parent    Level5   @relation(fields: [pid], references: [id])
   children  Level7[]
 
@@ -212,7 +212,7 @@ model Level7 {
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   parent    Level6   @relation(fields: [pid], references: [id])
   // children Level8[]          ?????????????
 

@@ -65,50 +65,44 @@ export class ConverterPage implements OnInit {
   }
 
 
-
-
-  selectOptionChange(level, itemID) {
+  async selectOptionChange(level, itemID) {
     this.selectedLevel = level;
     if (itemID === this.level1.options[0].id) {
       this.isVideo = true;
     } else if (itemID === this.level1.options[1].id) {
       this.isVideo = false;
     }
+    console.log(level, itemID);
+
     if (itemID === '0') {
       this.selectedTopics[level - 1].id = '0';
     } else if (itemID === '1') {
       this.selectedTopics[level - 1].id = '1';
-
     } else {
       this.selectedTopics[level - 1].id = itemID;
       this.selectedTopics[level].id = '0';
       this.selectedTopics[level].options = [];
-      const options = this.getOptions(itemID);
-      if (options.id) { this.selectedItem = options }
+      const options: any = await this.getOptions(level, this.isVideo, itemID);
+      if (typeof options[0] != 'undefined') {
+        this.selectedItem = _.cloneDeep(options[0]);
+      } else {
+        this.selectedItem = _.cloneDeep(options);
+      };
       if (this.selectedItem.children && this.selectedItem.children.length > 0 && this.selectedItem.isLeaf === false) {
         this.selectedTopics[level].options = this.selectedItem.children;
       }
-      console.log('selected', this.selectedItem);
+      console.log('selected', this.selectedItem, this.selectedTopics[level]);
     }
+
   }
 
-  getOptions(id) {
-    let selected: any = {};
-    let db: any[] = []
-    if (this.isVideo) {
-      db = this.dataService.videoDB
-    } else {
-      db = this.dataService.audioDB
-    }
-    db.filter(function getItem(item) {
-      if (item.id === id) {
-        selected = item
-      }
-      if (item.children && item.children.length > 0 && item.isLeaf === false) {
-        item.children.filter(getItem)
-      }
+  async getOptions(level, isVideo, id) {
+    return new Promise(async (resolve) => {
+      const result = await this.dataService.fetchLevelDB(level, isVideo, undefined, id);
+      console.log('getoption', result);
+
+      resolve(result);
     });
-    return selected
   }
 
 
@@ -132,33 +126,11 @@ export class ConverterPage implements OnInit {
         name: value,
       }
     }).subscribe(async ({ data }) => {
-      switch (level) {
-        case 2:
-          this.selectedItem = await _.cloneDeep(data.createLevel2)
-          break;
-        case 3:
-          this.selectedItem = await _.cloneDeep(data.createLevel3)
-          break;
-        case 4:
-          this.selectedItem = await _.cloneDeep(data.createLevel4)
-          break;
-        case 5:
-          this.selectedItem = await _.cloneDeep(data.createLevel5)
-          break;
-        case 6:
-          this.selectedItem = await _.cloneDeep(data.createLevel6)
-          break;
-        default:
-      }
-      await this.selectedTopics[level - 1].options.push(this.selectedItem)
-      // await this.dataService.fetchDB(this.isVideo);
+      const result = data[Object.keys(data)[0]];
+      this.selectedItem = await _.cloneDeep(result);
+      await this.selectedTopics[level - 1].options.push(this.selectedItem);
+      await this.selectOptionChange(level, this.selectedItem.id);
       console.log(this.selectedItem);
-
-      await this.selectOptionChange(level, this.selectedItem.id)
-
-      console.log(data);
-
-
     }, (error) => {
       console.log('there was an error sending the query', error);
       if (this._electronService.isElectronApp) {
@@ -209,11 +181,15 @@ export class ConverterPage implements OnInit {
     return str;
   }
 
-  test() {
-    console.log(this.path, this.level);
-    if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.send('test', this.path, this.level);
-    }
+  async test() {
+    const testItem = await this.getOptions(1, true, '00000000-0000-0000-0000-000000000001'); // 00000000-0000-0000-0000-000000000001 3c99cef1-0b91-4cff-a01b-2aa3cc0ca1d4
+    console.log(testItem);
+
+
+    // console.log(this.path, this.level);
+    // if (this._electronService.isElectronApp) {
+    //   this._electronService.ipcRenderer.send('test', this.path, this.level);
+    // }
 
     // this.updateIsLeaf();
     // console.log(this.level1.options, '\n', this.level2.options, '\n', this.level3.options, '\n', this.level4.options, '\n', this.level5.options);
@@ -312,7 +288,7 @@ export class ConverterPage implements OnInit {
 
   Convert() {
     if (this._electronService.isElectronApp) {
-      if (this.inputPath === '' || this.outputPath === '' || !this.selectedItem || this.selectedItem.children[0].isLeaf) {
+      if (!this.inputPath || !this.outputPath || !this.selectedItem) {
         this._electronService.ipcRenderer.invoke('error-message', 'missing-path');
       } else {
 
@@ -320,13 +296,13 @@ export class ConverterPage implements OnInit {
         this._electronService.ipcRenderer.invoke('start-convert', this.inputPath, this.outputPath, this.fileCheckbox, this.selectedItem);
         this._electronService.ipcRenderer.on('exec-done', (event) => {
           this.zone.run(() => {
-            this.updateIsLeaf(this.selectedItem, this.totalFiles);
+            // this.updateIsLeaf(this.selectedItem, this.totalFiles);
             this.isConverting = false;
             this.progressLoading = false;
             this.progressionStatus = 0;
             this.outputPath = '';
             this.inputPath = '';
-            this.dataService.dbRefresh(this.isVideo);
+            // this.dataService.dbRefresh(this.isVideo);
           });
         });
 

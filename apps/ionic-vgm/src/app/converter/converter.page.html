@@ -68,7 +68,7 @@
                 <ion-col size="8">
                   <ion-input
                     value="{{outputPath}}"
-                    placeholder="Select ouput destination"
+                    placeholder="Select output destination"
                     readonly
                     class="path"
                   ></ion-input>
@@ -155,7 +155,7 @@
             </ion-grid>
           </ion-card-content>
           <hr class="new" />
-
+          <!-- 
           <ion-input
             style="background-color: white; color: black"
             [(ngModel)]="path"
@@ -165,7 +165,7 @@
             style="background-color: pink; color: black"
             [(ngModel)]="level"
           >
-          </ion-input>
+          </ion-input> -->
 
           <ion-card-content *ngIf="!isConverting; else stop_convert">
             <ion-button expand="block" (click)="Convert()"

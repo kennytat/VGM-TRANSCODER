@@ -10,7 +10,7 @@ import {
   Int,
   InputType,
   Field,
-  registerEnumType,
+  Float
 } from '@nestjs/graphql'
 import { PrismaService } from '../prisma.service'
 import { Inject } from '@nestjs/common'
@@ -104,7 +104,7 @@ export class Level7CreateInput {
   @Field((type) => String, { nullable: true })
   duration?: string
 
-  @Field((type) => Int, { nullable: true })
+  @Field((type) => Float, { nullable: true })
   size?: number
 }
 

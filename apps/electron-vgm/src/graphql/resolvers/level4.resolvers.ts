@@ -10,6 +10,7 @@ import {
   InputType,
   Field,
   Int,
+  Float
 } from '@nestjs/graphql'
 import { Inject } from '@nestjs/common'
 import { PrismaService } from '../prisma.service'
@@ -104,7 +105,7 @@ export class Level4CreateInput {
   @Field((type) => String, { nullable: true })
   duration?: string
 
-  @Field((type) => Int, { nullable: true })
+  @Field((type) => Float, { nullable: true })
   size?: number
 }
 

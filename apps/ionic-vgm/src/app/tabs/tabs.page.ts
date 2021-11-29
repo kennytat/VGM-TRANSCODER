@@ -1,12 +1,15 @@
 import { Component } from '@angular/core';
-
+import { ModalController } from '@ionic/angular';
+import { SettingModalComponent } from '@vgm-converter/xplat/ionic/features';
 @Component({
   selector: 'vgm-converter-tabs',
   templateUrl: 'tabs.page.html',
   styleUrls: ['tabs.page.scss'],
 })
 export class TabsPage {
-  constructor() { }
+  constructor(
+    public modalController: ModalController
+  ) { }
 
   darkModeChange(event) {
     let systemDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -26,4 +29,16 @@ export class TabsPage {
     }
   }
 
+  editSetting() {
+    this.presentModal()
+  }
+  async presentModal() {
+    const modal = await this.modalController.create({
+      component: SettingModalComponent,
+      cssClass: 'share-modal',
+      animated: false,
+      componentProps: {}
+    });
+    return await modal.present();
+  }
 }
