@@ -39,7 +39,7 @@ mkdir -p "$outPath" && cd "$outPath" &&
 			-strftime_mkdir 1 \
 			-var_stream_map "${varStreamMap}" \
 			-master_pl_name playlist.m3u8 \
-			-hls_segment_filename %v/data%01d.vgmx "$outPath"/%v.m3u8 &&
+			-hls_segment_filename %v/content%01d.vgmx "$outPath"/%v.m3u8 &&
 			mkdir -p "$outPath"/{1080,720,480} &&
 			ffmpeg -v quiet -y -ss 00:00:10 -hwaccel cuvid -c:v h264_cuvid -threads 1 -skip_frame nokey -i "${inPath}" \
 				-vf select='not(mod(n\,5))',scale_npp=1920:1080,hwdownload,format=nv12,fps=1/7 -r 0.1 -frames:v 7 -vsync vfr -q:v 2 -f image2 "$outPath"/1080/%01d.jpg \
@@ -55,7 +55,7 @@ mkdir -p "$outPath" && cd "$outPath" &&
 			-hls_playlist_type vod \
 			-hls_flags independent_segments \
 			-hls_segment_type mpegts \
-			-hls_segment_filename "$outPath"/data%01d.vgmx \
+			-hls_segment_filename "$outPath"/content%01d.vgmx \
 			"$outPath"/128p.m3u8
 	fi
 rm file.keyinfo

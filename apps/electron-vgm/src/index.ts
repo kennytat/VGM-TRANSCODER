@@ -10,9 +10,22 @@ import * as CryptoJS from "crypto-js";
 import { slice } from 'ramda';
 import * as M3U8FileParser from "m3u8-file-parser";
 import * as bitwise from 'bitwise';
+import { NFTStorage, File } from 'nft.storage'
 
 import PQueue from 'p-queue';
 const queue = new PQueue();
+
+queue.on('add', () => {
+  console.log(`Task is added.  Size: ${queue.size}  Pending: ${queue.pending}`);
+});
+
+queue.on('next', () => {
+  console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
+});
+
+queue.on('idle', () => {
+  console.log(`Queue is idle.  Size: ${queue.size}  Pending: ${queue.pending}`);
+});
 
 const rcloneConfig = {
   gateway: 'https://cdn.vgm.tv/encrypted/',
@@ -20,6 +33,10 @@ const rcloneConfig = {
   warehouse: 'VGM-Origin:vgmorigin/warehouse',
   encrypted: 'VGM-Converted:vgmencrypted/encrypted'
 }
+
+const endpoint: any = 'https://api.nft.storage'; // the default
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDg2YzE5MTE1ODZlRTZDODZhN2EzM2NCOTliOEY5MzIzNTU3RTJEMWQiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzODk0NDM1MjY5OCwibmFtZSI6InZnbS1pcGZzIn0.0rr-RBbRTxWIfpQpbMoRZ7jBI1hYtL0EB_vgmj7tNCk' // your API key from https://nft.storage/manage
+
 // const { createLogger, transports } = require("winston");
 // const LokiTransport = require("winston-loki");
 // const options = {
@@ -381,6 +398,105 @@ try {
     }
   })
 
+
+  ipcMain.handle('cloud-to-ipfs', async (event, prefix, fileType, startPoint, endPoint) => {
+    let VGM;
+    if (fileType === 'audio') {
+      VGM = 'VGMA';
+      queue.concurrency = 5;
+    } else if (fileType === 'video') {
+      VGM = 'VGMV';
+      queue.concurrency = 1;
+    }
+    const txtPath = `${prefix}/database/${VGM}Single.txt`;
+    const originalTemp = `${prefix}/database/tmp`;
+    const apiPath = `${prefix}/database/API/items/single`;
+    const convertedPath = `VGM-Converted:vgmencrypted/encrypted/${VGM}`;
+
+
+    const downloadConverted = async (fileLocation, outPath) => {
+      console.log('download converted file', `${convertedPath}/${fileLocation}/`, `${outPath}/`);
+      return new Promise((resolve) => {
+        const rclone = spawn('rclone', ['copy', '--progress', `${convertedPath}/${fileLocation}/`, `${outPath}/`]);
+        rclone.stdout.on('data', async (data) => {
+          console.log(`rclone download converted stdout: ${data}`);
+        });
+        rclone.stderr.on('data', async (data) => {
+          console.log(`Stderr: ${data}`);
+        });
+        rclone.on('close', async (code) => {
+          console.log(`download converted file done with code:`, code);
+          resolve('done');
+        })
+      });
+    }
+
+    const uploadIPFS = async (dir) => {
+      console.log('uploadIPFS', `${dir}`);
+      return new Promise(async (resolve) => {
+        try {
+          const storage = new NFTStorage({ endpoint, token });
+          let fileArray: any = [];
+          const files = execSync(`find ${dir} -type f -name '*.*'`, { encoding: 'utf8' }).split('\n');
+          files.pop();
+          for (let [index, file] of files.entries()) {
+            fileArray.push(new File([await fs.promises.readFile(file)], file.replace(`${dir}/`, '')));
+          }
+          console.log(fileArray);
+
+          const cid = await storage.storeDirectory(fileArray);
+          console.log('cid:', cid)
+          if (cid) {
+            resolve(cid);
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      });
+    }
+
+
+    const processFile = async (file: string) => {
+      console.log(file);
+      return new Promise(async (resolve) => {
+        const jsonString = await fs.readFileSync(`${apiPath}/${file}.json`, { encoding: 'utf8' });
+        let fileInfo: any = JSON.parse(jsonString);
+        console.log('old file info', fileInfo);
+        const cloudPath = file.replace(/\./g, '\/');
+        const tmpDir = `${originalTemp}/${path.basename(file)}`;
+        await downloadConverted(cloudPath, tmpDir);
+        const cid = await uploadIPFS(tmpDir);
+        fileInfo.qm = cid;
+        const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+        fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
+        console.log('updated fileInfo', fileInfo);
+        event.sender.send('update-ipfs', fileInfo);
+      })
+    };
+
+    // start script here
+    const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
+
+    if (raw) {
+      let list = raw.split('\n');
+      list.pop();
+      // list.reverse();
+      console.log('total files', list.length);
+      // let i = startPoint;
+      for (let i = startPoint; i < endPoint; i++) { // list.length or endPoint
+        (async () => {
+          queue.add(async () => {
+            await processFile(list[i]);
+            await fs.appendFileSync(`${prefix}/database/${fileType}-ipfs-count.txt`, `\n${i}`);
+            console.log('processed files', i);
+
+          });
+        })();
+      }
+
+    }
+
+  })
   // Get input and output path from above and execute sh file
   ipcMain.handle('start-convert', async (event, argInPath, argOutPath, fileOnly, pItem) => {
     // console.log('args', argInPath, argOutPath, fileOnly, pItem);
@@ -500,7 +616,7 @@ try {
             // upload converted to s3
             const upConvertedPath = `${rcloneConfig.encrypted}/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`;
             await upConverted(`${outPath}`, upConvertedPath);
-            convertedFiles++;
+            // convertedFiles++;
             // await upConverted(outPath, upConvertedPath);
             // await fs.rmdirSync(outPath, { recursive: true });
             // console.log('removed converted folder');
@@ -577,6 +693,7 @@ try {
       files.forEach(file => {
         tasks.push(async () => {
           await convertFile(file, fileType, pItem, argOutPath);
+          convertedFiles++;
         })
       });
       await Promise.all(tasks.map(task => queue.add(task))).then(async () => {
@@ -1103,18 +1220,20 @@ try {
       let VGM;
       if (fileType === 'audio') {
         VGM = 'VGMA';
+        queue.concurrency = 20;
       } else if (fileType === 'video') {
         VGM = 'VGMV';
+        queue.concurrency = 1;
       }
       const txtPath = `${prefix}/database/${VGM}.txt`;
-      const renamedFolder = `${prefix}/database/renamed/${VGM}/06-Phim`; // /06-Phim
+      const renamedFolder = `${prefix}/database/renamed/${VGM}/05-Ngôn Ngữ Ký Hiệu`; // /06-Phim
       const originalTemp = `${prefix}/database/tmp`;
-      const apiPath = `${prefix}/database/API`; // APIPhim
+      const apiPath = `${prefix}/database/API`;
       const localOutPath = `${prefix}/database/converted`;
       // const mountedEncrypted = `${prefix}/database/encrypted`;
       const mountedOrigin = `${prefix}/database/origin`;
       const gateway = `https://cdn.vgm.tv/encrypted/${VGM}`;
-      const originalPath = 'VGM-Movies:'; // from onedrive: VGM-Movies: from origin: 'VGM-Origin:vgmorigin/origin';
+      const originalPath = 'VGM-Origin:vgmorigin/origin'; // from onedrive: 'VGM-Movies:' --- from origin: 'VGM-Origin:vgmorigin/origin';
       const warehousePath = 'VGM-Origin:vgmorigin/warehouse';
       const convertedPath = 'VGM-Converted:vgmencrypted/encrypted';
 
@@ -1152,6 +1271,23 @@ try {
           });
           rclone.on('close', async (code) => {
             console.log(`upload warehouse successfully with code:`, code);
+            resolve('done');
+          })
+        });
+      }
+
+      const removeOldConverted = async (fileLocation) => {
+        console.log('uploading converted file', `${convertedPath}${fileLocation}/`);
+        return new Promise((resolve) => {
+          const rclone = spawn('rclone', ['delete', '--progress', `${convertedPath}${fileLocation}/`]);
+          rclone.stdout.on('data', async (data) => {
+            console.log(`rclone removeOldConverted stdout: ${data}`);
+          });
+          rclone.stderr.on('data', async (data) => {
+            console.log(`Stderr: ${data}`);
+          });
+          rclone.on('close', async (code) => {
+            console.log(`rclone removeOldConverted done with code:`, code);
             resolve('done');
           })
         });
@@ -1195,7 +1331,7 @@ try {
               await execSync(`mv "${tmpPath}" "${mp4Tmp}"`);
               console.log(mp4Tmp, tmpPath);
 
-              const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-filter:v', 'pad=ih*16/9:ih:(ow-iw)/2:(oh-ih)/2', '-c:a', 'copy', `${tmpPath}`]);
+              const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-filter:v', 'pad=width=max(iw\\,ih*(16/9)):height=ow/(16/9):x=(ow-iw)/2:y=(oh-ih)/2', '-c:a', 'copy', `${tmpPath}`]);
               // ffmpeg -vsync 0 -i '/home/vgm/Desktop/test.mp4' -c:v h264_nvenc -c:a aac '/home/vgm/Desktop/test2.mp4'
               mp4.stdout.on('data', async (data) => {
                 console.log(`converting to mp4 stdout: ${data}`);
@@ -1286,6 +1422,7 @@ try {
               await fs.writeFileSync(`${outPath}/key.vgmk`, encrypted, { encoding: 'binary' });
               console.log('Encrypt key file done');
               // upload converted to s3 instant code
+              await removeOldConverted(upConvertedPath);
               await upConverted(outPath, upConvertedPath);
               await fs.rmdirSync(outPath, { recursive: true });
               console.log('removed converted folder');
@@ -1321,7 +1458,7 @@ try {
               // } else {
               //   event.sender.send('create-database', fileInfo);
               // }
-              event.sender.send('create-database', fileInfo);
+              // event.sender.send('create-database', fileInfo);
               resolve('done');
 
             } catch (error) {
@@ -1378,8 +1515,11 @@ try {
           const api = `${pUrl}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
           const fileUrl = api.replace(/\./g, '/');
           let quality;
-          if (fType === 'video') quality = '480p'; else quality = '128p';
-          const url = `${gateway}/${fileUrl}/${quality}.m3u8`; // if video 480p.m3u8 audio 128p.m3u8
+          if (fType === 'video') quality = '480'; else quality = '128';
+          // // check m3u8 url
+          const url = `${gateway}/${fileUrl}/${quality}p.m3u8`; // if video 480p.m3u8 audio 128p.m3u8
+          // // check thumb url
+          // const url = `${gateway}/${fileUrl}/${quality}/7.jpg`;
           // console.log('checkURL curl --silent --head --fail', url);
           exec(`curl --silent --head --fail ${url}`, async (error, stdout, stderr) => {
             if (error) {
@@ -1424,7 +1564,7 @@ try {
           const nonVietnamese = nonAccentVietnamese(vName);
           const urlPath = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
           const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
-          console.log('start extracting thumbnail');
+          console.log('start extracting thumbnail', 'bash', 'ffmpeg-thumb.sh', `"${file}"`, `"${outPath}"`);
 
           const conversion = spawn('bash', ['ffmpeg-thumb.sh', `"${file}"`, `"${outPath}"`]);
 
@@ -1443,8 +1583,8 @@ try {
               // get iv info
               const upConvertedPath = `/VGMV/${urlPath.replace(/\./g, '\/')}`;
               await upConverted(outPath, upConvertedPath);
-              await fs.rmdirSync(outPath, { recursive: true });
               await fs.unlinkSync(file);
+              // await fs.rmdirSync(outPath, { recursive: true });
               console.log('removed converted folder');
               resolve('done');
             } catch (error) {
@@ -1455,12 +1595,14 @@ try {
         });
       }
 
+
       const processFile = async (file: string, fType: string) => {
         return new Promise(async (resolve) => {
 
           const originalFile = file.replace('.ini', '');
           const ext = path.parse(originalFile).ext;
           const fileIni = execSync(`find '${renamedFolder}' -type f -name "${path.basename(file)}"`, { encoding: "utf8" }).split('\n');
+          console.log('fileIni', fileIni);
           if (fileIni[0]) {
             const fileContent = fs.readFileSync(fileIni[0], { encoding: 'utf8' });
             const fileName = `${fileContent.split('|')[1]}`;
@@ -1471,7 +1613,10 @@ try {
               re = /^.*VGMA\//;
             }
             const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
+            console.log('nonVietnamese', nonVietnamese);
             const pUrl = nonVietnamese.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
+            // await checkFileExists(fileName, pUrl, fType);
+            console.log('pURL', pUrl);
             const pAPI = execSync(`find '${apiPath}/topics/single' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).split('\n');
             console.log('pAPI', pAPI);
 
@@ -1479,45 +1624,47 @@ try {
               const pContent = fs.readFileSync(pAPI[0], { encoding: 'utf8' });
               const pItem = JSON.parse(pContent);
               // check if file exist
-              const fileExist = await checkFileExists(fileName, pItem.url, fType);
-              if (!fileExist) {
-                await downloadLocal(originalFile);
-                const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
-                if (fs.existsSync(localOriginPath)) {
-                  // // // extract thumbnail instance code start
-                  // await extractThumb(localOriginPath, fileName, pItem, localOutPath);
-                  // // // extract thumbnail instance code end
+              // const fileExist = await checkFileExists(fileName, pItem.url, fType);
+              // if (!fileExist) {
+              await downloadLocal(originalFile);
+              const localOriginPath = `${originalTemp}/${path.parse(originalFile).base}`;
+              if (fs.existsSync(localOriginPath)) {
+                // // // extract thumbnail instance code start
+                // await extractThumb(localOriginPath, fileName, pItem, localOutPath);
+                // // // extract thumbnail instance code end
 
-                  // check and convert mp4 to m3u8
-                  const fileOk = await checkMP4(localOriginPath, fType); // audio dont need check MP4
-                  if (fileOk) {
-                    let fStat: string;
-                    const checkNonSilence = await execSync(`ffmpeg -i "${localOriginPath}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
-                    if (checkNonSilence) fStat = fType; else fStat = 'videoSilence';
-                    await convertFile(localOriginPath, fileName, fStat, pItem, localOutPath);
-                    // rename and up vietnamese warehouse
-                    const renamedVietnamese = `${originalTemp}/${fileName}${ext}`;
-                    if (!fs.existsSync(renamedVietnamese)) {
-                      await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
-                    }
-                    const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
-                    console.log('uploading Origin', originalFile, warehouseDir);
-                    await upWarehouse(renamedVietnamese, warehouseDir);
+                // check and convert mp4 to m3u8
+                const fileOk = await checkMP4(localOriginPath, fType); // audio dont need check MP4
+                if (fileOk) {
+                  // convert and up encrypted and database
+                  let fStat: string;
+                  const checkNonSilence = await execSync(`ffmpeg -i "${localOriginPath}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
+                  if (checkNonSilence) fStat = fType; else fStat = 'videoSilence';
+                  await convertFile(localOriginPath, fileName, fStat, pItem, localOutPath);
 
-                    // remove downloaded file when done
-                    await fs.unlinkSync(renamedVietnamese);
-                    await fs.unlinkSync(fileIni[0]);
-                    resolve('done');
-                  } else {
-                    await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n ${fileIni[0]} broken`);
-                    await fs.unlinkSync(fileIni[0]);
-                    resolve('done');
+                  // // rename and up vietnamese warehouse
+                  const renamedVietnamese = `${originalTemp}/${fileName}${ext}`;
+                  if (!fs.existsSync(renamedVietnamese)) {
+                    await execSync(`mv "${localOriginPath}" "${renamedVietnamese}"`);
                   }
+                  // const warehouseDir = `${path.dirname(fileIni[0]).replace(/^.*renamed/, '')}`;
+                  // console.log('uploading Origin', originalFile, warehouseDir);
+                  // await upWarehouse(renamedVietnamese, warehouseDir);
+
+                  // remove downloaded file when done
+                  await fs.unlinkSync(renamedVietnamese);
+                  await fs.unlinkSync(fileIni[0]);
+                  resolve('done');
+                } else {
+                  await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n ${fileIni[0]} broken`);
+                  await fs.unlinkSync(fileIni[0]);
+                  resolve('done');
                 }
-              } else {
-                await fs.unlinkSync(fileIni[0]);
-                resolve('done');
               }
+              // } else {
+              //   await fs.unlinkSync(fileIni[0]);
+              //   resolve('done');
+              // }
 
               // // // store instant db code start 
               // const dataExist = await checkDBExists(fileName, pItem.url);
@@ -1548,55 +1695,41 @@ try {
         list.pop();
         // list.reverse();
         console.log('total files', list.length);
-        let i = startPoint;
-
-        // // // convert audio loops
-        // // p-queue start
-        // // const queue = new PQueue({ concurrency: 20 });
-        queue.concurrency = 20;
-        // queue.on('add', () => {
-        //   console.log(`Task is added.  Size: ${queue.size}  Pending: ${queue.pending}`);
-        // });
-
-        // queue.on('next', () => {
-        //   console.log(`Task is completed.  Size: ${queue.size}  Pending: ${queue.pending}`);
-        // });
-
-        // queue.on('idle', () => {
-        //   console.log(`Queue is idle.  Size: ${queue.size}  Pending: ${queue.pending}`);
-        // });
+        // let i = startPoint;
 
 
-        // for (let i = startPoint; i < list.length; i++) { // list.length or endPoint
-        //   (async () => {
-        //     queue.add(async () => {
-        //       if (!list[i].includes('Info.ini')) {
-        //         await processFile(list[i], fileType);
-        //         await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
-        //         console.log('processed files', i);
-        //       } else {
-        //         await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i} --skip Info.ini`);
-        //       }
-        //     });
-        //     // console.log('Done 1 file');
-        //   })();
-        // }
-        // // p-queue end
-        // // // convert audio loops end
+        // // convert audio loops
 
-        // convert video loops
-        while (i < list.length) { // list.length or endPoint
-          if (!list[i].includes('Info.ini')) {
-            await processFile(list[i], fileType);
-            await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
-            console.log('processed files', i);
-          } else {
-            await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i} --skip Info.ini`);
-          }
-          i++;
+        for (let i = startPoint; i < list.length; i++) { // list.length or endPoint
+          (async () => {
+            queue.add(async () => {
+              if (!list[i].includes('Info.ini')) {
+                await processFile(list[i], fileType);
+                await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
+                console.log('processed files', i);
+              } else {
+                await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i} --skip Info.ini`);
+              }
+            });
+            // console.log('Done 1 file');
+          })();
         }
-        // // QmdFcsTExrPaEKR3tkE69pP6AMpmZKK98gSBTyx2cRxW7a test QmWhTKbYab3r9rbQ7S5t2PXcMVPRGQeqt6M31Mv2KjPKAh
-        // convert video loops end
+        // p-queue end
+        // // convert audio loops end
+
+        // // convert video loops
+        // while (i < list.length) { // list.length or endPoint
+        //   if (!list[i].includes('Info.ini')) {
+        //     await processFile(list[i], fileType);
+        //     await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i}`);
+        //     console.log('processed files', i);
+        //   } else {
+        //     await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${i} --skip Info.ini`);
+        //   }
+        //   i++;
+        // }
+        // // // QmdFcsTExrPaEKR3tkE69pP6AMpmZKK98gSBTyx2cRxW7a test QmWhTKbYab3r9rbQ7S5t2PXcMVPRGQeqt6M31Mv2KjPKAh
+        // // convert video loops end
       }
     } catch (error) {
       console.log('total error', error);
@@ -1837,7 +1970,7 @@ try {
     str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
     str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
     str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
-    str = str.replace(/Đ/g, "D");
+    str = str.replace(/Đ|Ð/g, "D");
     // Some system encode vietnamese combining accent as individual utf-8 characters
     str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // Huyền sắc hỏi ngã nặng 
     str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư

@@ -140,6 +140,9 @@ export class DatabasePage implements OnInit {
         this.updateIsLeaf(fileInfo);
         this.createNewItem(fileInfo);
       })
+      this._electronService.ipcRenderer.on('update-ipfs', (event, fileInfo) => {
+        console.log('update IPFS called', fileInfo);
+      })
     }
   }
 
@@ -262,14 +265,15 @@ export class DatabasePage implements OnInit {
     // await this.updateIsLeaf(item);
 
 
-    // convert intance code
+    // convert instance code
     if (this._electronService.isElectronApp) {
       // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
       const prefixPath = '/home/vgm/Desktop';
       const startPoint = 0; // audio 05NV-13DS, video 02,04,05 done
-      const endPoint = 2000;
-      const fileType = 'audio';
+      const endPoint = 5;
+      const fileType = 'video';
       this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint); // 'test' 'fastly' 
+      // this._electronService.ipcRenderer.send('cloud-to-ipfs', prefixPath, fileType, startPoint, endPoint);
     }
 
     // const fileInfo = {
@@ -541,26 +545,20 @@ export class DatabasePage implements OnInit {
     });
   }
 
-  deleteDB() {
-    let db: any[] = []
-    let selected: any = {};
-    if (this.isVideo) {
-      db = this.dataService.videoDB;
-    } else {
-      db = this.dataService.audioDB;
-    }
-    this.selectedFilesID.forEach(fileID => {
-      db.filter(function getItem(item) {
-        if (item.id === fileID) {
-          selected = item
-        }
-        if (item.children && item.children.length >= 1) {
-          item.children.filter(getItem)
-        }
-      });
+  async deleteDB() {
+    let selectedItem: any | null = null;
+    this.selectedFilesID.forEach(async (fileID) => {
+      console.log(fileID);
+
+      for (let i = 0; i < this.updateGQL.length; i++) {
+        const item = await this.dataService.fetchLevelDB(i + 2, this.isVideo, false, fileID);
+        if (!selectedItem && item) {
+          [selectedItem] = item;
+        };
+      }
 
       this.apollo.mutate<any>({
-        mutation: this.deleteGQL[selected.dblevel - 2],
+        mutation: this.deleteGQL[selectedItem.dblevel - 2],
         variables: { id: fileID },
       }).subscribe(({ data }) => {
         console.log('deleted local DB', data);
