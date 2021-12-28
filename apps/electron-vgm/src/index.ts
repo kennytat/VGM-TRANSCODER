@@ -10,7 +10,8 @@ import * as CryptoJS from "crypto-js";
 import { slice } from 'ramda';
 import * as M3U8FileParser from "m3u8-file-parser";
 import * as bitwise from 'bitwise';
-import { NFTStorage, File } from 'nft.storage'
+// import { NFTStorage, File, Blob } from 'nft.storage'
+import { Buffer } from 'buffer';
 
 import PQueue from 'p-queue';
 const queue = new PQueue();
@@ -27,6 +28,9 @@ queue.on('idle', () => {
   console.log(`Queue is idle.  Size: ${queue.size}  Pending: ${queue.pending}`);
 });
 
+let ipfsClient = create({ host: 'localhost', port: 9095 }) // http://ipfs-cluster-stackos.hjm.bid/ port: 80 localhost port:9095
+let ipfsInfo;
+
 const rcloneConfig = {
   gateway: 'https://cdn.vgm.tv/encrypted/',
   origin: 'VGM-Origin:vgmorigin/origin',
@@ -34,8 +38,8 @@ const rcloneConfig = {
   encrypted: 'VGM-Converted:vgmencrypted/encrypted'
 }
 
-const endpoint: any = 'https://api.nft.storage'; // the default
-const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDg2YzE5MTE1ODZlRTZDODZhN2EzM2NCOTliOEY5MzIzNTU3RTJEMWQiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzODk0NDM1MjY5OCwibmFtZSI6InZnbS1pcGZzIn0.0rr-RBbRTxWIfpQpbMoRZ7jBI1hYtL0EB_vgmj7tNCk' // your API key from https://nft.storage/manage
+// const endpoint: any = 'https://api.nft.storage'; // the default
+// const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDg2YzE5MTE1ODZlRTZDODZhN2EzM2NCOTliOEY5MzIzNTU3RTJEMWQiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzODk0NDM1MjY5OCwibmFtZSI6InZnbS1pcGZzIn0.0rr-RBbRTxWIfpQpbMoRZ7jBI1hYtL0EB_vgmj7tNCk' // your API key from https://nft.storage/manage
 
 // const { createLogger, transports } = require("winston");
 // const LokiTransport = require("winston-loki");
@@ -47,8 +51,6 @@ const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDg2
 //   ]
 // };
 // const logger = createLogger(options);
-
-
 
 
 // import { S3Client, GetObjectCommand, ListObjectsCommand, CopyObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
@@ -66,8 +68,6 @@ let serve;
 const args = process.argv.slice(1);
 serve = args.some((val) => val === '--serve');
 
-let ipfsClient;
-let ipfsInfo;
 interface FileInfo {
   pid: string,
   location: string,
@@ -329,9 +329,9 @@ try {
     }
   })
 
-  ipcMain.handle('ipfs-ready', async (event, httpApiConfig) => {
-    ipfsClient = await create(httpApiConfig);
-  })
+  // ipcMain.handle('ipfs-ready', async (event, httpApiConfig) => {
+  //   ipfsClient = await create(httpApiConfig);
+  // })
 
   // Listen to renderer process and open dialog for input and output path
   ipcMain.handle('open-dialog', async (event, isFile) => {
@@ -398,84 +398,21 @@ try {
     }
   })
 
-
-  ipcMain.handle('cloud-to-ipfs', async (event, prefix, fileType, startPoint, endPoint) => {
-    let VGM;
-    if (fileType === 'audio') {
-      VGM = 'VGMA';
-      queue.concurrency = 5;
-    } else if (fileType === 'video') {
-      VGM = 'VGMV';
-      queue.concurrency = 1;
-    }
-    const txtPath = `${prefix}/database/${VGM}Single.txt`;
-    const originalTemp = `${prefix}/database/tmp`;
-    const apiPath = `${prefix}/database/API/items/single`;
-    const convertedPath = `VGM-Converted:vgmencrypted/encrypted/${VGM}`;
-
-
-    const downloadConverted = async (fileLocation, outPath) => {
-      console.log('download converted file', `${convertedPath}/${fileLocation}/`, `${outPath}/`);
-      return new Promise((resolve) => {
-        const rclone = spawn('rclone', ['copy', '--progress', `${convertedPath}/${fileLocation}/`, `${outPath}/`]);
-        rclone.stdout.on('data', async (data) => {
-          console.log(`rclone download converted stdout: ${data}`);
-        });
-        rclone.stderr.on('data', async (data) => {
-          console.log(`Stderr: ${data}`);
-        });
-        rclone.on('close', async (code) => {
-          console.log(`download converted file done with code:`, code);
-          resolve('done');
-        })
-      });
-    }
-
-    const uploadIPFS = async (dir) => {
-      console.log('uploadIPFS', `${dir}`);
-      return new Promise(async (resolve) => {
-        try {
-          const storage = new NFTStorage({ endpoint, token });
-          let fileArray: any = [];
-          const files = execSync(`find ${dir} -type f -name '*.*'`, { encoding: 'utf8' }).split('\n');
-          files.pop();
-          for (let [index, file] of files.entries()) {
-            fileArray.push(new File([await fs.promises.readFile(file)], file.replace(`${dir}/`, '')));
-          }
-          console.log(fileArray);
-
-          const cid = await storage.storeDirectory(fileArray);
-          console.log('cid:', cid)
-          if (cid) {
-            resolve(cid);
-          }
-        } catch (error) {
-          console.log(error);
-        }
-      });
-    }
-
-
+  ipcMain.on('get-count', async (event) => {
     const processFile = async (file: string) => {
       console.log(file);
       return new Promise(async (resolve) => {
-        const jsonString = await fs.readFileSync(`${apiPath}/${file}.json`, { encoding: 'utf8' });
+        const jsonString = await fs.readFileSync(file, { encoding: 'utf8' });
         let fileInfo: any = JSON.parse(jsonString);
-        console.log('old file info', fileInfo);
-        const cloudPath = file.replace(/\./g, '\/');
-        const tmpDir = `${originalTemp}/${path.basename(file)}`;
-        await downloadConverted(cloudPath, tmpDir);
-        const cid = await uploadIPFS(tmpDir);
-        fileInfo.qm = cid;
-        const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
-        fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
-        console.log('updated fileInfo', fileInfo);
-        event.sender.send('update-ipfs', fileInfo);
+        fileInfo.count = fileInfo.children.length;
+        delete fileInfo.children;
+        event.sender.send('update-count', fileInfo);
+        resolve(true)
       })
     };
 
     // start script here
-    const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
+    const raw = execSync(`find '/home/vgm/Desktop/database/API/topics/list' -type f -name '*.json'`, { encoding: 'utf8' });
 
     if (raw) {
       let list = raw.split('\n');
@@ -483,20 +420,139 @@ try {
       // list.reverse();
       console.log('total files', list.length);
       // let i = startPoint;
-      for (let i = startPoint; i < endPoint; i++) { // list.length or endPoint
+      for (let i = 0; i < list.length; i++) { // list.length or endPoint
         (async () => {
           queue.add(async () => {
             await processFile(list[i]);
-            await fs.appendFileSync(`${prefix}/database/${fileType}-ipfs-count.txt`, `\n${i}`);
             console.log('processed files', i);
-
           });
         })();
       }
-
     }
 
   })
+
+  ipcMain.on('cloud-to-ipfs', async (event, prefix, fileType, startPoint, endPoint) => {
+    try {
+      let VGM;
+      if (fileType === 'audio') {
+        VGM = 'VGMA';
+        queue.concurrency = 20;
+      } else if (fileType === 'video') {
+        VGM = 'VGMV';
+        queue.concurrency = 1;
+      }
+      const txtPath = `${prefix}/database/${VGM}Single.txt`;
+      const originalTemp = `${prefix}/database/tmp`;
+      const localTemp = `/mnt/6TBHDD/VGMDATA/${VGM}`;
+      const apiPath = `${prefix}/database/API/items/single`;
+      const convertedPath = `VGM-Converted:vgmencrypted/encrypted/${VGM}`;
+
+      const downloadConverted = async (fileLocation, outPath) => {
+        console.log('download converted file', `${convertedPath}/${fileLocation}/`, `${outPath}/`);
+        return new Promise(async (resolve) => {
+          const startDownload = () => {
+            const rclone = spawn('rclone', ['copy', '--progress', '--no-update-modtime', `${convertedPath}/${fileLocation}/`, `${outPath}/`]);
+            rclone.stdout.on('data', async (data) => {
+              console.log(`rclone download converted stdout: ${data}`);
+            });
+            rclone.stderr.on('data', async (data) => {
+              console.log(`Stderr: ${data}`);
+            });
+            rclone.on('close', async (code) => {
+              console.log(`download converted file done with code:`, code);
+              resolve(true);
+            })
+          }
+          const keyPath = `${outPath}/key.vgmk`;
+          const m3u8Path = `${outPath}/128p.m3u8`;
+          if (fs.existsSync(outPath) && fs.existsSync(keyPath) && fs.existsSync(m3u8Path)) {
+            const reader = new M3U8FileParser();
+            const segment = await fs.readFileSync(m3u8Path, { encoding: 'utf-8' });
+            reader.read(segment);
+            const m3u8 = reader.getResult();
+            for (const segment of m3u8.segments) {
+              if (!fs.existsSync(`${outPath}/${segment.url}`)) {
+                startDownload();
+              } else {
+                resolve(true);
+              }
+            }
+          } else {
+            startDownload();
+          }
+        });
+      }
+
+      const uploadIPFS = async (dir) => {
+        console.log('uploadIPFS', `${dir}`);
+        return new Promise(async (resolve) => {
+          let cid: CID;
+          for await (const file of ipfsClient.addAll(globSource(dir, '**/*'), { wrapWithDirectory: true })) {
+            cid = file.cid;
+            console.log('Hash:', cid);
+
+          }
+          if (cid) {
+            resolve(cid);
+          }
+        });
+      }
+
+      const processFile = async (file: string) => {
+        console.log(file);
+        return new Promise(async (resolve) => {
+          const jsonString = await fs.readFileSync(`${apiPath}/${file}.json`, { encoding: 'utf8' });
+          let fileInfo: any = JSON.parse(jsonString);
+          console.log('old file info', fileInfo);
+          const cloudPath = file.replace(/\./g, '\/');
+          const fileDir = `${localTemp}/${cloudPath}`;
+          await downloadConverted(cloudPath, fileDir);
+          const cid = await uploadIPFS(fileDir);
+          // console.log('cid from ipfs', cid);
+          fileInfo.qm = cid.toString();
+          const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+          fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
+          console.log('updated fileInfo', fileInfo);
+          event.sender.send('update-ipfs', fileInfo);
+          // await fs.rmdirSync(fileDir, { recursive: true });
+          if (fileInfo.qm) {
+            resolve(true)
+          }
+        })
+      };
+
+      // start script here
+      const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
+
+      if (raw) {
+        let list = raw.split('\n');
+        list.pop();
+        // list.reverse();
+        console.log('total files', list.length);
+        // let i = startPoint;
+        for (let i = startPoint; i < list.length; i++) { // list.length or endPoint
+          (async () => {
+            queue.add(async () => {
+              const result = await processFile(list[i]);
+              console.log('processed files', i);
+              if (result) {
+                await fs.appendFileSync(`${prefix}/database/${fileType}-ipfs-count.txt`, `\n${i}`);
+              } else {
+                await fs.appendFileSync(`${prefix}/database/${fileType}-ipfs-count.txt`, `\n${i}-notfound: ${list[i]}`);
+              }
+            });
+          })();
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+  })
+
+
+
   // Get input and output path from above and execute sh file
   ipcMain.handle('start-convert', async (event, argInPath, argOutPath, fileOnly, pItem) => {
     // console.log('args', argInPath, argOutPath, fileOnly, pItem);
@@ -515,6 +571,45 @@ try {
           console.log(`Upload converted file done with code:`, code);
           resolve('done');
         })
+      });
+    }
+
+    const checkMP4 = async (tmpPath, fType) => {
+      console.log('checking downloaded file', `${tmpPath}`);
+      return new Promise(async (resolve) => {
+        let info = await execSync(`ffprobe -v quiet -print_format json -show_streams "${tmpPath}"`, { encoding: 'utf8' });
+        if (fType === 'video') {
+          const jsonInfo = JSON.parse(info);
+          const displayRatio = (jsonInfo.streams[0].width / jsonInfo.streams[0].height).toFixed(2);
+          console.log(jsonInfo.streams[0].codec_long_name, displayRatio);
+          // await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${tmpPath} ${jsonInfo.streams[0].codec_long_name} ${displayRatio}`);
+          if (jsonInfo.streams[0].codec_long_name === 'MPEG-4 part 2' || displayRatio === (4 / 3).toFixed(2)) {
+            const tmpName = path.parse(tmpPath).name;
+            const mp4Tmp = tmpPath.replace(tmpName, `${tmpName}1`);
+            await execSync(`mv "${tmpPath}" "${mp4Tmp}"`);
+            console.log(mp4Tmp, tmpPath);
+
+            const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-filter:v', 'pad=width=max(iw\\,ih*(16/9)):height=ow/(16/9):x=(ow-iw)/2:y=(oh-ih)/2', '-c:a', 'copy', `${tmpPath}`]);
+            // ffmpeg -vsync 0 -i '/home/vgm/Desktop/test.mp4' -c:v h264_nvenc -c:a aac '/home/vgm/Desktop/test2.mp4'
+            mp4.stdout.on('data', async (data) => {
+              console.log(`converting to mp4 stdout: ${data}`);
+            });
+            mp4.stderr.on('data', async (data) => {
+              console.log(`Stderr: ${data}`);
+            });
+            mp4.on('close', async (code) => {
+              console.log(`Converted to mp4 done with code:`, code);
+              await fs.unlinkSync(mp4Tmp);
+              resolve(true);
+            })
+          } else {
+            console.log('mp4 h264 file ok');
+            resolve(true);
+          }
+        } else {
+          console.log('mp3 file ok');
+          resolve(true);
+        }
       });
     }
 
@@ -676,7 +771,7 @@ try {
     if (fileOnly) {
       files = argInPath;
     } else {
-      files = execSync(`find ${argInPath} -regextype posix-extended -regex '.*.(mp4|mp3)'`, { encoding: "utf8" }).split('\n');
+      files = execSync(`find '${argInPath}' -regextype posix-extended -regex '.*.(mp4|mp3)'`, { encoding: "utf8" }).split('\n');
       files.pop();
     }
     totalFiles = files.length;
@@ -692,7 +787,16 @@ try {
       let tasks = [];
       files.forEach(file => {
         tasks.push(async () => {
-          await convertFile(file, fileType, pItem, argOutPath);
+          const fileOk = await checkMP4(file, fileType); // audio dont need check MP4
+          if (fileOk) {
+            // convert and up encrypted and database
+            let fStat: string;
+            const checkNonSilence = await execSync(`ffmpeg -i "${file}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
+            if (checkNonSilence) fStat = fileType; else fStat = 'videoSilence';
+            await convertFile(file, fileType, pItem, argOutPath);
+          } else {
+            console.log(`file data error: cannot read - ${file}`);
+          }
           convertedFiles++;
         })
       });
@@ -963,6 +1067,7 @@ try {
     }
   })
 
+
   // ipcMain.on('test', async (event, url, num) => { // instant add to db
   ipcMain.on('test', async (event, prefix, fileType, startPoint, endPoint) => { // start instant code
 
@@ -1152,6 +1257,7 @@ try {
     //     return new Promise((resolve, reject) => {
     //       const content = fs.readFileSync(file, { encoding: 'utf8' })
     //       const name = content.match(/\|.*\|/).toString().replace(/^\||\|$/, '').replace(/\|\d+\|/, '');
+    // const name = content.split('|')[1].replace(/^\s+|[^a-zA-Z\d\s\_\-:]|\s+$/g,'');
     //       const oldPath = path.dirname(file);
     //       const newPath = `${path.dirname(oldPath)}/${name}`;
     //       console.log(oldPath, newPath);
@@ -1226,7 +1332,7 @@ try {
         queue.concurrency = 1;
       }
       const txtPath = `${prefix}/database/${VGM}.txt`;
-      const renamedFolder = `${prefix}/database/renamed/${VGM}/05-Ngôn Ngữ Ký Hiệu`; // /06-Phim
+      const renamedFolder = `${prefix}/database/renamed/${VGM}/01-Bài Giảng/Tổng Quan Kinh Thánh`; // /06-Phim
       const originalTemp = `${prefix}/database/tmp`;
       const apiPath = `${prefix}/database/API`;
       const localOutPath = `${prefix}/database/converted`;
@@ -1852,7 +1958,7 @@ try {
     // })
   })
 
-  ipcMain.handle('export-database', async (event, item, outpath, fileType, isVideo?: boolean) => {
+  ipcMain.handle('export-database', async (event, apiType: string, item, outpath, fileType, isVideo?: boolean) => {
     console.log('export-database called');
 
     let filePath: string;
@@ -1865,17 +1971,17 @@ try {
     }
     // handle file path
     if (fileType === 'itemList') {
-      filePath = `${outpath.toString()}/API/items/list/${item.url}.json`
+      filePath = `${outpath.toString()}/API-${apiType}/items/list/${item.url}.json`
     } else if (fileType === 'itemSingle') {
-      filePath = `${outpath.toString()}/API/items/single/${item.url}.json`
+      filePath = `${outpath.toString()}/API-${apiType}/items/single/${item.url}.json`
     } else if (fileType === 'topicList') {
-      filePath = `${outpath.toString()}/API/topics/list/${item.url}.json`
+      filePath = `${outpath.toString()}/API-${apiType}/topics/list/${item.url}.json`
     } else if (fileType === 'topicSingle') {
-      filePath = `${outpath.toString()}/API/topics/single/${item.url}.json`
+      filePath = `${outpath.toString()}/API-${apiType}/topics/single/${item.url}.json`
     } else if (fileType === 'searchAPI' && isVideo) {
-      filePath = `${outpath.toString()}/API/searchAPI-VGMV.json`;
+      filePath = `${outpath.toString()}/API-${apiType}/searchAPI-VGMV.json`;
     } else if (fileType === 'searchAPI' && !isVideo) {
-      filePath = `${outpath.toString()}/API/searchAPI-VGMA.json`;
+      filePath = `${outpath.toString()}/API-${apiType}/searchAPI-VGMA.json`;
     }
 
     const dir = path.dirname(filePath)

@@ -151,8 +151,7 @@ export class DataService {
         fetchPolicy: 'cache-and-network',
       }).valueChanges.subscribe(({ data }) => {
         const list = data[Object.keys(data)[0]];
-        // console.log(level, list);
-
+        // console.log('fetched Level DB:', level, list, data);
         if (list) resolve(list);
       });
 

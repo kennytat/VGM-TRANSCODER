@@ -47,6 +47,9 @@ export class Level2UpdateInput {
   @Field((type) => String, { nullable: true })
   hash?: string
 
+  @Field((type) => String, { nullable: true })
+  qm?: string
+
   @Field((type) => Int, { nullable: true })
   audience?: number
 
@@ -213,6 +216,7 @@ export class Level2Resolver {
         url: data.url,
         keyword: data.keyword,
         hash: data.hash,
+        qm: data.qm,
         audience: data.audience,
         mtime: data.mtime,
         viewCount: data.viewCount

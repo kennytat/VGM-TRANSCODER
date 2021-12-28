@@ -30,6 +30,29 @@ export class Level1Resolver {
     });
   }
 
+  @Query((returns) => [Level1])
+  level1Queries(
+    @Args('isVideo') isVideo: boolean,
+    @Args('isLeaf', { nullable: true }) isLeaf: boolean,
+    @Args('id', { nullable: true }) id: string,
+    @Context() ctx) {
+    // const or = isVideo
+    //   ? {
+    //     OR: [{
+    //       isVideo: isVideo,
+    //       isLeaf: isLeaf,
+    //       id: id
+    //     }],
+    //   } : {}
+    return this.prismaService.level1.findMany({
+      where: {
+        isVideo: isVideo,
+        isLeaf: isLeaf,
+        id: id
+      },
+    })
+  }
+
   @ResolveField('parent', () => [Home])
   async getParent(@Root() level1: Level1) {
     return this.prismaService.root.findUnique({

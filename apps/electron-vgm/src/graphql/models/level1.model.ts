@@ -23,7 +23,7 @@ export class Level1 {
   @Field((type) => String)
   location: string
 
-  @Field((type) => Boolean)
+  @Field((type) => Boolean, { nullable: true })
   isLeaf: boolean
 
   @Field((type) => String)

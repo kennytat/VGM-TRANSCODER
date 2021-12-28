@@ -25,7 +25,7 @@ model Level1 {
   updatedAt DateTime @updatedAt
   // topic & item fields
   location  String
-  isLeaf    Boolean  @default(false)
+  isLeaf    Boolean? @default(false)
   isVideo   Boolean
   url       String   @default("")
   name      String

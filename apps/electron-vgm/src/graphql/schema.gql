@@ -163,7 +163,7 @@ type Level1 {
   createdAt: DateTime!
   updatedAt: DateTime!
   location: String!
-  isLeaf: Boolean!
+  isLeaf: Boolean
   url: String!
   isVideo: Boolean!
   name: String!
@@ -184,6 +184,7 @@ type Root {
 type Query {
   root(id: String!): Root!
   level1Unique(id: String!): Level1!
+  level1Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level1!]!
   level2Unique(id: String!): Level2!
   level2Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level2!]!
   level3Unique(id: String!): Level3!
@@ -247,6 +248,7 @@ input Level2UpdateInput {
   name: String
   keyword: String
   hash: String
+  qm: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -280,6 +282,7 @@ input Level3UpdateInput {
   name: String
   keyword: String
   hash: String
+  qm: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -313,6 +316,7 @@ input Level4UpdateInput {
   name: String
   keyword: String
   hash: String
+  qm: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -346,6 +350,7 @@ input Level5UpdateInput {
   name: String
   keyword: String
   hash: String
+  qm: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -379,6 +384,7 @@ input Level6UpdateInput {
   name: String
   keyword: String
   hash: String
+  qm: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -412,6 +418,7 @@ input Level7UpdateInput {
   name: String
   keyword: String
   hash: String
+  qm: String
   audience: Int
   mtime: Int
   viewCount: Int

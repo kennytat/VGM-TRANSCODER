@@ -57,10 +57,7 @@ export class IpfsPage {
           }
 
         })
-
       })
-
-
     }
   }
 

@@ -182,8 +182,11 @@ export class ConverterPage implements OnInit {
   }
 
   async test() {
-    const testItem = await this.getOptions(1, true, '00000000-0000-0000-0000-000000000001'); // 00000000-0000-0000-0000-000000000001 3c99cef1-0b91-4cff-a01b-2aa3cc0ca1d4
-    console.log(testItem);
+    const item = await this.dataService.fetchLevelDB(1, true, false);
+    console.log('got itemmmmmm', item);
+
+    // const testItem = await this.getOptions(1, true, '00000000-0000-0000-0000-000000000001'); // 00000000-0000-0000-0000-000000000001 3c99cef1-0b91-4cff-a01b-2aa3cc0ca1d4
+    // console.log(testItem);
 
 
     // console.log(this.path, this.level);

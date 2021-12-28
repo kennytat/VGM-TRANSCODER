@@ -4,7 +4,7 @@ import { TabsPage } from './tabs.page';
 
 const routes: Routes = [
   {
-    path: 'vgm',
+    path: '',
     component: TabsPage,
     children: [
       {
@@ -24,16 +24,11 @@ const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: '/vgm/database',
+        redirectTo: 'database',
         pathMatch: 'full',
       },
     ],
-  },
-  {
-    path: '',
-    redirectTo: '/vgm/database',
-    pathMatch: 'full',
-  },
+  }
 ];
 
 @NgModule({

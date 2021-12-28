@@ -311,9 +311,45 @@ export const LEVEL_1_TREE = gql`
   }
 }`;
 
-export const LEVEL_1_QUERIES = gql`
+export const LEVEL_1_UNIQUE = gql`
   query level1Unique($id:String!){
     level1Unique(id:$id)
+      {
+        id
+        pid
+        dblevel
+        location
+        isVideo
+        name
+        count
+        isLeaf
+        url
+        children {
+          id
+          pid
+          dblevel
+          location
+          isVideo
+          url
+          name
+          count
+          isLeaf
+          keyword
+          hash
+          viewCount
+          duration
+          size
+        }
+      }
+}`;
+
+export const LEVEL_1_QUERIES = gql`
+  query level1Queries($isVideo:Boolean!,
+      $isLeaf:Boolean,
+      $id:String){
+    level1Queries(isVideo:$isVideo,
+      isLeaf:$isLeaf,
+      id:$id)
       {
         id
         pid
@@ -908,6 +944,7 @@ mutation updateLevel2 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $qm: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int
@@ -922,6 +959,7 @@ mutation updateLevel2 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      qm: $qm,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount
@@ -935,6 +973,8 @@ mutation updateLevel2 (
     dblevel
     location
     count
+    qm
+    hash
   }
 }`;
 
@@ -948,6 +988,7 @@ mutation updateLevel3 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $qm: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int
@@ -962,6 +1003,7 @@ mutation updateLevel3 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      qm: $qm,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount
@@ -975,6 +1017,8 @@ mutation updateLevel3 (
     dblevel
     location
     count
+    qm
+    hash
   }
 }`;
 
@@ -988,6 +1032,7 @@ mutation updateLevel4 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $qm: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int
@@ -1002,6 +1047,7 @@ mutation updateLevel4 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      qm: $qm,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount
@@ -1015,6 +1061,8 @@ mutation updateLevel4 (
     dblevel
     location
     count
+    qm
+    hash
   }
 }`;
 
@@ -1028,6 +1076,7 @@ mutation updateLevel5 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $qm: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int
@@ -1042,6 +1091,7 @@ mutation updateLevel5 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      qm: $qm,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount
@@ -1055,6 +1105,8 @@ mutation updateLevel5 (
     dblevel
     location
     count
+    qm
+    hash
   }
 }`;
 
@@ -1068,6 +1120,7 @@ mutation updateLevel6 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $qm: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int
@@ -1082,6 +1135,7 @@ mutation updateLevel6 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      qm: $qm,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount
@@ -1095,6 +1149,8 @@ mutation updateLevel6 (
     dblevel
     location
     count
+    qm
+    hash
   }
 }`;
 
@@ -1108,6 +1164,7 @@ mutation updateLevel7 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $qm: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int
@@ -1122,6 +1179,7 @@ mutation updateLevel7 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      qm: $qm,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount
@@ -1135,6 +1193,8 @@ mutation updateLevel7 (
     dblevel
     location
     count
+    qm
+    hash
   }
 }`;
 

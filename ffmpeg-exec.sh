@@ -11,22 +11,23 @@ if [[ $fileType == 'video' ]]; then
 elif [[ $fileType == 'videoSilence' ]]; then
 	varStreamMap="v:0,name:1080p v:1,name:720p v:2,name:480p"
 fi
-
+start=$(date +"%T")
+echo "Start convert time : $start"
 mkdir -p "$outPath" && cd "$outPath" &&
 	openssl rand 16 >key.vgmk &&
 	echo key.vgmk >file.keyinfo &&
 	echo key.vgmk >>file.keyinfo &&
 	openssl rand -hex 16 >>file.keyinfo &&
 	if [[ $fileType == 'video' || $fileType == 'videoSilence' ]]; then
-		ffmpeg -progress pipe:1 -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
+		ffmpeg -progress pipe:1 -stats_period 0.5 -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
 			-filter_complex \
 			"[0:v]split=3[v1][v2][v3]; \
 [v1]scale_npp=w=1920:h=1080:force_original_aspect_ratio=decrease[v1out]; \
 [v2]scale_npp=w=1280:h=720:force_original_aspect_ratio=decrease[v2out]; \
 [v3]scale_npp=w=854:h=480:force_original_aspect_ratio=decrease[v3out]" \
-			-map "[v1out]" -c:v h264_nvenc -b:v:0 5M -maxrate:v:0 5M -minrate:v:0 5M -bufsize:v:0 10M -preset slow -g 48 -sc_threshold 0 -keyint_min 48 \
-			-map "[v2out]" -c:v h264_nvenc -b:v:0 3M -maxrate:v:0 3M -minrate:v:0 3M -bufsize:v:0 6M -preset slow -g 48 -sc_threshold 0 -keyint_min 48 \
-			-map "[v3out]" -c:v h264_nvenc -b:v:0 2M -maxrate:v:0 2M -minrate:v:0 2M -bufsize:v:0 4M -preset slow -g 48 -sc_threshold 0 -keyint_min 48 \
+			-map "[v1out]" -c:v h264_nvenc -b:v:0 4500K -maxrate:v:0 4500K -minrate:v:0 4500K -bufsize:v:0 9000K -preset slow -g 48 -sc_threshold 0 -keyint_min 48 \
+			-map "[v2out]" -c:v h264_nvenc -b:v:0 1800K -maxrate:v:0 1800K -minrate:v:0 1800K -bufsize:v:0 3600K -preset slow -g 48 -sc_threshold 0 -keyint_min 48 \
+			-map "[v3out]" -c:v h264_nvenc -b:v:0 1200K -maxrate:v:0 1200K -minrate:v:0 1200K -bufsize:v:0 2400K -preset slow -g 48 -sc_threshold 0 -keyint_min 48 \
 			-map "0:a?" -c:a aac -b:a:0 192k -ac 2 \
 			-map "0:a?" -c:a aac -b:a:1 128k -ac 2 \
 			-map "0:a?" -c:a aac -b:a:2 96k -ac 2 \
@@ -46,16 +47,20 @@ mkdir -p "$outPath" && cd "$outPath" &&
 				-vf select='not(mod(n\,5))',scale_npp=1280:720,hwdownload,format=nv12,fps=1/7 -r 0.1 -frames:v 7 -vsync vfr -q:v 2 -f image2 "$outPath"/720/%01d.jpg \
 				-vf select='not(mod(n\,5))',scale_npp=854:480,hwdownload,format=nv12,fps=1/7 -r 0.1 -frames:v 7 -vsync vfr -q:v 2 -f image2 "$outPath"/480/%01d.jpg
 	else
-		ffmpeg -progress pipe:1 -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
-			-map 0:a -c:a aac -b:a:0 192k -ac 2 \
-			-f hls \
-			-hls_time 5 \
-			-preset slow \
-			-hls_key_info_file file.keyinfo \
-			-hls_playlist_type vod \
-			-hls_flags independent_segments \
-			-hls_segment_type mpegts \
-			-hls_segment_filename "$outPath"/content%01d.vgmx \
-			"$outPath"/128p.m3u8
+		mkdir -p "$outPath"/128p &&
+			ffmpeg -progress pipe:1 -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
+				-map 0:a -c:a aac -b:a:0 192k -ac 2 \
+				-f hls \
+				-hls_time 5 \
+				-preset slow \
+				-hls_key_info_file file.keyinfo \
+				-hls_playlist_type vod \
+				-hls_flags independent_segments \
+				-hls_segment_type mpegts \
+				-strftime_mkdir 1 \
+				-hls_segment_filename 128p/content%01d.vgmx \
+				"$outPath"/128p.m3u8
 	fi
 rm file.keyinfo
+end=$(date +"%T")
+echo "End convert time : $end"
