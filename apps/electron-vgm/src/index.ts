@@ -398,46 +398,46 @@ try {
     }
   })
 
-  ipcMain.on('get-count', async (event) => {
-    const processFile = async (file: string) => {
-      console.log(file);
-      return new Promise(async (resolve) => {
-        const jsonString = await fs.readFileSync(file, { encoding: 'utf8' });
-        let fileInfo: any = JSON.parse(jsonString);
-        fileInfo.count = fileInfo.children.length;
-        delete fileInfo.children;
-        event.sender.send('update-count', fileInfo);
-        resolve(true)
-      })
-    };
+  // ipcMain.on('get-count', async (event) => {
+  //   const processFile = async (file: string) => {
+  //     console.log(file);
+  //     return new Promise(async (resolve) => {
+  //       const jsonString = await fs.readFileSync(file, { encoding: 'utf8' });
+  //       let fileInfo: any = JSON.parse(jsonString);
+  //       fileInfo.count = fileInfo.children.length;
+  //       delete fileInfo.children;
+  //       event.sender.send('update-count', fileInfo);
+  //       resolve(true)
+  //     })
+  //   };
 
-    // start script here
-    const raw = execSync(`find '/home/vgm/Desktop/database/API/topics/list' -type f -name '*.json'`, { encoding: 'utf8' });
+  //   // start script here
+  //   const raw = execSync(`find '/home/vgm/Desktop/database/API/topics/list' -type f -name '*.json'`, { encoding: 'utf8' });
 
-    if (raw) {
-      let list = raw.split('\n');
-      list.pop();
-      // list.reverse();
-      console.log('total files', list.length);
-      // let i = startPoint;
-      for (let i = 0; i < list.length; i++) { // list.length or endPoint
-        (async () => {
-          queue.add(async () => {
-            await processFile(list[i]);
-            console.log('processed files', i);
-          });
-        })();
-      }
-    }
+  //   if (raw) {
+  //     let list = raw.split('\n');
+  //     list.pop();
+  //     // list.reverse();
+  //     console.log('total files', list.length);
+  //     // let i = startPoint;
+  //     for (let i = 0; i < list.length; i++) { // list.length or endPoint
+  //       (async () => {
+  //         queue.add(async () => {
+  //           await processFile(list[i]);
+  //           console.log('processed files', i);
+  //         });
+  //       })();
+  //     }
+  //   }
 
-  })
+  // })
 
   ipcMain.on('cloud-to-ipfs', async (event, prefix, fileType, startPoint, endPoint) => {
     try {
       let VGM;
       if (fileType === 'audio') {
         VGM = 'VGMA';
-        queue.concurrency = 20;
+        queue.concurrency = 1;
       } else if (fileType === 'video') {
         VGM = 'VGMV';
         queue.concurrency = 1;
@@ -487,15 +487,17 @@ try {
       const uploadIPFS = async (dir) => {
         console.log('uploadIPFS', `${dir}`);
         return new Promise(async (resolve) => {
-          let cid: CID;
-          for await (const file of ipfsClient.addAll(globSource(dir, '**/*'), { wrapWithDirectory: true })) {
-            cid = file.cid;
-            console.log('Hash:', cid);
+          // // add folder to IPFS
+          // let cid: CID;
+          // for await (const file of ipfsClient.addAll(globSource(dir, '**/*'), { wrapWithDirectory: true })) {
+          //   cid = file.cid;
+          //   console.log('Hash:', cid);
+          // }
 
-          }
-          if (cid) {
-            resolve(cid);
-          }
+          // instance get ipfs hash, not yet add to ipfs client
+          let cid = execSync(`ipfs add -r -n -Q '${dir}'`, { encoding: "utf8" }).split('\n')[0];
+          if (cid) { resolve(cid) }
+
         });
       }
 
@@ -504,10 +506,11 @@ try {
         return new Promise(async (resolve) => {
           const jsonString = await fs.readFileSync(`${apiPath}/${file}.json`, { encoding: 'utf8' });
           let fileInfo: any = JSON.parse(jsonString);
-          console.log('old file info', fileInfo);
+          // console.log('old file info', fileInfo);
           const cloudPath = file.replace(/\./g, '\/');
           const fileDir = `${localTemp}/${cloudPath}`;
           await downloadConverted(cloudPath, fileDir);
+          await execSync(`bash mv-vgmx.sh "${fileDir}"`);
           const cid = await uploadIPFS(fileDir);
           // console.log('cid from ipfs', cid);
           fileInfo.qm = cid.toString();

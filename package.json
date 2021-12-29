@@ -138,6 +138,7 @@
     "babel-plugin-graphql-tag": "^3.3.0",
     "codelyzer": "~6.0.0",
     "cypress": "^6.0.1",
+    "cz-conventional-changelog": "^3.3.0",
     "dotenv": "8.2.0",
     "electron": "^11.1.1",
     "electron-builder": "^22.9.1",
@@ -174,5 +175,10 @@
   "xplat": {
     "prefix": "vgm",
     "framework": "angular"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }

@@ -91,7 +91,9 @@
               <ion-label position="stacked"
                 >Database Location:
                 <span style="color: var(--ion-color-success)">
-                  {{selectedItem ? selectedItem.location : ''}}
+                  {{selectedItem ? selectedItem.isVideo ? 'VGMV/' : 'VGMA/' : ''
+                  }}{{(selectedItem ? selectedItem.url : '' ) | replaceDotSlash
+                  }}
                 </span>
               </ion-label>
             </div>

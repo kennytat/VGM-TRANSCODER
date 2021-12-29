@@ -135,27 +135,27 @@ export class DatabasePage implements OnInit {
     });
 
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.on('create-database', (event, fileInfo) => {
+      this._electronService.ipcRenderer.on('create-database', async (event, fileInfo) => {
         console.log('createDB called', fileInfo);
         // this.updateIsLeaf(fileInfo);
-        this.createNewItem(fileInfo);
+        await this.createNewItem(fileInfo);
       })
-      this._electronService.ipcRenderer.on('update-ipfs', (event, fileInfo) => {
+      this._electronService.ipcRenderer.on('update-ipfs', async (event, fileInfo) => {
         // console.log('update IPFS Hash called', fileInfo);
         const variables = {
           id: fileInfo.id,
           hash: fileInfo.hash,
           qm: fileInfo.qm,
         };
-        this.updateSingle(fileInfo.dblevel, variables);
+        await this.updateSingle(fileInfo.dblevel, variables);
       })
-      this._electronService.ipcRenderer.on('update-count', (event, fileInfo) => {
+      this._electronService.ipcRenderer.on('update-count', async (event, fileInfo) => {
         console.log('update count called', fileInfo);
         const variables = {
           id: fileInfo.id,
           count: fileInfo.count
         };
-        this.updateSingle(fileInfo.dblevel, variables);
+        await this.updateSingle(fileInfo.dblevel, variables);
       })
     }
   }
@@ -327,12 +327,12 @@ export class DatabasePage implements OnInit {
     if (this._electronService.isElectronApp) {
       // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
       const prefixPath = '/home/vgm/Desktop';
-      const startPoint = 23452; // audio 05NV-13DS, video 02,04,05 done
-      const endPoint = 20000;
+      const startPoint = 0; // ipfs 299 file done
+      const endPoint = 10;
       const fileType = 'audio';
       // this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint); // 'test' 'fastly' 
-      // this._electronService.ipcRenderer.send('cloud-to-ipfs', prefixPath, fileType, startPoint, endPoint);
-      this._electronService.ipcRenderer.send('get-count');
+      this._electronService.ipcRenderer.send('cloud-to-ipfs', prefixPath, fileType, startPoint, endPoint);
+      // this._electronService.ipcRenderer.send('get-count');
     }
 
     // const fileInfo = {
