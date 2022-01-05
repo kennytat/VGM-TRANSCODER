@@ -32,7 +32,7 @@ let ipfsClient = create({ host: 'localhost', port: 9095 }) // http://ipfs-cluste
 let ipfsInfo;
 
 const rcloneConfig = {
-  gateway: 'https://cdn.vgm.tv/encrypted/',
+  gateway: 'https://cdn.vgm.tv/encrypted',
   origin: 'VGM-Origin:vgmorigin/origin',
   warehouse: 'VGM-Origin:vgmorigin/warehouse',
   encrypted: 'VGM-Converted:vgmencrypted/encrypted'
@@ -447,12 +447,39 @@ try {
       const localTemp = `/mnt/6TBHDD/VGMDATA/${VGM}`;
       const apiPath = `${prefix}/database/API/items/single`;
       const convertedPath = `VGM-Converted:vgmencrypted/encrypted/${VGM}`;
+      const gateway = `https://cdn.vgm.tv/encrypted/${VGM}`;
+      const quality = fileType === 'video' ? '480' : '128';
+
+      const checkFileExists = async (fileUrl) => {
+        return new Promise((resolve) => {
+          // process filename
+          // const fileUrl = api.replace(/\./g, '/');
+          // // check m3u8 url
+          const url = `${gateway}/${fileUrl}/${quality}p.m3u8`; // if video 480p.m3u8 audio 128p.m3u8
+          console.log('checking url:', url);
+
+          // // check thumb url
+          exec(`curl --silent --head --fail ${url}`, async (error, stdout, stderr) => {
+            if (error) {
+              console.log('file exist:', false);
+              await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${url} --fileMissing`);
+              resolve(false)
+            };
+            if (stderr) console.log('stderr', stderr);
+            if (stdout) {
+              console.log('file exist:', true);
+              // await fs.appendFileSync(`${prefix}/database/${fileType}-converted-count.txt`, `\n${url} --fileExist`);
+              resolve(true);
+            };
+          });
+        });
+      }
 
       const downloadConverted = async (fileLocation, outPath) => {
         console.log('download converted file', `${convertedPath}/${fileLocation}/`, `${outPath}/`);
         return new Promise(async (resolve) => {
           const startDownload = () => {
-            const rclone = spawn('rclone', ['copy', '--progress', '--no-update-modtime', `${convertedPath}/${fileLocation}/`, `${outPath}/`]);
+            const rclone = spawn('rclone', ['copy', '--progress', `${convertedPath}/${fileLocation}/`, `${outPath}/`]);
             rclone.stdout.on('data', async (data) => {
               console.log(`rclone download converted stdout: ${data}`);
             });
@@ -495,9 +522,31 @@ try {
           // }
 
           // instance get ipfs hash, not yet add to ipfs client
-          let cid = execSync(`ipfs add -r -n -Q '${dir}'`, { encoding: "utf8" }).split('\n')[0];
-          if (cid) { resolve(cid) }
-
+          // let cid = execSync(`ipfs add -r -n -Q '${dir}'`, { encoding: "utf8" }).split('\n')[0];
+          // // exec(`ipfs add -r -n -Q '${dir}'`, (error, stdout, stderr) => {
+          // //   if (error) {
+          // //     console.error(`exec error: ${error}`);
+          // //     return;
+          // //   }
+          // //   const cid = stdout.toString();
+          // console.log(`got QMMMM: ${cid}`);
+          // //   console.error(`stderr: ${stderr}`);
+          // if (cid) {
+          //   resolve(cid);
+          // }
+          // });
+          let cid;
+          const ls = spawn('ipfs', ['add', '-r', '-n', '-Q', dir]);
+          ls.stdout.on('data', (data) => {
+            console.log(`got QMMM: ${data}`);
+            if (data) {
+              cid = data.toString().split('\n')[0];
+            }
+          });
+          ls.on('close', (code) => {
+            resolve(cid);
+            console.log(`child process exited with code ${code}`);
+          });
         });
       }
 
@@ -509,18 +558,25 @@ try {
           // console.log('old file info', fileInfo);
           const cloudPath = file.replace(/\./g, '\/');
           const fileDir = `${localTemp}/${cloudPath}`;
-          await downloadConverted(cloudPath, fileDir);
-          await execSync(`bash mv-vgmx.sh "${fileDir}"`);
-          const cid = await uploadIPFS(fileDir);
-          // console.log('cid from ipfs', cid);
-          fileInfo.qm = cid.toString();
-          const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
-          fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
-          console.log('updated fileInfo', fileInfo);
-          event.sender.send('update-ipfs', fileInfo);
-          // await fs.rmdirSync(fileDir, { recursive: true });
-          if (fileInfo.qm) {
-            resolve(true)
+          // const fileExist = await checkFileExists(cloudPath);
+          const fileExist = await execSync(`rclone lsf '${convertedPath}/${cloudPath}/${quality}p.m3u8'`, { encoding: 'utf8' }) ? true : false; // if video 480p.m3u8 audio 128p.m3u8
+          console.log('file Existtttt:', fileExist);
+          if (fileExist) {
+            await downloadConverted(cloudPath, fileDir);
+            await execSync(`bash mv-vgmx.sh "${fileDir}"`);
+            const cid = await uploadIPFS(fileDir);
+            // console.log('cid from ipfs', cid);
+            fileInfo.qm = cid.toString();
+            const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+            fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
+            console.log('updated fileInfo', fileInfo);
+            event.sender.send('update-ipfs', fileInfo);
+            // await fs.rmdirSync(fileDir, { recursive: true });
+            if (fileInfo.qm) {
+              resolve(true)
+            }
+          } else {
+            resolve(false)
           }
         })
       };
@@ -534,7 +590,7 @@ try {
         // list.reverse();
         console.log('total files', list.length);
         // let i = startPoint;
-        for (let i = startPoint; i < list.length; i++) { // list.length or endPoint
+        for (let i = startPoint; i < endPoint; i++) { // list.length or endPoint
           (async () => {
             queue.add(async () => {
               const result = await processFile(list[i]);
@@ -1069,6 +1125,67 @@ try {
 
     }
   })
+
+
+  // add mass DB folder recursively
+  ipcMain.on('instance-db', async (event, url) => { // instant add to db
+    let apiArray = [];
+    // add directory to database start
+    try {
+      const list = await execSync(`find '${url}' -type d -printf '%h\\0%d\\0%p\\n' | sort -t '\\0' -n | awk -F '\\0' '{print $3}'`, { encoding: 'utf8' });
+      const listArray = await list.toString().split('\n');
+      listArray.pop();
+      listArray.shift();
+      console.log('listArray:', listArray, listArray.length);
+      if (listArray) {
+        for await (const folderPath of listArray) {
+          const folderName = path.basename(folderPath);
+          const pAPI = path.dirname(folderPath).replace(url, '').replace('\/', '');
+          apiArray.push({
+            pName: pAPI,
+            name: folderName,
+          })
+        }
+        event.sender.send('create-manual', apiArray)
+        console.log(apiArray);
+      }
+    } catch (error) {
+      console.log('fs promise error:', error);
+    }
+    // add directory to database end
+  })
+
+
+  ipcMain.on('xor-key', async (event, url, isVideo) => { // start instant code 
+    // encrypte && decrypte key start
+    let m3u8Name = isVideo ? '480p' : '128p';
+    try {
+      // encrypt key file
+      const reader = new M3U8FileParser();
+      const segment = fs.readFileSync(`${url}/${m3u8Name}.m3u8`, { encoding: 'utf-8' });
+      reader.read(segment);
+      const m3u8 = reader.getResult();
+      const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
+      // get buffer from key and iv
+      const code = Buffer.from(secret);
+
+      const key: Buffer = await fs.readFileSync(`${url}/key.vgmk`);
+      const encrypted = bitwise.buffer.xor(key, code, false);
+      console.log(key, '\n', code, '\n', encrypted);
+
+
+      const codeArray = new Uint8Array(code);
+      const keyArray = new Uint8Array(key);
+      const newKeyArray = new Uint8Array(encrypted);
+
+      console.log(keyArray, codeArray, newKeyArray);
+      fs.writeFileSync(`${url}/key.vgmk`, encrypted, { encoding: 'binary' })
+    } catch (error) {
+      console.log('encrypt key error:', error);
+    }
+    // encrypte && decrypte key end
+  })
+
 
 
   // ipcMain.on('test', async (event, url, num) => { // instant add to db

@@ -19,7 +19,7 @@ mkdir -p "$outPath" && cd "$outPath" &&
 	echo key.vgmk >>file.keyinfo &&
 	openssl rand -hex 16 >>file.keyinfo &&
 	if [[ $fileType == 'video' || $fileType == 'videoSilence' ]]; then
-		ffmpeg -progress pipe:1 -stats_period 0.5 -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
+		ffmpeg -progress pipe:1 -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
 			-filter_complex \
 			"[0:v]split=3[v1][v2][v3]; \
 [v1]scale_npp=w=1920:h=1080:force_original_aspect_ratio=decrease[v1out]; \

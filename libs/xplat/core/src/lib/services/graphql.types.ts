@@ -1203,6 +1203,9 @@ mutation deleteLevel2 ($id: String!) {
   deleteLevel2 (id: $id) {
     id
     name
+    pid
+    dblevel
+    isVideo
   }
 }`;
 
@@ -1211,6 +1214,9 @@ mutation deleteLevel3 ($id: String!) {
   deleteLevel3 (id: $id) {
     id
     name
+    pid
+    dblevel
+    isVideo
   }
 }`;
 export const DELETE_LEVEL_4 = gql`
@@ -1218,6 +1224,9 @@ mutation deleteLevel4 ($id: String!) {
   deleteLevel4 (id: $id) {
     id
     name
+    pid
+    dblevel
+    isVideo
   }
 }`;
 export const DELETE_LEVEL_5 = gql`
@@ -1225,6 +1234,9 @@ mutation deleteLevel5 ($id: String!) {
   deleteLevel5 (id: $id) {
     id
     name
+    pid
+    dblevel
+    isVideo
   }
 }`;
 export const DELETE_LEVEL_6 = gql`
@@ -1232,6 +1244,9 @@ mutation deleteLevel6 ($id: String!) {
   deleteLevel6 (id: $id) {
     id
     name
+    pid
+    dblevel
+    isVideo
   }
 }`;
 export const DELETE_LEVEL_7 = gql`
@@ -1239,5 +1254,8 @@ mutation deleteLevel7 ($id: String!) {
   deleteLevel7 (id: $id) {
     id
     name
+    pid
+    dblevel
+    isVideo
   }
 }`;

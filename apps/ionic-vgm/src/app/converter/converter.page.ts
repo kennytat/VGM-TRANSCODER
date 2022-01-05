@@ -45,6 +45,7 @@ export class ConverterPage implements OnInit {
   // instance for adding db manually
   path = '';
   level: number = 0;
+  newDBArray = [];
 
   constructor(
     private _electronService: ElectronService,
@@ -56,12 +57,34 @@ export class ConverterPage implements OnInit {
 
 
   ngOnInit() {
-    // create large db instant code
+    // create large db instant code start
     if (this._electronService.isElectronApp) {
-      this._electronService.ipcRenderer.on('create-manual', (event, value) => {
-        this.createNewTopic(this.level, value)
+      this._electronService.ipcRenderer.on('create-manual', async (event, listArray) => {
+        this.newDBArray = [];
+        this.newDBArray.push(this.selectedItem);
+        console.log(listArray, this.newDBArray);
+        let i = 0;
+        while (i < listArray.length) {
+          if (!listArray[i].pName) {
+            listArray[i].pName = this.selectedItem.name;
+            listArray[i].pid = this.selectedItem.id;
+          }
+          const pIndex = this.newDBArray.findIndex(item => listArray[i].pName === item.name);
+          if (pIndex >= 0) {
+            console.log('found pItem', this.newDBArray[pIndex], listArray[i].pName);
+            const newItem = await this.createMass(listArray[i].name, this.newDBArray[pIndex]);
+            this.newDBArray.push(newItem);
+            if (newItem) {
+              i++
+            }
+          } else {
+            console.log('pItem not found', listArray[i]);
+            i++;
+          }
+        }
       })
     }
+    // create large db instant code end
   }
 
 
@@ -264,6 +287,40 @@ export class ConverterPage implements OnInit {
 
     //   });
     // }
+  }
+
+  async createMass(itemName, pItem) {
+    return new Promise<string>(async (resolve, reject) => {
+
+      // const pid = this.selectedTopics[level - 2].id;
+      const gql = this.selectedTopics[pItem.dblevel + 1 - 1].createGQL;
+      const nonVietnamese = await this.nonAccentVietnamese(itemName);
+      // const nonChinese = await  pinyin(itemName, {removeTone: true, keepRest: true}); // this line for non Chinese characters
+      // const pList = [...this.selectedTopics[level - 2].options];
+      // const [pItem] = pList.filter((item) => item.id.includes(pid));
+      // console.log('parent', pid, pItem, pList);
+
+      // this.selectedTopics[level - 1].name = '';
+      await this.apollo.mutate<any>({
+        mutation: gql,
+        variables: {
+          pid: pItem.id,
+          isLeaf: false,
+          location: `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`,
+          url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, ''),
+          isVideo: pItem.isVideo,
+          name: itemName,
+        }
+      }).subscribe(async ({ data }) => {
+        const result = await _.cloneDeep(data[Object.keys(data)[0]]);
+        resolve(result);
+      }, (error) => {
+        console.log('there was an error sending the query', error);
+        // if (this._electronService.isElectronApp) {
+        //   this._electronService.ipcRenderer.invoke('error-message', 'topic-db-error');
+        // }
+      });
+    })
   }
 
 

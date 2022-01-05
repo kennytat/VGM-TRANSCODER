@@ -327,8 +327,8 @@ export class DatabasePage implements OnInit {
     if (this._electronService.isElectronApp) {
       // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
       const prefixPath = '/home/vgm/Desktop';
-      const startPoint = 0; // ipfs 299 file done
-      const endPoint = 10;
+      const startPoint = 1350; // ipfs 299 file done 1350
+      const endPoint = 1351;
       const fileType = 'audio';
       // this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint); // 'test' 'fastly' 
       this._electronService.ipcRenderer.send('cloud-to-ipfs', prefixPath, fileType, startPoint, endPoint);
@@ -674,39 +674,58 @@ export class DatabasePage implements OnInit {
     });
   }
 
-  async deleteDB() {
-    let selectedItem: any | null = null;
-    this.selectedFilesID.forEach(async (fileID) => {
-      console.log(fileID);
-
+  async getFile(fileID) {
+    return new Promise(async (resolve) => {
       for (let i = 0; i < this.updateGQL.length; i++) {
-        const item = await this.dataService.fetchLevelDB(i + 2, this.isVideo, false, fileID);
-        if (!selectedItem && item) {
-          [selectedItem] = item;
+        const item = await this.dataService.fetchLevelDB(i + 2, this.isVideo, undefined, fileID);
+        if (item && item[0]) {
+          resolve(item);
         };
       }
+    })
+  }
 
-      this.apollo.mutate<any>({
-        mutation: this.deleteGQL[selectedItem.dblevel - 2],
-        variables: { id: fileID },
-      }).subscribe(async ({ data }) => {
-        console.log('delete local DB', data);
-        const result: any = data[Object.keys(data)[0]];
-        const [pItem] = _.cloneDeep(await this.dataService.fetchLevelDB(result.dblevel - 1, result.isVideo, undefined, result.pid));
-        console.log('pItem after create new:', pItem);
-        const pItemCount = pItem.children.length - 1;
-        const updateParentOption = {
-          id: result.pid,
-          count: pItemCount,
-        };
-        await this.updateSingle(pItem.dblevel, updateParentOption);
-        // this.deleteSearch(fileID);
-      }, (error) => {
-        console.log('error deleting files', error);
-      });
+  async deleteDB() {
+    this.selectedFilesID.forEach(async (fileID) => {
+      // for (const fileID of this.selectedFilesID) {
+      try {
+        console.log(fileID);
+        const [selectedItem]: any = await this.getFile(fileID);
+        console.log('get selected Item:::::', selectedItem);
+
+        // for (let i = 0; i < this.updateGQL.length; i++) {
+        //   const item = await this.dataService.fetchLevelDB(i + 2, this.isVideo, false, fileID);
+        //   if (!selectedItem && item) {
+        //     [selectedItem] = item;
+        //   };
+        // }
+
+        await this.apollo.mutate<any>({
+          mutation: this.deleteGQL[selectedItem.dblevel - 2],
+          variables: { id: fileID },
+        }).subscribe(async ({ data }) => {
+          console.log('delete local DB', data);
+          const result: any = data[Object.keys(data)[0]];
+          const [pItem] = _.cloneDeep(await this.dataService.fetchLevelDB(result.dblevel - 1, result.isVideo, undefined, result.pid));
+          console.log('pItem after create new:', pItem);
+          const pItemCount = pItem.children.length - 1;
+          const updateParentOption = {
+            id: result.pid,
+            count: pItemCount,
+          };
+          await this.updateSingle(pItem.dblevel, updateParentOption);
+          // this.deleteSearch(fileID);
+        }, (error) => {
+          console.log('error deleting files', error);
+        });
+      } catch (error) {
+        console.log(error);
+
+      }
+      // }
     });
 
-    this.dataService.treeRefresh(this.isVideo);
+    // this.dataService.treeRefresh(this.isVideo);
     const execDoneMessage: string = `Total ${this.selectedFilesID.length} items has been deleted`;
     this.execDBDone(execDoneMessage);
   }
