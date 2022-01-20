@@ -48,6 +48,9 @@ export class Level5UpdateInput {
   hash?: string
 
   @Field((type) => String, { nullable: true })
+  khash?: string
+
+  @Field((type) => String, { nullable: true })
   qm?: string
 
   @Field((type) => Int, { nullable: true })
@@ -95,6 +98,9 @@ export class Level5CreateInput {
 
   @Field((type) => String, { nullable: true })
   hash?: string
+
+  @Field((type) => String, { nullable: true })
+  khash?: string
 
   @Field((type) => Int, { nullable: true })
   audience?: number
@@ -182,6 +188,7 @@ export class Level5Resolver {
         thumb: data.thumb,
         qm: data.qm,
         hash: data.hash,
+        khash: data.khash,
         audience: data.audience,
         mtime: data.mtime,
         viewCount: data.viewCount,
@@ -213,6 +220,7 @@ export class Level5Resolver {
         url: data.url,
         keyword: data.keyword,
         hash: data.hash,
+        khash: data.khash,
         qm: data.qm,
         audience: data.audience,
         mtime: data.mtime,

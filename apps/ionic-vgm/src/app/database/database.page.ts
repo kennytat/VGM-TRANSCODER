@@ -24,6 +24,7 @@ interface FileInfo {
   qm: string,
   url: string,
   hash: string,
+  khash: string,
   isVideo: boolean,
   dblevel: number
 }
@@ -141,11 +142,12 @@ export class DatabasePage implements OnInit {
         await this.createNewItem(fileInfo);
       })
       this._electronService.ipcRenderer.on('update-ipfs', async (event, fileInfo) => {
-        // console.log('update IPFS Hash called', fileInfo);
+        console.log('update IPFS Hash called', fileInfo);
         const variables = {
           id: fileInfo.id,
-          hash: fileInfo.hash,
-          qm: fileInfo.qm,
+          khash: fileInfo.khash,
+          // hash: fileInfo.hash,
+          // qm: fileInfo.qm,
         };
         await this.updateSingle(fileInfo.dblevel, variables);
       })
@@ -327,12 +329,12 @@ export class DatabasePage implements OnInit {
     if (this._electronService.isElectronApp) {
       // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
       const prefixPath = '/home/vgm/Desktop';
-      const startPoint = 1350; // ipfs 299 file done 1350
-      const endPoint = 1351;
-      const fileType = 'audio';
+      const startPoint = 1532; // ipfs 299 file done 1350
+      const endPoint = 10;
       // this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint); // 'test' 'fastly' 
-      this._electronService.ipcRenderer.send('cloud-to-ipfs', prefixPath, fileType, startPoint, endPoint);
+      // this._electronService.ipcRenderer.send('cloud-to-ipfs', prefixPath, fileType, startPoint, endPoint);
       // this._electronService.ipcRenderer.send('get-count');
+      this._electronService.ipcRenderer.send('xor-key-ipfs', prefixPath, startPoint, endPoint);
     }
 
     // const fileInfo = {

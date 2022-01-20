@@ -3,6 +3,7 @@ import { ElectronService } from 'ngx-electron';
 import { Apollo } from 'apollo-angular';
 import * as type from 'libs/xplat/core/src/lib/services/graphql.types';
 import { DataService } from '@vgm-converter/xplat/core';
+import * as path from 'path'
 import * as _ from 'lodash';
 interface SelectedTopic {
   level: number,
@@ -61,6 +62,9 @@ export class ConverterPage implements OnInit {
     if (this._electronService.isElectronApp) {
       this._electronService.ipcRenderer.on('create-manual', async (event, listArray) => {
         this.newDBArray = [];
+        if (this.selectedItem.name === 'Audio' || this.selectedItem.name === 'Video') {
+          this.selectedItem.url = '';
+        }
         this.newDBArray.push(this.selectedItem);
         console.log(listArray, this.newDBArray);
         let i = 0;
@@ -69,7 +73,7 @@ export class ConverterPage implements OnInit {
             listArray[i].pName = this.selectedItem.name;
             listArray[i].pid = this.selectedItem.id;
           }
-          const pIndex = this.newDBArray.findIndex(item => listArray[i].pName === item.name);
+          const pIndex = this.newDBArray.findIndex(item => path.basename(listArray[i].pName) === item.name);
           if (pIndex >= 0) {
             console.log('found pItem', this.newDBArray[pIndex], listArray[i].pName);
             const newItem = await this.createMass(listArray[i].name, this.newDBArray[pIndex]);
@@ -144,7 +148,7 @@ export class ConverterPage implements OnInit {
         pid: pid,
         isLeaf: false,
         location: `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`,
-        url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, ''),
+        url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-"),
         isVideo: this.isVideo,
         name: value,
       }
@@ -307,7 +311,7 @@ export class ConverterPage implements OnInit {
           pid: pItem.id,
           isLeaf: false,
           location: `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`,
-          url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, ''),
+          url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-"),
           isVideo: pItem.isVideo,
           name: itemName,
         }

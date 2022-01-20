@@ -18,6 +18,7 @@ type Level7 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -47,6 +48,7 @@ type Level6 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -72,6 +74,7 @@ type Level5 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -97,6 +100,7 @@ type Level4 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -122,6 +126,7 @@ type Level3 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -147,6 +152,7 @@ type Level2 {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -232,6 +238,7 @@ input Level2CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -248,6 +255,7 @@ input Level2UpdateInput {
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int
@@ -266,6 +274,7 @@ input Level3CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -282,6 +291,7 @@ input Level3UpdateInput {
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int
@@ -300,6 +310,7 @@ input Level4CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -316,6 +327,7 @@ input Level4UpdateInput {
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int
@@ -334,6 +346,7 @@ input Level5CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -350,6 +363,7 @@ input Level5UpdateInput {
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int
@@ -368,6 +382,7 @@ input Level6CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -384,6 +399,7 @@ input Level6UpdateInput {
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int
@@ -402,6 +418,7 @@ input Level7CreateInput {
   thumb: String
   qm: String
   hash: String
+  khash: String
   audience: Int
   mtime: Int
   viewCount: Int
@@ -418,6 +435,7 @@ input Level7UpdateInput {
   name: String
   keyword: String
   hash: String
+  khash: String
   qm: String
   audience: Int
   mtime: Int

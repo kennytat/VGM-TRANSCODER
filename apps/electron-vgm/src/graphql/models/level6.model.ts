@@ -50,6 +50,9 @@ export class Level6 {
   @Field((type) => String, { nullable: true })
   hash?: string
 
+  @Field((type) => String, { nullable: true })
+  khash?: string
+
   @Field((type) => Int, { nullable: true })
   audience?: number
 

@@ -35,6 +35,7 @@ export type Level2 = {
   thumb: string,
   qm: string,
   hash: string,
+  khash: string,
   audience: number,
   mtime: number,
   viewCount: number,
@@ -59,6 +60,7 @@ export type Level3 = {
   thumb: string,
   qm: string,
   hash: string,
+  khash: string,
   audience: number,
   mtime: number,
   viewCount: number,
@@ -82,6 +84,7 @@ export type Level4 = {
   thumb: string,
   qm: string,
   hash: string,
+  khash: string,
   audience: number,
   mtime: number,
   viewCount: number,
@@ -105,6 +108,7 @@ export type Level5 = {
   thumb: string,
   qm: string,
   hash: string,
+  khash: string,
   audience: number,
   mtime: number,
   viewCount: number,
@@ -128,6 +132,7 @@ export type Level6 = {
   thumb: string,
   qm: string,
   hash: string,
+  khash: string,
   audience: number,
   mtime: number,
   viewCount: number,
@@ -151,6 +156,7 @@ export type Level7 = {
   thumb: string,
   qm: string,
   hash: string,
+  khash: string,
   audience: number,
   mtime: number,
   viewCount: number,
@@ -180,6 +186,7 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          khash
           qm
           viewCount
           duration
@@ -197,6 +204,7 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          khash
           qm
           viewCount
           duration
@@ -214,6 +222,7 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          khash
           qm
           viewCount
           duration
@@ -231,6 +240,7 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          khash
           qm
           viewCount
           duration
@@ -248,6 +258,7 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          khash
           qm
           viewCount
           duration
@@ -265,6 +276,7 @@ export const ALL_DATA = gql`
           isLeaf
           keyword
           hash
+          khash
           qm
           viewCount
           duration
@@ -336,6 +348,7 @@ export const LEVEL_1_UNIQUE = gql`
           isLeaf
           keyword
           hash
+          khash
           viewCount
           duration
           size
@@ -372,6 +385,7 @@ export const LEVEL_1_QUERIES = gql`
           isLeaf
           keyword
           hash
+          khash
           viewCount
           duration
           size
@@ -400,6 +414,7 @@ export const LEVEL_2_QUERIES = gql`
         isLeaf
         keyword
         hash
+          khash
         viewCount
         duration
         size
@@ -415,6 +430,7 @@ export const LEVEL_2_QUERIES = gql`
           isLeaf
           keyword
           hash
+          khash
           viewCount
           duration
           size
@@ -443,6 +459,7 @@ export const LEVEL_3_QUERIES = gql`
         isLeaf
         keyword
         hash
+          khash
         viewCount
         duration
         size
@@ -458,6 +475,7 @@ export const LEVEL_3_QUERIES = gql`
           isLeaf
           keyword
           hash
+          khash
           viewCount
           duration
           size
@@ -486,6 +504,7 @@ export const LEVEL_4_QUERIES = gql`
         isLeaf
         keyword
         hash
+          khash
         viewCount
         duration
         size
@@ -501,6 +520,7 @@ export const LEVEL_4_QUERIES = gql`
           isLeaf
           keyword
           hash
+          khash
           viewCount
           duration
           size
@@ -529,6 +549,7 @@ export const LEVEL_5_QUERIES = gql`
         isLeaf
         keyword
         hash
+          khash
         viewCount
         duration
         size
@@ -544,6 +565,7 @@ export const LEVEL_5_QUERIES = gql`
           isLeaf
           keyword
           hash
+          khash
           viewCount
           duration
           size
@@ -572,6 +594,7 @@ export const LEVEL_6_QUERIES = gql`
         isLeaf
         keyword
         hash
+          khash
         viewCount
         duration
         size
@@ -587,6 +610,7 @@ export const LEVEL_6_QUERIES = gql`
           isLeaf
           keyword
           hash
+          khash
           viewCount
           duration
           size
@@ -615,6 +639,7 @@ export const LEVEL_7_QUERIES = gql`
         isLeaf
         keyword
         hash
+          khash
         viewCount
         duration
         size
@@ -634,6 +659,7 @@ mutation createLevel2 (
   $thumb: String,
   $qm: String,
   $hash: String,
+  $khash: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int,
@@ -653,6 +679,7 @@ mutation createLevel2 (
       thumb: $thumb,
       qm: $qm,
       hash: $hash,
+      khash: $khash,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount,
@@ -668,6 +695,7 @@ mutation createLevel2 (
     dblevel
     location
     hash
+    khash
     duration
     size
   }
@@ -686,6 +714,7 @@ mutation createLevel3 (
   $thumb: String,
   $qm: String,
   $hash: String,
+  $khash: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int,
@@ -705,6 +734,7 @@ mutation createLevel3 (
       thumb: $thumb,
       qm: $qm,
       hash: $hash,
+      khash: $khash,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount,
@@ -720,6 +750,7 @@ mutation createLevel3 (
     dblevel
     location
     hash
+    khash
     duration
     size
   }
@@ -738,6 +769,7 @@ mutation createLevel4 (
   $thumb: String,
   $qm: String,
   $hash: String,
+  $khash: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int,
@@ -757,6 +789,7 @@ mutation createLevel4 (
       thumb: $thumb,
       qm: $qm,
       hash: $hash,
+      khash: $khash,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount,
@@ -772,6 +805,7 @@ mutation createLevel4 (
     dblevel
     location
     hash
+    khash
     duration
     size
   }
@@ -790,6 +824,7 @@ mutation createLevel5 (
   $thumb: String,
   $qm: String,
   $hash: String,
+  $khash: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int,
@@ -809,6 +844,7 @@ mutation createLevel5 (
       thumb: $thumb,
       qm: $qm,
       hash: $hash,
+      khash: $khash,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount,
@@ -824,6 +860,7 @@ mutation createLevel5 (
     dblevel
     location
     hash
+    khash
     duration
     size
   }
@@ -842,6 +879,7 @@ mutation createLevel6 (
   $thumb: String,
   $qm: String,
   $hash: String,
+  $khash: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int,
@@ -861,6 +899,7 @@ mutation createLevel6 (
       thumb: $thumb,
       qm: $qm,
       hash: $hash,
+      khash: $khash,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount,
@@ -876,6 +915,7 @@ mutation createLevel6 (
     dblevel
     location
     hash
+    khash
     duration
     size
   }
@@ -894,6 +934,7 @@ mutation createLevel7 (
   $thumb: String,
   $qm: String,
   $hash: String,
+  $khash: String,
   $audience: Int,
   $mtime: Int,
   $viewCount: Int,
@@ -913,6 +954,7 @@ mutation createLevel7 (
       thumb: $thumb,
       qm: $qm,
       hash: $hash,
+      khash: $khash,
       audience: $audience,
       mtime: $mtime,
       viewCount: $viewCount,
@@ -928,6 +970,7 @@ mutation createLevel7 (
     dblevel
     location
     hash
+    khash
     duration
     size
   }
@@ -944,6 +987,7 @@ mutation updateLevel2 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $khash: String,
   $qm: String,
   $audience: Int,
   $mtime: Int,
@@ -959,6 +1003,7 @@ mutation updateLevel2 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      khash: $khash,
       qm: $qm,
       audience: $audience,
       mtime: $mtime,
@@ -975,6 +1020,7 @@ mutation updateLevel2 (
     count
     qm
     hash
+    khash
   }
 }`;
 
@@ -988,6 +1034,7 @@ mutation updateLevel3 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $khash: String,
   $qm: String,
   $audience: Int,
   $mtime: Int,
@@ -1003,6 +1050,7 @@ mutation updateLevel3 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      khash: $khash,
       qm: $qm,
       audience: $audience,
       mtime: $mtime,
@@ -1019,6 +1067,7 @@ mutation updateLevel3 (
     count
     qm
     hash
+    khash
   }
 }`;
 
@@ -1032,6 +1081,7 @@ mutation updateLevel4 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $khash: String,
   $qm: String,
   $audience: Int,
   $mtime: Int,
@@ -1047,6 +1097,7 @@ mutation updateLevel4 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      khash: $khash,
       qm: $qm,
       audience: $audience,
       mtime: $mtime,
@@ -1063,6 +1114,7 @@ mutation updateLevel4 (
     count
     qm
     hash
+    khash
   }
 }`;
 
@@ -1076,6 +1128,7 @@ mutation updateLevel5 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $khash: String,
   $qm: String,
   $audience: Int,
   $mtime: Int,
@@ -1091,6 +1144,7 @@ mutation updateLevel5 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      khash: $khash,
       qm: $qm,
       audience: $audience,
       mtime: $mtime,
@@ -1107,6 +1161,7 @@ mutation updateLevel5 (
     count
     qm
     hash
+    khash
   }
 }`;
 
@@ -1120,6 +1175,7 @@ mutation updateLevel6 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $khash: String,
   $qm: String,
   $audience: Int,
   $mtime: Int,
@@ -1135,6 +1191,7 @@ mutation updateLevel6 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      khash: $khash,
       qm: $qm,
       audience: $audience,
       mtime: $mtime,
@@ -1151,6 +1208,7 @@ mutation updateLevel6 (
     count
     qm
     hash
+    khash
   }
 }`;
 
@@ -1164,6 +1222,7 @@ mutation updateLevel7 (
   $url: String,
   $keyword: String,
   $hash: String,
+  $khash: String,
   $qm: String,
   $audience: Int,
   $mtime: Int,
@@ -1179,6 +1238,7 @@ mutation updateLevel7 (
       url: $url,
       keyword: $keyword,
       hash: $hash,
+      khash: $khash,
       qm: $qm,
       audience: $audience,
       mtime: $mtime,
@@ -1195,6 +1255,7 @@ mutation updateLevel7 (
     count
     qm
     hash
+    khash
   }
 }`;
 

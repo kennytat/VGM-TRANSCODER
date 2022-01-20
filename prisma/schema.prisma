@@ -56,6 +56,7 @@ model Level2 {
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
@@ -88,6 +89,7 @@ model Level3 {
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
@@ -118,6 +120,7 @@ model Level4 {
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
@@ -148,6 +151,7 @@ model Level5 {
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
@@ -178,6 +182,7 @@ model Level6 {
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
@@ -208,6 +213,7 @@ model Level7 {
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?

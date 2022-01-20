@@ -398,46 +398,186 @@ try {
     }
   })
 
-  // ipcMain.on('get-count', async (event) => {
-  //   const processFile = async (file: string) => {
-  //     console.log(file);
-  //     return new Promise(async (resolve) => {
-  //       const jsonString = await fs.readFileSync(file, { encoding: 'utf8' });
-  //       let fileInfo: any = JSON.parse(jsonString);
-  //       fileInfo.count = fileInfo.children.length;
-  //       delete fileInfo.children;
-  //       event.sender.send('update-count', fileInfo);
-  //       resolve(true)
-  //     })
-  //   };
+  ipcMain.on('get-count', async (event) => {
+    const processFile = async (file: string) => {
+      console.log(file);
+      return new Promise(async (resolve) => {
+        const jsonString = await fs.readFileSync(file, { encoding: 'utf8' });
+        let fileInfo: any = JSON.parse(jsonString);
 
-  //   // start script here
-  //   const raw = execSync(`find '/home/vgm/Desktop/database/API/topics/list' -type f -name '*.json'`, { encoding: 'utf8' });
+        const ls = spawn('ls', ['.']);
+        ls.on('close', (code) => {
+          if (fileInfo.children[0]) {
+            fileInfo.count = fileInfo.children.length;
+            resolve(fileInfo);
+          } else {
+            console.log(fileInfo);
+            resolve(false);
+          }
+        });
+      })
+    };
 
-  //   if (raw) {
-  //     let list = raw.split('\n');
-  //     list.pop();
-  //     // list.reverse();
-  //     console.log('total files', list.length);
-  //     // let i = startPoint;
-  //     for (let i = 0; i < list.length; i++) { // list.length or endPoint
-  //       (async () => {
-  //         queue.add(async () => {
-  //           await processFile(list[i]);
-  //           console.log('processed files', i);
-  //         });
-  //       })();
-  //     }
-  //   }
 
-  // })
+    // start script here
+    const raw = execSync(`find '/home/vgm/Desktop/database/API/topics/list' -type f -name '*.json'`, { encoding: 'utf8' });
+
+    if (raw) {
+      queue.concurrency = 1;
+      let list = raw.split('\n');
+      list.pop();
+      // list.reverse();
+      console.log('total files', list.length);
+      // let i = startPoint;
+      for (let i = 0; i < list.length; i++) { // list.length or endPoint
+        (async () => {
+          queue.add(async () => {
+            const result = await processFile(list[i]);
+            // const delayTime = Math.random() * 300;
+            if (result) {
+              event.sender.send('update-count', result);
+            }
+            console.log('processed files', i);
+
+          });
+        })();
+      }
+    }
+
+  })
+
+  ipcMain.on('xor-key-ipfs', async (event, prefix, startPoint, endPoint) => {
+    try {
+      queue.concurrency = 40;
+      const txtPath = `${prefix}/database/VGMSingle.txt`;
+      const originalTemp = `${prefix}/database/tmp`;
+      const apiPath = `${prefix}/database/API/items/single`;
+
+      const downloadConverted = async (fileLocation, outPath) => {
+        console.log('download converted file', `${fileLocation}`, `${outPath}/`);
+        return new Promise(async (resolve) => {
+          const rclone = spawn('rclone', ['copy', '--progress', `${fileLocation}`, `${outPath}/`]);
+          rclone.stdout.on('data', async (data) => {
+            console.log(`rclone download converted stdout: ${data}`);
+          });
+          rclone.stderr.on('data', async (data) => {
+            console.log(`Stderr: ${data}`);
+          });
+          rclone.on('close', async (code) => {
+            console.log(`download converted file done with code:`, code);
+            resolve(true);
+          })
+        });
+      }
+
+      const uploadIPFS = async (dir) => {
+        console.log('uploadIPFS', `${dir}`);
+        return new Promise(async (resolve) => {
+          let cid;
+          const ls = spawn('ipfs-cluster-ctl', ['add', '-Q', dir]);
+          ls.stdout.on('data', (data) => {
+            console.log(`got QMMM: ${data}`);
+            if (data) {
+              cid = data.toString().split('\n')[0];
+            }
+          });
+          ls.on('close', (code) => {
+            resolve(cid);
+            console.log(`child process exited with code ${code}`);
+          });
+        });
+      }
+
+      const processFile = async (file: string) => {
+        console.log(file);
+        return new Promise(async (resolve) => {
+
+          try {
+            const jsonString = await fs.readFileSync(`${apiPath}/${file}.json`, { encoding: 'utf8' });
+            let fileInfo: any = JSON.parse(jsonString);
+            // console.log('old file info', fileInfo);
+            const convertedPath = fileInfo.isVideo ? `VGM-Converted:vgmencrypted/encrypted/VGMV` : `VGM-Converted:vgmencrypted/encrypted/VGMA`;
+            const cloudPath = file.replace(/\./g, '\/');
+            const fileDir = `${originalTemp}/${file}`; // cloudPath or file
+            const fileExist = await execSync(`rclone lsf '${convertedPath}/${cloudPath}/key.vgmk'`, { encoding: 'utf8' }) ? true : false;
+            console.log('file Existtttt:', fileExist);
+            if (fileExist) {
+              const m3u8Name = fileInfo.isVideo ? '480p.m3u8' : '128p.m3u8';
+              const keyPath = `${fileDir}/${m3u8Name}`;
+              await downloadConverted(`${convertedPath}/${cloudPath}/${m3u8Name}`, fileDir);
+              await downloadConverted(`${convertedPath}/${cloudPath}/key.vgmk`, fileDir);
+              const reader = new M3U8FileParser();
+              const segment = await fs.readFileSync(keyPath, { encoding: 'utf-8' });
+              reader.read(segment);
+              const m3u8 = reader.getResult();
+              const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
+              // get buffer from key and iv
+              const code = Buffer.from(secret);
+              const key: Buffer = await fs.readFileSync(`${fileDir}/key.vgmk`);
+              const encrypted = bitwise.buffer.xor(key, code, false);
+              console.log(secret, key, encrypted);
+              await fs.writeFileSync(`${fileDir}/key.vgmk`, encrypted, { encoding: 'binary' });
+              console.log('xor key finished!!!');
+              const cid = await uploadIPFS(`${fileDir}/key.vgmk`);
+              // console.log('cid from ipfs', cid);
+              const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+              fileInfo.khash = CryptoJS.AES.encrypt(cid.toString(), secretKey).toString();
+              console.log('updated fileInfo', fileInfo);
+              const ls = spawn('echo', ['hello']);
+              ls.on('close', async (code) => {
+                event.sender.send('update-ipfs', fileInfo);
+              });
+              if (fileInfo.khash) {
+                await fs.rmdir(fileDir, { recursive: true }, () => {
+                  console.log("Folder Deleted!");
+                  resolve(true)
+                });
+              }
+            } else {
+              resolve(false)
+            }
+          } catch (error) {
+            resolve(false)
+            console.log(error);
+          }
+        })
+      };
+
+      // start script here
+      const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
+
+      if (raw) {
+        let list = raw.split('\n');
+        list.pop();
+        // list.reverse();
+        console.log('total files', list.length);
+        // let i = startPoint;
+        for (let i = startPoint; i < list.length; i++) { // list.length or endPoint
+          (async () => {
+            queue.add(async () => {
+              const result = await processFile(list[i]);
+              console.log('processed files', i);
+              if (result) {
+                await fs.appendFileSync(`${prefix}/database/xor-key-ipfs-count.txt`, `\n${i}`);
+              } else {
+                await fs.appendFileSync(`${prefix}/database/xor-key-ipfs-count.txt`, `\n${i}-notfound: ${list[i]}`);
+              }
+            });
+          })();
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+  })
 
   ipcMain.on('cloud-to-ipfs', async (event, prefix, fileType, startPoint, endPoint) => {
     try {
       let VGM;
       if (fileType === 'audio') {
         VGM = 'VGMA';
-        queue.concurrency = 1;
+        queue.concurrency = 10;
       } else if (fileType === 'video') {
         VGM = 'VGMV';
         queue.concurrency = 1;
@@ -475,11 +615,33 @@ try {
         });
       }
 
+      const checkFileIsFull = async (outPath) => {
+        return new Promise(async (resolve) => {
+          const keyPath = `${outPath}/key.vgmk`;
+          const m3u8Path = `${outPath}/128p.m3u8`;
+          if (fs.existsSync(outPath) && fs.existsSync(keyPath) && fs.existsSync(m3u8Path)) {
+            const reader = new M3U8FileParser();
+            const segment = await fs.readFileSync(m3u8Path, { encoding: 'utf-8' });
+            reader.read(segment);
+            const m3u8 = reader.getResult();
+            for await (const segment of m3u8.segments) {
+              if (!fs.existsSync(`${outPath}/${segment.url}`)) {
+                resolve(false);
+                break;
+              }
+            }
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        })
+      }
+
       const downloadConverted = async (fileLocation, outPath) => {
         console.log('download converted file', `${convertedPath}/${fileLocation}/`, `${outPath}/`);
         return new Promise(async (resolve) => {
           const startDownload = () => {
-            const rclone = spawn('rclone', ['copy', '--progress', `${convertedPath}/${fileLocation}/`, `${outPath}/`]);
+            const rclone = spawn('rclone', ['copy', '--progress', '--no-update-modtime', `${convertedPath}/${fileLocation}/`, `${outPath}/`]);
             rclone.stdout.on('data', async (data) => {
               console.log(`rclone download converted stdout: ${data}`);
             });
@@ -491,20 +653,10 @@ try {
               resolve(true);
             })
           }
-          const keyPath = `${outPath}/key.vgmk`;
-          const m3u8Path = `${outPath}/128p.m3u8`;
-          if (fs.existsSync(outPath) && fs.existsSync(keyPath) && fs.existsSync(m3u8Path)) {
-            const reader = new M3U8FileParser();
-            const segment = await fs.readFileSync(m3u8Path, { encoding: 'utf-8' });
-            reader.read(segment);
-            const m3u8 = reader.getResult();
-            for (const segment of m3u8.segments) {
-              if (!fs.existsSync(`${outPath}/${segment.url}`)) {
-                startDownload();
-              } else {
-                resolve(true);
-              }
-            }
+          const fileIsFull = await checkFileIsFull(outPath);
+          console.log('fileIsFull:', fileIsFull);
+          if (fileIsFull) {
+            resolve(true);
           } else {
             startDownload();
           }
@@ -590,7 +742,7 @@ try {
         // list.reverse();
         console.log('total files', list.length);
         // let i = startPoint;
-        for (let i = startPoint; i < endPoint; i++) { // list.length or endPoint
+        for (let i = startPoint; i < list.length; i++) { // list.length or endPoint
           (async () => {
             queue.add(async () => {
               const result = await processFile(list[i]);
@@ -672,6 +824,24 @@ try {
       });
     }
 
+    const uploadIPFS = async (dir) => {
+      console.log('uploadIPFS', `${dir}`);
+      return new Promise(async (resolve) => {
+        let cid;
+        const ls = spawn('ipfs-cluster-ctl', ['add', '-r', '-Q', dir]);
+        ls.stdout.on('data', (data) => {
+          console.log(`got QMMM: ${data}`);
+          if (data) {
+            cid = data.toString().split('\n')[0];
+          }
+        });
+        ls.on('close', (code) => {
+          resolve(cid);
+          console.log(`child process exited with code ${code}`);
+        });
+      });
+    }
+
     const convertFile = async (file: string, fType: string, pItem, argOutPath) => {
       return new Promise((resolve) => {
         let fileInfo: FileInfo = { pid: '', location: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', isVideo: false, dblevel: 0 };
@@ -748,15 +918,8 @@ try {
           try {
             // get iv info
             const reader = new M3U8FileParser();
-            let keyPath: string;
-            let VGM: string;
-            if (fType === 'audio') {
-              keyPath = `${outPath}/128p.m3u8`;
-              VGM = 'VGMA';
-            } else if (fType === 'video' || fType === 'videoSilence') {
-              keyPath = `${outPath}/480p.m3u8`;
-              VGM = 'VGMV';
-            }
+            const keyPath = fType === 'audio' ? `${outPath}/128p.m3u8` : fType === 'video' ? `${outPath}/480p.m3u8` : '';
+            const VGM = fType === 'audio' ? 'VGMA' : fType === 'video' ? 'VGMV' : '';
             const segment = await fs.readFileSync(keyPath, { encoding: 'utf-8' });
             reader.read(segment);
             const m3u8 = reader.getResult();
@@ -770,12 +933,20 @@ try {
             // upload converted to s3
             const upConvertedPath = `${rcloneConfig.encrypted}/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`;
             await upConverted(`${outPath}`, upConvertedPath);
-            // convertedFiles++;
-            // await upConverted(outPath, upConvertedPath);
+            if (fType === 'audio') {
+              const cid: any = await uploadIPFS(outPath);
+              console.log('cid from ipfs', cid);
+              fileInfo.qm = cid.toString();
+              const secretKey = slice(0, 32, `${fileInfo.url}gggggggggggggggggggggggggggggggg`);
+              fileInfo.hash = CryptoJS.AES.encrypt(fileInfo.qm, secretKey).toString();
+              console.log('updated fileInfo', fileInfo);
+            }
             // await fs.rmdirSync(outPath, { recursive: true });
             // console.log('removed converted folder');
 
             // // upload ipfs
+
+
             // if (ipfsClient) {
             //   console.log('uploading ipfs');
             //   // monitor ipfs uploading time
