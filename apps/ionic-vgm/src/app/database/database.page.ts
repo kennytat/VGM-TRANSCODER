@@ -9,11 +9,15 @@ import * as type from 'libs/xplat/core/src/lib/services/graphql.types';
 import { DataService } from '@vgm-converter/xplat/core';
 import * as _ from 'lodash';
 import { MeiliSearch } from 'meilisearch';
-
+import Pqueue from 'p-queue';
+const queue = new Pqueue({ concurrency: 100 });
 const client = new MeiliSearch({
   host: 'http://search.hjm.bid', // 'http://search.hjm.bid'
   apiKey: '', // 'KYV2oMHSE5G2p9ZXwUGH3CfWpaXB1CF5'
 })
+queue.on('idle', async () => {
+  console.log(`Queue is idle.  Size: ${queue.size}  Pending: ${queue.pending}`);
+});
 
 interface FileInfo {
   pid: string,
@@ -45,14 +49,6 @@ export class DatabasePage implements OnInit {
     type.CREATE_LEVEL_6,
     type.CREATE_LEVEL_7,
   ];
-  updateGQL: any[] = [
-    type.UPDATE_LEVEL_2,
-    type.UPDATE_LEVEL_3,
-    type.UPDATE_LEVEL_4,
-    type.UPDATE_LEVEL_5,
-    type.UPDATE_LEVEL_6,
-    type.UPDATE_LEVEL_7,
-  ]
   deleteGQL: any[] = [
     type.DELETE_LEVEL_2,
     type.DELETE_LEVEL_3,
@@ -145,11 +141,11 @@ export class DatabasePage implements OnInit {
         console.log('update IPFS Hash called', fileInfo);
         const variables = {
           id: fileInfo.id,
-          khash: fileInfo.khash,
-          // hash: fileInfo.hash,
-          // qm: fileInfo.qm,
+          // khash: fileInfo.khash,
+          hash: fileInfo.hash,
+          qm: fileInfo.qm,
         };
-        await this.updateSingle(fileInfo.dblevel, variables);
+        await this.dataService.updateSingle(fileInfo.dblevel, variables);
       })
       this._electronService.ipcRenderer.on('update-count', async (event, fileInfo) => {
         console.log('update count called', fileInfo);
@@ -157,7 +153,7 @@ export class DatabasePage implements OnInit {
           id: fileInfo.id,
           count: fileInfo.count
         };
-        await this.updateSingle(fileInfo.dblevel, variables);
+        await this.dataService.updateSingle(fileInfo.dblevel, variables);
       })
     }
   }
@@ -214,7 +210,7 @@ export class DatabasePage implements OnInit {
         isLeaf: true,
         count: pItemCount,
       };
-      await this.updateSingle(pItem.dblevel, updateParentOption);
+      await this.dataService.updateSingle(pItem.dblevel, updateParentOption);
     }, (error) => {
       console.log('error creating new item', error);
     });
@@ -259,20 +255,20 @@ export class DatabasePage implements OnInit {
   //   })
   // }
 
-  async updateSingle(dblevel, options) {
-    return new Promise((resolve) => {
-      this.apollo.mutate<any>({
-        mutation: this.updateGQL[dblevel - 2],
-        variables: options,
-        fetchPolicy: 'network-only',
-      }).subscribe(({ data }) => {
-        console.log(data);
-        resolve('done');
-      }, (error) => {
-        console.log('error updating single item', error);
-      });
-    })
-  }
+  // async updateSingle(dblevel, options) {
+  //   return new Promise((resolve) => {
+  //     this.apollo.mutate<any>({
+  //       mutation: this.updateGQL[dblevel - 2],
+  //       variables: options,
+  //       fetchPolicy: 'network-only',
+  //     }).subscribe(({ data }) => {
+  //       console.log(data);
+  //       resolve('done');
+  //     }, (error) => {
+  //       console.log('error updating single item', error);
+  //     });
+  //   })
+  // }
 
 
   refreshDB() {
@@ -317,24 +313,35 @@ export class DatabasePage implements OnInit {
     //   console.log(error);
     // }
 
-    // test instant update item 
+    // // test instant create item 
     // const item = {
-    //   "dblevel": 4,
-    //   "pid": "3d54f517-3db5-49e0-b786-b7d9a4796f9c",
+    //   pid: '9d9be977-4407-4097-bfd6-b02af3b27c80',
+    //   location: '/VGMV/03_HoatHinh/HoatHinh-2D/HoatHinh2D-bo/TimHieuThanhKinh/01-PhucAmMa-thi-o/TTBMat03_SuKhayDongTuCacNhaThongThai',
+    //   name: 'TTBMat03_Sự Khấy Động Từ Các Nhà Thông Thái',
+    //   size: 213499477,
+    //   duration: '3:19',
+    //   qm: '',
+    //   url: '03-hoat-hinh.hoat-hinh-2d.hoat-hinh-2d-bo.tim-hieu-thanh-kinh.01-phuc-am-ma-thi-o.ttbmat03-su-khay-dong-tu-cac-nha-thong-thai',
+    //   hash: '',
+    //   khash: 'U2FsdGVkX1/o3AVKfVs0LKVe6XFK0vVrWsjMIxQBI/1BJTvT9emgk1bSEia5WxvLR5oUPMi+DPFGanBQjGuSmA==',
+    //   isVideo: true,
+    //   dblevel: 7
     // }
-    // await this.updateIsLeaf(item);
+    // await this.createNewItem(item);
 
 
-    // convert instance code
+    // // convert instance code
     if (this._electronService.isElectronApp) {
       // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
       const prefixPath = '/home/vgm/Desktop';
-      const startPoint = 1532; // ipfs 299 file done 1350
-      const endPoint = 10;
+      const startPoint = 0; // ipfs 299 file done 1350
+      const endPoint = 1000;
       // this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint); // 'test' 'fastly' 
       // this._electronService.ipcRenderer.send('cloud-to-ipfs', prefixPath, fileType, startPoint, endPoint);
       // this._electronService.ipcRenderer.send('get-count');
-      this._electronService.ipcRenderer.send('xor-key-ipfs', prefixPath, startPoint, endPoint);
+      // this._electronService.ipcRenderer.send('xor-key-ipfs', prefixPath, startPoint, endPoint);
+      // this._electronService.ipcRenderer.send('ipfs-hash-to-db', prefixPath, startPoint, endPoint);
+      this._electronService.ipcRenderer.send('ipfs-unpin', prefixPath, startPoint, endPoint);
     }
 
     // const fileInfo = {
@@ -350,8 +357,7 @@ export class DatabasePage implements OnInit {
     //   dblevel: 5
     // }
 
-    // this.updateIsLeaf(fileInfo);
-    // this.createNewItem(fileInfo);
+
   }
 
   async exportAPI() {
@@ -361,28 +367,56 @@ export class DatabasePage implements OnInit {
           // // export itemList
           const itemList: any = await this.getAllDB(this.isVideo, true);
           await itemList.forEach(async item => {
-            await this._electronService.ipcRenderer.invoke('export-database', 'web', item, outpath, 'itemList');
+            (async () => {
+              await queue.add(async () => {
+                await this._electronService.ipcRenderer.invoke('export-database', 'web', item, outpath, 'itemList');
+              });
+            })();
           });
+
           // // export itemSingle
           const itemSingle: any = await this.getAllDB(this.isVideo, null);
           await itemSingle.forEach(async item => {
-            await this._electronService.ipcRenderer.invoke('export-database', 'web', item, outpath, 'itemSingle')
+            (async () => {
+              await queue.add(async () => {
+                await this._electronService.ipcRenderer.invoke('export-database', 'web', item, outpath, 'itemSingle')
+              });
+            })();
           });
           // export topicList
           const nonLeafList: any = await this.getAllDB(this.isVideo, false);
           const topicList = nonLeafList.concat(itemList);
           await topicList.forEach(async item => {
-            await this._electronService.ipcRenderer.invoke('export-database', 'web', item, outpath, 'topicList');
+            (async () => {
+              await queue.add(async () => {
+                await this._electronService.ipcRenderer.invoke('export-database', 'web', item, outpath, 'topicList');
+              });
+            })();
           });
           // export topicSingle
           await topicList.forEach(async item => {
-            const topic = _.cloneDeep(item);
-            delete topic.children;
-            await this._electronService.ipcRenderer.invoke('export-database', 'web', topic, outpath, 'topicSingle');
+            (async () => {
+              await queue.add(async () => {
+                const topic = _.cloneDeep(item);
+                delete topic.children;
+                await this._electronService.ipcRenderer.invoke('export-database', 'web', topic, outpath, 'topicSingle');
+              });
+            })();
           });
           // export searchAPI
-          const searchList = itemSingle.filter(el => !/^(06-phim)/.test(el.url));
-          await this._electronService.ipcRenderer.invoke('export-database', 'web', searchList, outpath, 'searchAPI', this.isVideo);
+          (async () => {
+            await queue.add(async () => {
+              const searchList = itemSingle.filter(el => !/^(06-phim)/.test(el.url));
+              await this._electronService.ipcRenderer.invoke('export-database', 'web', searchList, outpath, 'searchAPI', this.isVideo);
+            });
+          })();
+          // export API Version
+          (async () => {
+            await queue.add(async () => {
+              const version = { version: Date.now() };
+              await this._electronService.ipcRenderer.invoke('export-database', 'web', version, outpath, 'apiVersion', this.isVideo);
+            });
+          })();
         }
       })
     }
@@ -396,62 +430,94 @@ export class DatabasePage implements OnInit {
           const itemList: any = await this.getAllDB(this.isVideo, true);
           await itemList.forEach(async item => {
             const list = _.cloneDeep(item);
-            const exportList = {
-              id: list.id,
-              name: list.name,
-              url: list.url,
-              isLeaf: list.isLeaf,
-              list: list.children.map((item) => ({
-                id: item.id,
-                name: item.name,
-                url: item.url,
-                hash: item.hash
-              }))
-            }
-            // console.log(exportList);
-            await this._electronService.ipcRenderer.invoke('export-database', 'speaker', exportList, outpath, 'itemList');
+            (async () => {
+              await queue.add(async () => {
+                const exportList = {
+                  id: list.id,
+                  name: list.name,
+                  url: list.url,
+                  isLeaf: list.isLeaf,
+                  list: list.children.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    url: item.url,
+                    hash: item.hash
+                  }))
+                }
+                // console.log(exportList);
+                await this._electronService.ipcRenderer.invoke('export-database', 'speaker', exportList, outpath, 'itemList');
+              });
+            })();
           });
           // // export itemSingle
           const itemSingle: any = await this.getAllDB(this.isVideo, null);
           await itemSingle.forEach(async item => {
             const list = _.cloneDeep(item);
-            const exportList = {
-              id: list.id,
-              name: list.name,
-              url: list.url,
-              hash: list.hash
-            }
-            await this._electronService.ipcRenderer.invoke('export-database', 'speaker', exportList, outpath, 'itemSingle')
+            (async () => {
+              await queue.add(async () => {
+                const exportList = {
+                  id: list.id,
+                  name: list.name,
+                  url: list.url,
+                  hash: list.hash
+                }
+                await this._electronService.ipcRenderer.invoke('export-database', 'speaker', exportList, outpath, 'itemSingle')
+              });
+            })();
           });
           // export topicList
           const nonLeafList: any = await this.getAllDB(this.isVideo, false);
           const topicList = nonLeafList.concat(itemList);
           await topicList.forEach(async item => {
             const list = _.cloneDeep(item);
-            const exportList = {
-              id: list.id,
-              name: list.name,
-              url: list.url,
-              isLeaf: list.isLeaf,
-              list: list.children.map((item) => ({
-                id: item.id,
-                name: item.name,
-                url: item.url,
-                isLeaf: item.isLeaf
-              }))
-            }
-            await this._electronService.ipcRenderer.invoke('export-database', 'speaker', exportList, outpath, 'topicList');
+            (async () => {
+              await queue.add(async () => {
+                const exportList = {
+                  id: list.id,
+                  name: list.name,
+                  url: list.url,
+                  isLeaf: list.isLeaf,
+                  list: list.children.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    url: item.url,
+                    isLeaf: item.isLeaf
+                  }))
+                }
+                await this._electronService.ipcRenderer.invoke('export-database', 'speaker', exportList, outpath, 'topicList');
+              });
+            })();
           });
           // export topicSingle
           await topicList.forEach(async item => {
             const list = _.cloneDeep(item);
-            const exportList = {
-              id: list.id,
-              name: list.name,
-              url: list.url,
-              isLeaf: list.isLeaf,
-            }
-            await this._electronService.ipcRenderer.invoke('export-database', 'speaker', exportList, outpath, 'topicSingle');
+            (async () => {
+              await queue.add(async () => {
+                const exportList = {
+                  id: list.id,
+                  name: list.name,
+                  url: list.url,
+                  isLeaf: list.isLeaf,
+                }
+                await this._electronService.ipcRenderer.invoke('export-database', 'speaker', exportList, outpath, 'topicSingle');
+              });
+            })();
+          });
+          await queue.onEmpty().then(async () => {
+            console.log('7. Queue is empty');
+            let apiJson = await fetch('http://find.hjm.bid').then(async (response) => await (await response.clone()).json());
+            console.log('apiJson', apiJson);
+            await this._electronService.ipcRenderer.invoke('export-database', 'speaker', apiJson, outpath, 'apiJson');
+            await this._electronService.ipcRenderer.invoke('add-ipfs', `${outpath}/API-speaker`).then(async (hash) => {
+              apiJson.version += 1;
+              apiJson.api = hash;
+              await this._electronService.ipcRenderer.invoke('export-database', 'speaker', apiJson, outpath, 'apiJson');
+              await this._electronService.ipcRenderer.invoke('add-ipfs', `${outpath}/API-speaker/instruction.json`).then(async (apiHash) => {
+                const updateDNS = await this._electronService.ipcRenderer.invoke('update-dns', apiHash);
+                console.log('Update DNS Status:', apiHash, '\n', updateDNS);
+              })
+            });
+
           });
         }
       })
@@ -461,111 +527,16 @@ export class DatabasePage implements OnInit {
   async getAllDB(isVideo, isLeaf) {
     return new Promise(async (resolve) => {
       let files: any[] = [];
-      for (let i = 0; i < this.updateGQL.length; i++) {
+      for (let i = 0; i < this.dataService.updateGQL.length; i++) {
         await this.dataService.fetchLevelDB(i + 1, isVideo, isLeaf).then((list) => {
           files = files.concat(list);
-          if (i === this.updateGQL.length - 1) {
+          if (i === this.dataService.updateGQL.length - 1) {
             resolve(files);
           }
         })
       }
     });
   }
-
-  // async getAllItem(isVideo) {
-  //   return new Promise(async (resolve) => {
-  //     let files: any[] = [];
-  //     for (let i = 0; i < this.updateGQL.length; i++) {
-  //       await this.dataService.fetchLevelDB(i + 2, isVideo, null).then((list) => {
-  //         files = files.concat(list);
-  //         if (i === this.updateGQL.length - 1) {
-  //           resolve(files);
-  //         }
-  //       })
-  //     }
-  //   });
-  // }
-
-  // async getAllIsLeaf(isVideo) {
-  //   return new Promise(async (resolve) => {
-  //     let files: any[] = [];
-  //     for (let i = 0; i < this.updateGQL.length; i++) {
-  //       await this.dataService.fetchLevelDB(i + 2, isVideo, true).then((list) => {
-  //         // console.log(i, list);
-  //         files = files.concat(list);
-  //         if (i === this.updateGQL.length - 1) {
-  //           // console.log(i);
-  //           resolve(files);
-  //         }
-  //       })
-  //     }
-  //   });
-  // }
-
-  // async getAllNonLeaf(isVideo) {
-  //   return new Promise(async (resolve) => {
-  //     let files: any[] = [];
-  //     for (let i = 0; i < this.updateGQL.length; i++) {
-  //       await this.dataService.fetchLevelDB(i + 2, isVideo, false).then((list) => {
-  //         files = files.concat(list);
-  //         if (i === this.updateGQL.length - 1) {
-  //           resolve(files);
-  //         }
-  //       })
-  //     }
-  //   });
-  // }
-
-  // async getAllIsLeaf(isVideo) {
-  //   let lists: any[] = [];
-  //   let db: any[];
-  //   if (isVideo) {
-  //     db = this.dataService.videoDB;
-  //   } else {
-  //     db = this.dataService.audioDB;
-  //   }
-  //   db.forEach(function getItem(item) {
-  //     if (item.isLeaf === true) {
-  //       lists.push(item);
-  //     }
-  //     if (item.children.length >= 1) {
-  //       item.children.forEach(getItem)
-  //     }
-  //   });
-  //   return lists;
-  // }
-
-  // getAllNonLeaf(isVideo) {
-  //   let lists: any[] = [];
-  //   let db: any[];
-  //   if (isVideo) {
-  //     db = this.dataService.videoDB
-  //   } else {
-  //     db = this.dataService.audioDB
-  //   }
-
-  //   db.forEach(function getItem(item) {
-  //     if (item.isLeaf === false) {
-  //       lists.push(item);
-  //     }
-  //     if (item.children.length >= 1) {
-  //       item.children.filter(getItem)
-  //     }
-  //   });
-
-  //   // lists.forEach((item) => {
-  //   //   if (item.children[0]) {
-  //   //     item.children.forEach(elem => {
-  //   //       console.log(elem);
-
-  //   //       // if (elem.children[0]) {
-  //   //       //   elem.children = []
-  //   //       // }
-  //   //     });
-  //   //   }
-  //   // })
-  //   return lists;
-  // }
 
   treeSelectedChange(ids) {
     this.selectedFilesID = ids;
@@ -587,6 +558,16 @@ export class DatabasePage implements OnInit {
   treeFilterChange(event: string) {
     console.log('filter:', event);
   }
+
+
+  getQm(url: string, hash: string) {
+    const secretKey = slice(0, 32, `${url}gggggggggggggggggggggggggggggggg`);
+    const decrypted = CryptoJS.AES.decrypt(hash, secretKey);
+    const qm = decrypted.toString(CryptoJS.enc.Utf8);
+    console.log('getHash:', url, hash, qm);
+    return qm;
+  };
+
 
   checkFilter(value, check) {
     switch (value) {
@@ -652,7 +633,7 @@ export class DatabasePage implements OnInit {
     console.log('function to update db');
     this.selectedFileInfo.forEach(item => {
       this.apollo.mutate<any>({
-        mutation: this.updateGQL[item.dblevel - 2],
+        mutation: this.dataService.updateGQL[item.dblevel - 2],
         variables: {
           id: item.id,
           isLeaf: item.isLeaf,
@@ -678,7 +659,7 @@ export class DatabasePage implements OnInit {
 
   async getFile(fileID) {
     return new Promise(async (resolve) => {
-      for (let i = 0; i < this.updateGQL.length; i++) {
+      for (let i = 0; i < this.dataService.updateGQL.length; i++) {
         const item = await this.dataService.fetchLevelDB(i + 2, this.isVideo, undefined, fileID);
         if (item && item[0]) {
           resolve(item);
@@ -695,7 +676,7 @@ export class DatabasePage implements OnInit {
         const [selectedItem]: any = await this.getFile(fileID);
         console.log('get selected Item:::::', selectedItem);
 
-        // for (let i = 0; i < this.updateGQL.length; i++) {
+        // for (let i = 0; i < this.dataService.updateGQL.length; i++) {
         //   const item = await this.dataService.fetchLevelDB(i + 2, this.isVideo, false, fileID);
         //   if (!selectedItem && item) {
         //     [selectedItem] = item;
@@ -715,7 +696,7 @@ export class DatabasePage implements OnInit {
             id: result.pid,
             count: pItemCount,
           };
-          await this.updateSingle(pItem.dblevel, updateParentOption);
+          await this.dataService.updateSingle(pItem.dblevel, updateParentOption);
           // this.deleteSearch(fileID);
         }, (error) => {
           console.log('error deleting files', error);

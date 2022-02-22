@@ -106,9 +106,13 @@ export class ConverterPage implements OnInit {
     } else if (itemID === '1') {
       this.selectedTopics[level - 1].id = '1';
     } else {
+      // console.log(this.selectedTopics[level - 1], this.selectedTopics[level]);
+
       this.selectedTopics[level - 1].id = itemID;
-      this.selectedTopics[level].id = '0';
-      this.selectedTopics[level].options = [];
+      if (level !== this.selectedTopics.length) {
+        this.selectedTopics[level].id = '0';
+        this.selectedTopics[level].options = [];
+      }
       const options: any = await this.getOptions(level, this.isVideo, itemID);
       if (typeof options[0] != 'undefined') {
         this.selectedItem = _.cloneDeep(options[0]);
@@ -118,10 +122,11 @@ export class ConverterPage implements OnInit {
       if (this.selectedItem.children && this.selectedItem.children.length > 0 && this.selectedItem.isLeaf === false) {
         this.selectedTopics[level].options = this.selectedItem.children;
       }
-      console.log('selected', this.selectedItem, this.selectedTopics[level]);
+      console.log('selected', this.selectedItem);
     }
 
   }
+
 
   async getOptions(level, isVideo, id) {
     return new Promise(async (resolve) => {
@@ -154,6 +159,16 @@ export class ConverterPage implements OnInit {
       }
     }).subscribe(async ({ data }) => {
       const result = data[Object.keys(data)[0]];
+      // update parent count
+      const [pItem] = _.cloneDeep(await this.dataService.fetchLevelDB(result.dblevel - 1, result.isVideo, undefined, result.pid));
+      console.log('pItem after create new:', pItem);
+      const pItemCount = pItem.children.length - 1;
+      const updateParentOption = {
+        id: result.pid,
+        count: pItemCount,
+      };
+      await this.dataService.updateSingle(pItem.dblevel, updateParentOption);
+      // update UI view
       this.selectedItem = await _.cloneDeep(result);
       await this.selectedTopics[level - 1].options.push(this.selectedItem);
       await this.selectOptionChange(level, this.selectedItem.id);
@@ -209,6 +224,14 @@ export class ConverterPage implements OnInit {
   }
 
   async test() {
+    // // instance update
+    const updateOption = {
+      id: '65beaf2f-ba86-4682-b0e6-54d63de4a313',
+      isLeaf: false,
+    };
+    await this.dataService.updateSingle(5, updateOption);
+
+
     // const item = await this.dataService.fetchLevelDB(1, true, false);
     // console.log('got itemmmmmm', item);
 

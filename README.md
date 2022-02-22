@@ -22,7 +22,7 @@ edit corresponding 'prefixPath', 'start' & 'end' conversting point in function t
 1/ Openssl
 2/ FFmpeg build:
 update apt - sudo apt-get update
-install basic - sudo apt-get install git curl libx264-dev libx265-dev libwebp-dev libmp3lame-dev libfdk-aac-dev build-essential yasm cmake libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev
+install basic - sudo apt-get install git curl libx264-dev libx265-dev libwebp-dev libmp3lame-dev libfdk-aac-dev build-essential yasm cmake libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev webp
 nvdia driver - ubuntu-drivers devices (look for recommended version)
 sudo ubuntu-drivers autoinstall && sudo apt install nvidia-driver-470 && sudo reboot
 cuda driver

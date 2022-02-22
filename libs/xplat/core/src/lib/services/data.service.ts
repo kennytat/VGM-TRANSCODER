@@ -4,6 +4,7 @@ import * as type from "./graphql.types";
 import { Apollo, QueryRef } from 'apollo-angular';
 import * as _ from 'lodash';
 
+
 @Injectable({
   providedIn: 'root',
 })
@@ -30,6 +31,14 @@ export class DataService {
     type.LEVEL_6_QUERIES,
     type.LEVEL_7_QUERIES,
   ];
+  updateGQL: any[] = [
+    type.UPDATE_LEVEL_2,
+    type.UPDATE_LEVEL_3,
+    type.UPDATE_LEVEL_4,
+    type.UPDATE_LEVEL_5,
+    type.UPDATE_LEVEL_6,
+    type.UPDATE_LEVEL_7,
+  ]
   public videoDB: any[] = [];
   public videoDB$: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
 
@@ -156,6 +165,21 @@ export class DataService {
       });
 
     });
+  }
+
+  async updateSingle(dblevel, options) {
+    return new Promise((resolve) => {
+      this.apollo.mutate<any>({
+        mutation: this.updateGQL[dblevel - 2],
+        variables: options,
+        fetchPolicy: 'network-only',
+      }).subscribe(({ data }) => {
+        console.log(data);
+        resolve('done');
+      }, (error) => {
+        console.log('error updating single item', error);
+      });
+    })
   }
 
 
