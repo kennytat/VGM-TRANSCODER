@@ -5,6 +5,8 @@ import * as type from 'libs/xplat/core/src/lib/services/graphql.types';
 import { DataService } from '@vgm-converter/xplat/core';
 import * as path from 'path'
 import * as _ from 'lodash';
+import CryptoJS from "crypto-js";
+import { slice } from 'ramda';
 interface SelectedTopic {
   level: number,
   id: string,
@@ -44,8 +46,9 @@ export class ConverterPage implements OnInit {
   convertedFiles: number = 0;
   totalFiles: number = 0;
   // instance for adding db manually
-  path = '';
-  level: number = 0;
+  updateID: string = '';
+  updateURL: string = '';
+  updateLevel: number = 0;
   newDBArray = [];
 
   constructor(
@@ -145,7 +148,7 @@ export class ConverterPage implements OnInit {
     const pList = [...this.selectedTopics[level - 2].options];
     const [pItem] = pList.filter((item) => item.id.includes(pid));
     // console.log('parent', pid, pItem, pList);
-
+    
     this.selectedTopics[level - 1].name = '';
     await this.apollo.mutate<any>({
       mutation: gql,
@@ -181,10 +184,10 @@ export class ConverterPage implements OnInit {
     });
   }
 
-  updateLeaf() {
-    const item = { id: this.path, dblevel: this.level }
-    this.updateIsLeaf(item, 0)
-  }
+  // updateLeaf() {
+  //   const item = { id: this.path, dblevel: this.level }
+  //   this.updateIsLeaf(item, 0)
+  // }
 
   updateIsLeaf(item, count) {
     this.apollo.mutate<any>({
@@ -225,11 +228,20 @@ export class ConverterPage implements OnInit {
 
   async test() {
     // // instance update
+    // const qmHash = 'QmQDuZsCmxQm2WwB5WHjG5n92kjuukaKrN7Py59hHC3FJs'
+    // const secretKey = slice(0, 32, `01-bai-giang.hoc-theo-sach-trong-kinh-thanh.tim-hieu-thanh-kinh.thtk01-sang-the-ky.sa01-tim-hieu-khai-quatgggggggggggggggggggggggggggggggg`);
+    // const folderHash = CryptoJS.AES.encrypt(qmHash, secretKey).toString();
+    // const keyHash = CryptoJS.AES.encrypt('QmSNageBUDv9gAEt1Y9NukENbQKMhRcsZQC2svWYib2m6T', secretKey).toString();
     const updateOption = {
-      id: '65beaf2f-ba86-4682-b0e6-54d63de4a313',
-      isLeaf: false,
+      id: this.updateID,
+      url: this.updateURL,
+      // qm: qmHash,
+      // hash: folderHash,
+      // khash: keyHash,
     };
-    await this.dataService.updateSingle(5, updateOption);
+    console.log(updateOption);
+
+    await this.dataService.updateSingle(this.updateLevel, updateOption);
 
 
     // const item = await this.dataService.fetchLevelDB(1, true, false);

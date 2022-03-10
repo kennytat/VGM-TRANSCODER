@@ -141,9 +141,10 @@ export class DatabasePage implements OnInit {
         console.log('update IPFS Hash called', fileInfo);
         const variables = {
           id: fileInfo.id,
+          url: fileInfo.url,
           // khash: fileInfo.khash,
-          hash: fileInfo.hash,
-          qm: fileInfo.qm,
+          // hash: fileInfo.hash,
+          // qm: fileInfo.qm,
         };
         await this.dataService.updateSingle(fileInfo.dblevel, variables);
       })
@@ -341,7 +342,10 @@ export class DatabasePage implements OnInit {
       // this._electronService.ipcRenderer.send('get-count');
       // this._electronService.ipcRenderer.send('xor-key-ipfs', prefixPath, startPoint, endPoint);
       // this._electronService.ipcRenderer.send('ipfs-hash-to-db', prefixPath, startPoint, endPoint);
-      this._electronService.ipcRenderer.send('ipfs-unpin', prefixPath, startPoint, endPoint);
+      // this._electronService.ipcRenderer.send('ipfs-unpin', prefixPath, startPoint, endPoint);
+      // const xorPath = '/home/vgm/Desktop/test/STK'
+      // this._electronService.ipcRenderer.send('xor-key', xorPath, true);
+      this._electronService.ipcRenderer.send('create-instance-db', prefixPath, startPoint, endPoint);
     }
 
     // const fileInfo = {
@@ -527,10 +531,10 @@ export class DatabasePage implements OnInit {
   async getAllDB(isVideo, isLeaf) {
     return new Promise(async (resolve) => {
       let files: any[] = [];
-      for (let i = 0; i < this.dataService.updateGQL.length; i++) {
+      for (let i = 0; i < this.dataService.queryGQL.length; i++) {
         await this.dataService.fetchLevelDB(i + 1, isVideo, isLeaf).then((list) => {
           files = files.concat(list);
-          if (i === this.dataService.updateGQL.length - 1) {
+          if (i === this.dataService.queryGQL.length - 1) {
             resolve(files);
           }
         })

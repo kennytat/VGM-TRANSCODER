@@ -19,8 +19,9 @@ if [ $3 ]; then
 			cp ${f} ${newPath}
 			sed -i 's/1080p.m3u8/1080p-mb.m3u8/g' "${newPath}" &&
 				sed -i 's/720p.m3u8/720p-mb.m3u8/g' "${newPath}" &&
-				sed -i 's/480p.m3u8/480p-mb.m3u8/g' "${newPath}"
-		elif [ $(basename ${f%.*}) == '1080p' ] || [ $(basename ${f%.*}) == '720p' ] || [ $(basename ${f%.*}) == '480p' ] || [ $(basename ${f%.*}) == '128p' ]; then
+				sed -i 's/480p.m3u8/480p-mb.m3u8/g' "${newPath}" &&
+				sed -i 's/360p.m3u8/360p-mb.m3u8/g' "${newPath}"
+		elif [ $(basename ${f%.*}) == '1080p' ] || [ $(basename ${f%.*}) == '720p' ] || [ $(basename ${f%.*}) == '480p' ] || [ $(basename ${f%.*}) == '360p' ] || [ $(basename ${f%.*}) == '128p' ]; then
 			newPath="${f%.*}-mb.${f##*.}"
 			cp ${f} ${newPath}
 			sed -i "s|key.vgmk|$keyPath|g" "${newPath}"

@@ -22,15 +22,15 @@ fi
 
 # Define convert function
 ffmpegVideoGPU() {
-	ffmpeg -progress pipe:1 -stats_period 0.5 -v quiet -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
+	ffmpeg -v quiet -progress pipe:1 -stats_period 0.5 -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
 		-filter_complex \
 		"[0:v]split=3[v1][v2][v3]; \
 [v1]scale_npp=w=1920:h=1080:force_original_aspect_ratio=decrease[v1out]; \
 [v2]scale_npp=w=1280:h=720:force_original_aspect_ratio=decrease[v2out]; \
 [v3]scale_npp=w=854:h=480:force_original_aspect_ratio=decrease[v3out]" \
-		-map "[v1out]" -c:v h264_nvenc -b:v:0 "$rate1080"K -maxrate:v:0 "$rate1080"K -minrate:v:0 "$rate1080"K -bufsize:v:0 "$buf1080"K -preset slow -g 48 -sc_threshold 0 -keyint_min 48 \
-		-map "[v2out]" -c:v h264_nvenc -b:v:1 "$rate720"K -maxrate:v:1 "$rate720"K -minrate:v:1 "$rate720"K -bufsize:v:1 "$buf720"K -preset slow -g 48 -sc_threshold 0 -keyint_min 48 \
-		-map "[v3out]" -c:v h264_nvenc -b:v:2 "$rate480"K -maxrate:v:2 "$rate480"K -minrate:v:2 "$rate480"K -bufsize:v:2 "$buf480"K -preset slow -g 48 -sc_threshold 0 -keyint_min 48 \
+		-map "[v1out]" -c:v h264_nvenc -preset:v p7 -tune:v hq -rc:v vbr -cq:v 19 -b:v:0 "$rate1080"K -maxrate:v:0 "$rate1080"K -bufsize:v:0 "$buf1080"K -g 48 -sc_threshold 0 -keyint_min 48 \
+		-map "[v2out]" -c:v h264_nvenc -preset:v p7 -tune:v hq -rc:v vbr -cq:v 19 -b:v:1 "$rate720"K -maxrate:v:1 "$rate720"K -bufsize:v:1 "$buf720"K -g 48 -sc_threshold 0 -keyint_min 48 \
+		-map "[v3out]" -c:v h264_nvenc -preset:v p7 -tune:v hq -rc:v vbr -cq:v 19 -b:v:2 "$rate480"K -maxrate:v:2 "$rate480"K -bufsize:v:2 "$buf480"K -g 48 -sc_threshold 0 -keyint_min 48 \
 		-map "0:a?" -c:a:0 aac -b:a:0 192k -ac 2 \
 		-map "0:a?" -c:a:1 aac -b:a:1 128k -ac 2 \
 		-map "0:a?" -c:a:2 aac -b:a:2 96k -ac 2 \
@@ -48,10 +48,11 @@ ffmpegVideoGPU() {
 }
 
 ffmpegVideoCPU() {
-	ffmpeg -progress pipe:1 -stats_period 0.5 -v quiet -vsync 0 -i "${inPath}" \
+	ffmpeg -v quiet -progress pipe:1 -stats_period 0.5 -vsync 0 -i "${inPath}" \
 		-vf scale=w=640:h=360:force_original_aspect_ratio=decrease \
-		-c:v h264 -b:v "$rate360"K -maxrate "$rate360"K -minrate "$rate360"K -bufsize "$buf360"K \
+		-c:v h264 -b:v "$rate360"K -maxrate "$rate360"K -bufsize "$buf360"K \
 		-c:a aac -b:a 96k -ac 2 \
+		-crf 28 \
 		-preset slow -g 48 -sc_threshold 0 -keyint_min 48 \
 		-f hls \
 		-hls_time 3 \
@@ -102,8 +103,8 @@ mkdir -p "$outPath" && cd "$outPath" &&
 		ffmpegThumbnailGPU
 	else
 		mkdir -p "$outPath"/128p && ffmpegAudioCPU
-	fi
-rm file.keyinfo
+	fi &&
+	rm file.keyinfo
 # Timer end
 ((end = $(date +%s) - $start))
 echo "Total converted time: $(date -u -d @${end} +"%T")"

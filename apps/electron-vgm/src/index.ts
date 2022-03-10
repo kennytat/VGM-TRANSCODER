@@ -12,6 +12,7 @@ import * as M3U8FileParser from "m3u8-file-parser";
 import * as bitwise from 'bitwise';
 // import { NFTStorage, File, Blob } from 'nft.storage'
 import { Buffer } from 'buffer';
+import { distance, closestMatch } from 'closest-match';
 
 import PQueue from 'p-queue';
 const queue = new PQueue();
@@ -619,6 +620,81 @@ try {
 
   })
 
+  ipcMain.on('create-instance-db', async (event, prefix, startPoint, endPoint) => {
+    try {
+      // queue.concurrency = 1;
+      // const videoOldUrlTxt = `${prefix}/database/videoSingle.txt`;
+
+      const newUrlTxt = `${prefix}/database/video-check-count.txt`;
+      const apiPath = `${prefix}/API-web/topics/single`;
+
+      // const rawOld = fs.readFileSync(videoOldUrlTxt, { encoding: 'utf8' });
+      // const oldArray = rawOld.split('\n');
+
+      const processFile = async (file: string) => {
+        console.log('processing:', file);
+
+        return new Promise(async (resolve) => {
+
+          const nonVietnamese = nonAccentVietnamese(file);
+          const api = `${nonVietnamese.replace(/.*VGMV\//, '').toLowerCase().replace(/\//g, '.').replace(/(?!\.)[\W\_]/g, '-').replace(/-+-/g, "-").replace(/\.mp4$/, '')}`;
+          console.log('file API:', api);
+          const pApi = api.match(/.*(?=\..*$)/).toString();
+          console.log('pAPI:', pApi);
+          const jsonString = await fs.readFileSync(`${apiPath}/${pApi}.json`, { encoding: 'utf8' });
+          let pItem: any = JSON.parse(jsonString);
+          let fileInfo: any = {};
+          fileInfo.url = api;
+          fileInfo.pid = pItem.id;
+          fileInfo.location = '';
+          fileInfo.isVideo = pItem.isVideo;
+          fileInfo.dblevel = pItem.dblevel + 1;
+          // get file Info
+          let metaData: any = [];
+          metaData = execSync(`ffprobe -v quiet -select_streams v:0 -show_entries format=filename,duration,size,stream_index:stream=avg_frame_rate -of default=noprint_wrappers=1 "${file}"`, { encoding: "utf8" }).split('\n');
+          // Then run ffmpeg to start convert
+          const duration_stat: string = metaData.filter(name => name.includes("duration=")).toString();
+          const duration: number = parseFloat(duration_stat.replace(/duration=/g, ''));
+          const minutes: number = Math.floor(duration / 60);
+          fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
+          fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
+          fileInfo.name = path.parse(file).name;
+          console.log('fileInfo:', fileInfo);
+          const ls = spawn('pwd');
+          ls.on('close', (code) => {
+            event.sender.send('create-database', fileInfo);
+          });
+          resolve(true)
+
+        })
+      };
+
+      // start script here
+      const rawNew = fs.readFileSync(newUrlTxt, { encoding: 'utf8' });
+      if (rawNew) {
+        let list = rawNew.split('\n');
+        list.pop();
+        // list.reverse();
+        console.log('total files', list.length);
+        // let i = startPoint;
+        for (let i = startPoint; i < list.length; i++) { // list.length or endPoint
+          // (async () => {
+          //   queue.add(async () => {
+          if (list[i]) {
+            await processFile(list[i]);
+            console.log('processed files', i);
+          }
+          //   });
+          // })();
+        }
+      }
+
+    } catch (error) {
+      console.log(error);
+    }
+
+  })
+
   ipcMain.on('ipfs-unpin', async (event, prefix, startPoint, endPoint) => {
     try {
       queue.concurrency = 10;
@@ -672,7 +748,7 @@ try {
     const upConverted = async (convertedTemp, uploadPath) => {
       console.log('uploading converted file', `${convertedTemp}/`, `${uploadPath}/`);
       return new Promise((resolve) => {
-        const rclone = spawn('rclone', ['copy', '--progress', `${convertedTemp}/`, `${uploadPath}/`]);
+        const rclone = spawn('rclone', ['copy', '--progress', '--exclude', "*-mb.{m3u8,vgmk}", `${convertedTemp}/`, `${uploadPath}/`]);
         rclone.stdout.on('data', async (data) => {
           console.log(`rclone upconvert stdout: ${data}`);
         });
@@ -701,7 +777,7 @@ try {
             await execSync(`mv "${tmpPath}" "${mp4Tmp}"`);
             console.log(mp4Tmp, tmpPath);
 
-            const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-filter:v', 'pad=width=max(iw\\,ih*(16/9)):height=ow/(16/9):x=(ow-iw)/2:y=(oh-ih)/2', '-c:a', 'copy', `${tmpPath}`]);
+            const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-filter:v', `pad="width=max(iw\\,ih*(16/9)):height=ow/(16/9):x=(ow-iw)/2:y=(oh-ih)/2"`, '-c:a', 'copy', `${tmpPath}`]);
             // ffmpeg -vsync 0 -i '/home/vgm/Desktop/test.mp4' -c:v h264_nvenc -c:a aac '/home/vgm/Desktop/test2.mp4'
             mp4.stdout.on('data', async (data) => {
               console.log(`converting to mp4 stdout: ${data}`);
@@ -1579,7 +1655,7 @@ try {
       const upConverted = async (outPath, fileLocation) => {
         console.log('uploading converted file', `${outPath}/`, `${convertedPath}${fileLocation}/`);
         return new Promise((resolve) => {
-          const rclone = spawn('rclone', ['copy', '--progress', `${outPath}/`, `${convertedPath}${fileLocation}/`]);
+          const rclone = spawn('rclone', ['copy', '--progress', '--exclude', "*-mb.{m3u8,vgmk}", `${outPath}/`, `${convertedPath}${fileLocation}/`]);
           rclone.stdout.on('data', async (data) => {
             console.log(`rclone upconvert stdout: ${data}`);
           });
@@ -1614,7 +1690,7 @@ try {
               await execSync(`mv "${tmpPath}" "${mp4Tmp}"`);
               console.log(mp4Tmp, tmpPath);
 
-              const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-filter:v', 'pad=width=max(iw\\,ih*(16/9)):height=ow/(16/9):x=(ow-iw)/2:y=(oh-ih)/2', '-c:a', 'copy', `${tmpPath}`]);
+              const mp4 = spawn('ffmpeg', ['-vsync', '0', '-i', `${mp4Tmp}`, '-c:v', 'h264_nvenc', '-filter:v', `pad="width=max(iw\\,ih*(16/9)):height=ow/(16/9):x=(ow-iw)/2:y=(oh-ih)/2"`, '-c:a', 'copy', `${tmpPath}`]);
               // ffmpeg -vsync 0 -i '/home/vgm/Desktop/test.mp4' -c:v h264_nvenc -c:a aac '/home/vgm/Desktop/test2.mp4'
               mp4.stdout.on('data', async (data) => {
                 console.log(`converting to mp4 stdout: ${data}`);

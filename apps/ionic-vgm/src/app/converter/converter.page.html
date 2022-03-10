@@ -6,14 +6,14 @@
           <ion-item>
             <ion-icon name="folder-open-outline" slot="start"></ion-icon>
             <ion-label>M3U8 Streaming Transcoder</ion-label>
-            <ion-button
+            <!-- <ion-button
               fill="outline"
               slot="end"
               style="font-size: 17px"
               (click)="updateLeaf()"
             >
               updateLeaf
-            </ion-button>
+            </ion-button> -->
             <ion-button fill="outline" slot="end" (click)="test()"
               >Test</ion-button
             >
@@ -157,17 +157,22 @@
             </ion-grid>
           </ion-card-content>
           <hr class="new" />
-          <!-- 
+
           <ion-input
             style="background-color: white; color: black"
-            [(ngModel)]="path"
+            [(ngModel)]="updateID"
           >
           </ion-input>
           <ion-input
             style="background-color: pink; color: black"
-            [(ngModel)]="level"
+            [(ngModel)]="updateURL"
           >
-          </ion-input> -->
+          </ion-input>
+          <ion-input
+            style="background-color: pink; color: black"
+            [(ngModel)]="updateLevel"
+          >
+          </ion-input>
 
           <ion-card-content *ngIf="!isConverting; else stop_convert">
             <ion-button expand="block" (click)="Convert()"
