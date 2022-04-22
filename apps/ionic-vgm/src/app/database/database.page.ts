@@ -21,7 +21,7 @@ queue.on('idle', async () => {
 
 interface FileInfo {
   pid: string,
-  location: string,
+  md5: string,
   name: string,
   size: number,
   duration: string,
@@ -152,7 +152,18 @@ export class DatabasePage implements OnInit {
         console.log('update count called', fileInfo);
         const variables = {
           id: fileInfo.id,
-          count: fileInfo.count
+          count: fileInfo.count,
+          md5: fileInfo.md5,
+          hash: fileInfo.hash,
+          khash: fileInfo.khash
+        };
+        await this.dataService.updateSingle(fileInfo.dblevel, variables);
+      })
+      this._electronService.ipcRenderer.on('update-leaf', async (event, fileInfo) => {
+        console.log('update leaf called', fileInfo);
+        const variables = {
+          id: fileInfo.id,
+          isLeaf: fileInfo.isLeaf
         };
         await this.dataService.updateSingle(fileInfo.dblevel, variables);
       })
@@ -189,7 +200,7 @@ export class DatabasePage implements OnInit {
       variables: {
         pid: item.pid,
         isLeaf: null,
-        location: item.location,
+        md5: item.md5,
         url: item.url,
         isVideo: item.isVideo,
         name: item.name,
@@ -317,7 +328,6 @@ export class DatabasePage implements OnInit {
     // // test instant create item 
     // const item = {
     //   pid: '9d9be977-4407-4097-bfd6-b02af3b27c80',
-    //   location: '/VGMV/03_HoatHinh/HoatHinh-2D/HoatHinh2D-bo/TimHieuThanhKinh/01-PhucAmMa-thi-o/TTBMat03_SuKhayDongTuCacNhaThongThai',
     //   name: 'TTBMat03_Sự Khấy Động Từ Các Nhà Thông Thái',
     //   size: 213499477,
     //   duration: '3:19',
@@ -335,22 +345,21 @@ export class DatabasePage implements OnInit {
     if (this._electronService.isElectronApp) {
       // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
       const prefixPath = '/home/vgm/Desktop';
-      const startPoint = 0; // ipfs 299 file done 1350
-      const endPoint = 1000;
+      const startPoint = 720; // ipfs 299 file done 1350
+      const endPoint = 2250;
       // this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint); // 'test' 'fastly' 
       // this._electronService.ipcRenderer.send('cloud-to-ipfs', prefixPath, fileType, startPoint, endPoint);
-      // this._electronService.ipcRenderer.send('get-count');
+      this._electronService.ipcRenderer.send('get-count');
       // this._electronService.ipcRenderer.send('xor-key-ipfs', prefixPath, startPoint, endPoint);
       // this._electronService.ipcRenderer.send('ipfs-hash-to-db', prefixPath, startPoint, endPoint);
       // this._electronService.ipcRenderer.send('ipfs-unpin', prefixPath, startPoint, endPoint);
       // const xorPath = '/home/vgm/Desktop/test/STK'
       // this._electronService.ipcRenderer.send('xor-key', xorPath, true);
-      this._electronService.ipcRenderer.send('create-instance-db', prefixPath, startPoint, endPoint);
+      // this._electronService.ipcRenderer.send('create-instance-db', prefixPath, startPoint, endPoint);
     }
 
     // const fileInfo = {
     //   pid: '193f4b25-1d46-4d15-8d87-d181de0a93bf',
-    //   location: '/VGMV/01_BaiGiang/HocTheoChuDe/11-ThanLeThat-traiTN2017/01-DucThanhLinhCoNguTrongToiKhongP1',
     //   name: '01-Đức Thánh Linh Có Ngự Trong Tôi Không P1',
     //   size: 2258434926,
     //   duration: '76:44',
@@ -642,7 +651,7 @@ export class DatabasePage implements OnInit {
           id: item.id,
           isLeaf: item.isLeaf,
           count: item.count,
-          location: item.location,
+          md5: item.md5,
           name: item.name,
           url: item.url,
           keyword: item.keyword,

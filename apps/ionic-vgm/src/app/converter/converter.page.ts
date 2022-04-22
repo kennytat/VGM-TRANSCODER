@@ -148,14 +148,13 @@ export class ConverterPage implements OnInit {
     const pList = [...this.selectedTopics[level - 2].options];
     const [pItem] = pList.filter((item) => item.id.includes(pid));
     // console.log('parent', pid, pItem, pList);
-    
+
     this.selectedTopics[level - 1].name = '';
     await this.apollo.mutate<any>({
       mutation: gql,
       variables: {
         pid: pid,
         isLeaf: false,
-        location: `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`,
         url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-"),
         isVideo: this.isVideo,
         name: value,
@@ -232,16 +231,17 @@ export class ConverterPage implements OnInit {
     // const secretKey = slice(0, 32, `01-bai-giang.hoc-theo-sach-trong-kinh-thanh.tim-hieu-thanh-kinh.thtk01-sang-the-ky.sa01-tim-hieu-khai-quatgggggggggggggggggggggggggggggggg`);
     // const folderHash = CryptoJS.AES.encrypt(qmHash, secretKey).toString();
     // const keyHash = CryptoJS.AES.encrypt('QmSNageBUDv9gAEt1Y9NukENbQKMhRcsZQC2svWYib2m6T', secretKey).toString();
-    const updateOption = {
-      id: this.updateID,
-      url: this.updateURL,
-      // qm: qmHash,
-      // hash: folderHash,
-      // khash: keyHash,
-    };
-    console.log(updateOption);
+    // const updateOption = {
+    //   id: this.updateID,
+    //   url: this.updateURL,
+    //   // qm: qmHash,
+    //   // hash: folderHash,
+    //   // khash: keyHash,
+    // };
+    // console.log(updateOption);
 
-    await this.dataService.updateSingle(this.updateLevel, updateOption);
+    // await this.dataService.updateSingle(this.updateLevel, updateOption);
+    this._electronService.ipcRenderer.send('instance-db', this.updateURL);
 
 
     // const item = await this.dataService.fetchLevelDB(1, true, false);
@@ -275,7 +275,6 @@ export class ConverterPage implements OnInit {
     //   variables: {
     //     pid: "00000000-0000-0000-0000-000000000001",
     //     isLeaf: true,
-    //     location: "asdfasdf234",
     //     url: "data.url",
     //     isVideo: false,
     //     name: "data 05 moto",
@@ -330,6 +329,7 @@ export class ConverterPage implements OnInit {
 
   async createMass(itemName, pItem) {
     return new Promise<string>(async (resolve, reject) => {
+      console.log('createmass called:', itemName, pItem);
 
       // const pid = this.selectedTopics[level - 2].id;
       const gql = this.selectedTopics[pItem.dblevel + 1 - 1].createGQL;
@@ -345,7 +345,6 @@ export class ConverterPage implements OnInit {
         variables: {
           pid: pItem.id,
           isLeaf: false,
-          location: `${pItem.location}/${nonVietnamese.replace(/\s/g, '')}`,
           url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-"),
           isVideo: pItem.isVideo,
           name: itemName,

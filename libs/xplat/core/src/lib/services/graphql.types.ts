@@ -12,7 +12,7 @@ export type Level1 = {
   id: string;
   pid: string;
   dblevel: number,
-  location: string,
+  md5: string,
   isLeaf: boolean,
   isVideo: boolean,
   name: string,
@@ -25,7 +25,7 @@ export type Level2 = {
   id: string;
   pid: string;
   dblevel: number,
-  location: string,
+  md5: string,
   url: string,
   name: string,
   count: number,
@@ -50,7 +50,7 @@ export type Level3 = {
   id: string;
   pid: string;
   dblevel: number,
-  location: string,
+  md5: string,
   url: string,
   name: string,
   count: number,
@@ -74,7 +74,7 @@ export type Level4 = {
   id: string;
   pid: string;
   dblevel: number,
-  location: string,
+  md5: string,
   url: string,
   name: string,
   count: number,
@@ -98,7 +98,7 @@ export type Level5 = {
   id: string;
   pid: string;
   dblevel: number,
-  location: string,
+  md5: string,
   url: string,
   name: string,
   count: number,
@@ -122,7 +122,7 @@ export type Level6 = {
   id: string;
   pid: string;
   dblevel: number,
-  location: string,
+  md5: string,
   url: string,
   name: string,
   count: number,
@@ -146,7 +146,7 @@ export type Level7 = {
   id: string;
   pid: string;
   dblevel: number,
-  location: string,
+  md5: string,
   url: string,
   name: string,
   count: number,
@@ -172,13 +172,13 @@ export const ALL_DATA = gql`
     id
     isLeaf
     name
-    location
+    md5
     dblevel
      children {
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -196,7 +196,7 @@ export const ALL_DATA = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -214,7 +214,7 @@ export const ALL_DATA = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -232,7 +232,7 @@ export const ALL_DATA = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -250,7 +250,7 @@ export const ALL_DATA = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -268,7 +268,7 @@ export const ALL_DATA = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -330,7 +330,7 @@ export const LEVEL_1_UNIQUE = gql`
         id
         pid
         dblevel
-        location
+        md5
         isVideo
         name
         count
@@ -340,7 +340,7 @@ export const LEVEL_1_UNIQUE = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -367,7 +367,7 @@ export const LEVEL_1_QUERIES = gql`
         id
         pid
         dblevel
-        location
+        md5
         isVideo
         name
         count
@@ -377,7 +377,7 @@ export const LEVEL_1_QUERIES = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -406,7 +406,7 @@ export const LEVEL_2_QUERIES = gql`
         id
         pid
         dblevel
-        location
+        md5
         isVideo
         url
         name
@@ -422,7 +422,7 @@ export const LEVEL_2_QUERIES = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -451,7 +451,7 @@ export const LEVEL_3_QUERIES = gql`
         id
         pid
         dblevel
-        location
+        md5
         isVideo
         url
         name
@@ -467,7 +467,7 @@ export const LEVEL_3_QUERIES = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -496,7 +496,7 @@ export const LEVEL_4_QUERIES = gql`
         id
         pid
         dblevel
-        location
+        md5
         isVideo
         url
         name
@@ -512,7 +512,7 @@ export const LEVEL_4_QUERIES = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -541,7 +541,7 @@ export const LEVEL_5_QUERIES = gql`
         id
         pid
         dblevel
-        location
+        md5
         isVideo
         url
         name
@@ -557,7 +557,7 @@ export const LEVEL_5_QUERIES = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -586,7 +586,7 @@ export const LEVEL_6_QUERIES = gql`
         id
         pid
         dblevel
-        location
+        md5
         isVideo
         url
         name
@@ -602,7 +602,7 @@ export const LEVEL_6_QUERIES = gql`
           id
           pid
           dblevel
-          location
+          md5
           isVideo
           url
           name
@@ -631,7 +631,7 @@ export const LEVEL_7_QUERIES = gql`
         id
         pid
         dblevel
-        location
+        md5
         isVideo
         url
         name
@@ -650,11 +650,11 @@ export const CREATE_LEVEL_2 = gql`
 mutation createLevel2 (
   $pid: String!,
   $isLeaf: Boolean,
-  $location: String!,
   $url: String!,
   $isVideo: Boolean!,
   $name: String!,
   $count: Int ,
+  $md5: String,
   $keyword: String,
   $thumb: String,
   $qm: String,
@@ -670,11 +670,11 @@ mutation createLevel2 (
     data:{
       pid: $pid
       isLeaf: $isLeaf,
-      location: $location,
       url: $url,
       isVideo: $isVideo,
       name: $name,
       count: $count,
+      md5: $md5,
       keyword: $keyword,
       thumb: $thumb,
       qm: $qm,
@@ -693,7 +693,7 @@ mutation createLevel2 (
     name
     isVideo
     dblevel
-    location
+    md5
     hash
     khash
     duration
@@ -705,11 +705,11 @@ export const CREATE_LEVEL_3 = gql`
 mutation createLevel3 (
   $pid: String!,
   $isLeaf: Boolean,
-  $location: String!,
   $url: String!,
   $isVideo: Boolean!,
   $name: String!,
   $count: Int ,
+  $md5: String,
   $keyword: String,
   $thumb: String,
   $qm: String,
@@ -725,11 +725,11 @@ mutation createLevel3 (
     data:{
       pid: $pid
       isLeaf: $isLeaf,
-      location: $location,
       url: $url,
       isVideo: $isVideo,
       name: $name,
       count: $count,
+      md5: $md5,
       keyword: $keyword,
       thumb: $thumb,
       qm: $qm,
@@ -748,7 +748,7 @@ mutation createLevel3 (
     name
     isVideo
     dblevel
-    location
+    md5
     hash
     khash
     duration
@@ -760,11 +760,11 @@ export const CREATE_LEVEL_4 = gql`
 mutation createLevel4 (
   $pid: String!,
   $isLeaf: Boolean,
-  $location: String!,
   $url: String!,
   $isVideo: Boolean!,
   $name: String!,
   $count: Int ,
+  $md5: String,
   $keyword: String,
   $thumb: String,
   $qm: String,
@@ -780,11 +780,11 @@ mutation createLevel4 (
     data:{
       pid: $pid
       isLeaf: $isLeaf,
-      location: $location,
       url: $url,
       isVideo: $isVideo,
       name: $name,
       count: $count,
+      md5: $md5,
       keyword: $keyword,
       thumb: $thumb,
       qm: $qm,
@@ -803,7 +803,7 @@ mutation createLevel4 (
     name
     isVideo
     dblevel
-    location
+    md5
     hash
     khash
     duration
@@ -815,11 +815,11 @@ export const CREATE_LEVEL_5 = gql`
 mutation createLevel5 (
   $pid: String!,
   $isLeaf: Boolean,
-  $location: String!,
   $url: String!,
   $isVideo: Boolean!,
   $name: String!,
   $count: Int ,
+  $md5: String,
   $keyword: String,
   $thumb: String,
   $qm: String,
@@ -835,11 +835,11 @@ mutation createLevel5 (
     data:{
       pid: $pid
       isLeaf: $isLeaf,
-      location: $location,
       url: $url,
       isVideo: $isVideo,
       name: $name,
       count: $count,
+      md5: $md5,
       keyword: $keyword,
       thumb: $thumb,
       qm: $qm,
@@ -858,7 +858,7 @@ mutation createLevel5 (
     name
     isVideo
     dblevel
-    location
+    md5
     hash
     khash
     duration
@@ -870,11 +870,11 @@ export const CREATE_LEVEL_6 = gql`
 mutation createLevel6 (
   $pid: String!,
   $isLeaf: Boolean,
-  $location: String!,
   $url: String!,
   $isVideo: Boolean!,
   $name: String!,
   $count: Int ,
+  $md5: String,
   $keyword: String,
   $thumb: String,
   $qm: String,
@@ -890,11 +890,11 @@ mutation createLevel6 (
     data:{
       pid: $pid
       isLeaf: $isLeaf,
-      location: $location,
       url: $url,
       isVideo: $isVideo,
       name: $name,
       count: $count,
+      md5: $md5,
       keyword: $keyword,
       thumb: $thumb,
       qm: $qm,
@@ -913,7 +913,7 @@ mutation createLevel6 (
     name
     isVideo
     dblevel
-    location
+    md5
     hash
     khash
     duration
@@ -925,11 +925,11 @@ export const CREATE_LEVEL_7 = gql`
 mutation createLevel7 (
   $pid: String!,
   $isLeaf: Boolean,
-  $location: String!,
   $url: String!,
   $isVideo: Boolean!,
   $name: String!,
   $count: Int ,
+  $md5: String,
   $keyword: String,
   $thumb: String,
   $qm: String,
@@ -945,11 +945,11 @@ mutation createLevel7 (
     data:{
       pid: $pid
       isLeaf: $isLeaf,
-      location: $location,
       url: $url,
       isVideo: $isVideo,
       name: $name,
       count: $count,
+      md5: $md5,
       keyword: $keyword,
       thumb: $thumb,
       qm: $qm,
@@ -968,7 +968,7 @@ mutation createLevel7 (
     name
     isVideo
     dblevel
-    location
+    md5
     hash
     khash
     duration
@@ -982,7 +982,7 @@ mutation updateLevel2 (
   $id: String!,
   $isLeaf: Boolean,
   $count: Int,
-  $location: String,
+  $md5: String,
   $name: String,
   $url: String,
   $keyword: String,
@@ -998,7 +998,7 @@ mutation updateLevel2 (
       id: $id,
       isLeaf: $isLeaf,
       count: $count,
-      location: $location,
+      md5: $md5,
       name: $name,
       url: $url,
       keyword: $keyword,
@@ -1016,7 +1016,7 @@ mutation updateLevel2 (
     url
     isVideo
     dblevel
-    location
+    md5
     count
     qm
     hash
@@ -1029,7 +1029,7 @@ mutation updateLevel3 (
   $id: String!,
   $isLeaf: Boolean,
   $count: Int,
-  $location: String,
+  $md5: String,
   $name: String,
   $url: String,
   $keyword: String,
@@ -1045,7 +1045,7 @@ mutation updateLevel3 (
       id: $id,
       isLeaf: $isLeaf,
       count: $count,
-      location: $location,
+      md5: $md5,
       name: $name,
       url: $url,
       keyword: $keyword,
@@ -1063,7 +1063,7 @@ mutation updateLevel3 (
     name
     isVideo
     dblevel
-    location
+    md5
     count
     qm
     hash
@@ -1076,7 +1076,7 @@ mutation updateLevel4 (
   $id: String!,
   $isLeaf: Boolean,
   $count: Int,
-  $location: String,
+  $md5: String,
   $name: String,
   $url: String,
   $keyword: String,
@@ -1092,7 +1092,7 @@ mutation updateLevel4 (
       id: $id,
       isLeaf: $isLeaf,
       count: $count,
-      location: $location,
+      md5: $md5,
       name: $name,
       url: $url,
       keyword: $keyword,
@@ -1110,7 +1110,7 @@ mutation updateLevel4 (
     name
     isVideo
     dblevel
-    location
+    md5
     count
     qm
     hash
@@ -1123,7 +1123,7 @@ mutation updateLevel5 (
   $id: String!,
   $isLeaf: Boolean,
   $count: Int,
-  $location: String,
+  $md5: String,
   $name: String,
   $url: String,
   $keyword: String,
@@ -1139,7 +1139,7 @@ mutation updateLevel5 (
       id: $id,
       isLeaf: $isLeaf,
       count: $count,
-      location: $location,
+      md5: $md5,
       name: $name,
       url: $url,
       keyword: $keyword,
@@ -1157,7 +1157,7 @@ mutation updateLevel5 (
     name
     isVideo
     dblevel
-    location
+    md5
     count
     qm
     hash
@@ -1170,7 +1170,7 @@ mutation updateLevel6 (
    $id: String!,
   $isLeaf: Boolean,
   $count: Int,
-  $location: String,
+  $md5: String,
   $name: String,
   $url: String,
   $keyword: String,
@@ -1186,7 +1186,7 @@ mutation updateLevel6 (
       id: $id,
       isLeaf: $isLeaf,
       count: $count,
-      location: $location,
+      md5: $md5,
       name: $name,
       url: $url,
       keyword: $keyword,
@@ -1204,7 +1204,7 @@ mutation updateLevel6 (
     name
     isVideo
     dblevel
-    location
+    md5
     count
     qm
     hash
@@ -1217,7 +1217,7 @@ mutation updateLevel7 (
   $id: String!,
   $isLeaf: Boolean,
   $count: Int,
-  $location: String,
+  $md5: String,
   $name: String,
   $url: String,
   $keyword: String,
@@ -1233,7 +1233,7 @@ mutation updateLevel7 (
       id: $id,
       isLeaf: $isLeaf,
       count: $count,
-      location: $location,
+      md5: $md5,
       name: $name,
       url: $url,
       keyword: $keyword,
@@ -1251,7 +1251,7 @@ mutation updateLevel7 (
     name
     isVideo
     dblevel
-    location
+    md5
     count
     qm
     hash

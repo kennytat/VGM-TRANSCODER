@@ -23,8 +23,8 @@ export class Level2 {
   @Field((type) => Boolean, { nullable: true })
   isLeaf: boolean
 
-  @Field((type) => String)
-  location: string
+  @Field((type) => String, { nullable: true })
+  md5: string
 
   @Field((type) => String)
   url: string

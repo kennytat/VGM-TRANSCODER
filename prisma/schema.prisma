@@ -24,7 +24,7 @@ model Level1 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String
+  md5       String?
   isLeaf    Boolean? @default(false)
   isVideo   Boolean
   url       String   @default("")
@@ -45,13 +45,13 @@ model Level2 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
@@ -78,13 +78,13 @@ model Level3 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
@@ -109,13 +109,13 @@ model Level4 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
@@ -140,13 +140,13 @@ model Level5 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
@@ -171,13 +171,13 @@ model Level6 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
@@ -202,13 +202,13 @@ model Level7 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?

@@ -32,7 +32,7 @@ export class Level6UpdateInput {
   count?: number
 
   @Field((type) => String, { nullable: true })
-  location?: string
+  md5?: string
 
   @Field((type) => String, { nullable: true })
   url?: string
@@ -71,8 +71,8 @@ export class Level6CreateInput {
   @Field((type) => Boolean, { nullable: true })
   isLeaf: boolean
 
-  @Field((type) => String)
-  location: string
+  @Field((type) => String, { nullable: true })
+  md5: string
 
   @Field((type) => String)
   url: string
@@ -179,7 +179,7 @@ export class Level6Resolver {
     return this.prismaService.level6.create({
       data: {
         isLeaf: data.isLeaf,
-        location: data.location,
+        md5: data.md5,
         url: data.url,
         isVideo: data.isVideo,
         name: data.name,
@@ -216,7 +216,7 @@ export class Level6Resolver {
       data: {
         isLeaf: data.isLeaf,
         count: data.count,
-        location: data.location,
+        md5: data.md5,
         name: data.name,
         url: data.url,
         keyword: data.keyword,
