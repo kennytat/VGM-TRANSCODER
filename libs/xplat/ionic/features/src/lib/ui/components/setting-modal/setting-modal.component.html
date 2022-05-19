@@ -1,49 +1,144 @@
 <ion-header class="ion-no-border">
   <ion-toolbar>
-    <ion-title>Header - No Border</ion-title>
+    <ion-title>{{ 'setting.title' | translate }}</ion-title>
   </ion-toolbar>
+  <ion-segment
+    (ionChange)="segmentChanged($event)"
+    scrollable
+    value="{{ rcloneConf[0].name }}"
+  >
+    <ion-segment-button value="{{ rcloneConf[0].name }}">
+      <ion-label>{{ 'setting.warehouse' | translate }}</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="{{ rcloneConf[1].name }}">
+      <ion-label>{{ 'setting.encrypted' | translate }}</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="{{ rcloneConf[2].name }}">
+      <ion-label>{{ 'setting.ipfs' | translate }}</ion-label>
+    </ion-segment-button>
+  </ion-segment>
 </ion-header>
 <ion-content>
-  <ion-grid>
-    <ion-item style="--border-style: none">
-      <ion-label color="primary" style="font-weight: bold; text-align: center">
-        Chia Sẻ
-      </ion-label>
-    </ion-item>
-    <ion-list>
-      <ion-button
-        color="primary"
-        fill="clear"
-        size="large"
-        target="_blank"
-        [href]="facebookLink"
-        (click)="dismiss()"
+  <ion-card #warehouse *ngIf="selectedTab === rcloneConf[0].name">
+    <ion-card-content>
+      <ion-list>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.type' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[0].type"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.provider' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[0].provider"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.key' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[0].access_key_id"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.secret' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[0].secret_access_key"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.endpoint' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[0].endpoint"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.acl' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[0].acl"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.bucket' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[0].bucket"></ion-input>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card *ngIf="selectedTab === rcloneConf[1].name">
+    <ion-card-content>
+      <ion-list>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.type' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[1].type"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.provider' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[1].provider"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.key' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[1].access_key_id"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.secret' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[1].secret_access_key"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.endpoint' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[1].endpoint"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.acl' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[1].acl"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.bucket' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[1].bucket"></ion-input>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card *ngIf="selectedTab === rcloneConf[2].name">
+    <ion-card-content>
+      <ion-list>
+        <ion-item>
+          <ion-label position="fixed">{{
+            'setting.s3.gateway' | translate
+          }}</ion-label>
+          <ion-input [(ngModel)]="rcloneConf[2].endpoint"></ion-input>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+  <ion-row style="justify-content: center">
+    <ion-button
+      (click)="saveConf(selectedTab)"
+      [disabled]="checkingConf"
+      color="{{ checkingConf ? 'warning' : 'primary' }}"
+    >
+      <ion-text *ngIf="!checkingConf" style="font-weight: bold">
+        {{ 'setting.save' | translate }}</ion-text
       >
-        <ion-icon name="logo-facebook"></ion-icon>
-      </ion-button>
-      <ion-button
-        color="success"
-        fill="clear"
-        size="large"
-        target="_blank"
-        [href]="whatsappLink"
-        (click)="dismiss()"
-      >
-        <ion-icon name="logo-whatsapp"></ion-icon>
-      </ion-button>
-      <ion-button
-        style="color: #3880ff"
-        fill="clear"
-        size="large"
-        target="_blank"
-        [href]="emailLink"
-        (click)="dismiss()"
-      >
-        <ion-icon name="vgm-gmail"></ion-icon>
-      </ion-button>
-      <ion-button color="dark" fill="clear" size="large" (click)="onLink()">
-        <ion-icon name="link-outline"></ion-icon>
-      </ion-button>
-    </ion-list>
-  </ion-grid>
+      <ion-spinner name="dots" *ngIf="checkingConf"></ion-spinner>
+    </ion-button>
+  </ion-row>
 </ion-content>

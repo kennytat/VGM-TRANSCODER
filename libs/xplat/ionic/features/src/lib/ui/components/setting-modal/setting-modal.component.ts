@@ -1,41 +1,87 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Plugins } from '@capacitor/core';
 const { Share } = Plugins;
 import { ToastController, ModalController } from '@ionic/angular';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalforageService } from '@vgm-converter/xplat/core';
+import { ElectronService } from 'ngx-electron';
+
 @Component({
-  selector: 'vgm-setting-modal',
-  templateUrl: 'setting-modal.component.html'
+	selector: 'vgm-setting-modal',
+	templateUrl: 'setting-modal.component.html'
 })
 
-export class SettingModalComponent {
-  @Input() sharedMessage = '';
-  facebookLink = `https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2F${this.sharedMessage}%2F&amp;src=sdkpreparse`;
-  whatsappLink = `https://web.whatsapp.com/send?text=${this.sharedMessage}`;
-  emailLink = `https://mail.google.com/mail/u/0/?to&su=VGM:+Chia+Sẽ+Bài+Giảng&body=https://${this.sharedMessage}/&bcc&cc&fs=1&tf=cm`;
-  constructor(
-    public modalController: ModalController,
-    public toastController: ToastController,
-  ) { }
+export class SettingModalComponent implements OnInit {
+	@Input() rcloneConf = [];
+	selectedTab: string;
+	checkingConf = false;
 
-  onLink() {
-    // copy link to clipboard
-    navigator.clipboard.writeText(this.sharedMessage)
-    this.presentToast('Liên kết đã được sao chép')
-    this.dismiss();
-  }
-  async presentToast(message) {
-    const toast = await this.toastController.create({
-      message: message,
-      position: 'top',
-      duration: 2000,
-      cssClass: 'toast-info'
-    });
-    toast.present();
-  }
+	constructor(
+		public modalController: ModalController,
+		public toastController: ToastController,
+		private _translateService: TranslateService,
+		private _electronService: ElectronService,
+		private _localForage: LocalforageService
+	) { }
 
-  dismiss() {
-    this.modalController.dismiss({
-      'dismissed': true
-    });
-  }
+	async ngOnInit() {
+		this.selectedTab = this.rcloneConf[0].name;
+
+		for (let i = 0; i < this.rcloneConf.length; i++) {
+			const result = await this._localForage.get(this.rcloneConf[i].name);
+			if (result) {
+				this.rcloneConf[i] = result;
+				console.log('config found', this.rcloneConf[i]);
+			} else {
+				console.log('no conf found, create new');
+				await this._localForage.set(this.rcloneConf[i].name, this.rcloneConf[i]);
+			}
+		}
+	}
+
+	segmentChanged(e) {
+		this.selectedTab = e.detail.value;
+	}
+
+	async saveConf(name) {
+		this.checkingConf = true;
+		console.log('checking conf:', name)
+		const i = this.rcloneConf.findIndex(conf => conf.name === name)
+		console.log(name, 'config saved:', this.rcloneConf[i]);
+		await this._localForage.set(this.rcloneConf[i].name, this.rcloneConf[i]);
+		const connectionResult = await this.checkConfigConnection(this.rcloneConf[i]);
+		if (connectionResult) {
+			this.presentToast(this._translateService.instant('setting.s3.message-success'), 'toast-success');
+		} else {
+			this.presentToast(this._translateService.instant('setting.s3.message-error'), 'toast-error')
+		}
+	}
+
+	async checkConfigConnection(config) {
+		return new Promise((resolve) => {
+			if (this._electronService.isElectronApp) {
+				this._electronService.ipcRenderer.invoke('check-conf', config).then((conf) => {
+					console.log(`connection of ${config.name}:`, conf);
+					this.checkingConf = false;
+					resolve(conf)
+				})
+			}
+		})
+	}
+
+	async presentToast(message, cssClass) {
+		const toast = await this.toastController.create({
+			message: message,
+			position: 'top',
+			duration: 2000,
+			cssClass: cssClass
+		});
+		toast.present();
+	}
+
+	dismiss() {
+		this.modalController.dismiss({
+			'dismissed': true
+		});
+	}
 }

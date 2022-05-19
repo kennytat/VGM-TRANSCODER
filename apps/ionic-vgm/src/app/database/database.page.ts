@@ -344,17 +344,17 @@ export class DatabasePage implements OnInit {
     // // convert instance code
     if (this._electronService.isElectronApp) {
       // set prefixed local path to database folder, start vs end converting point for each machine. Ex: '/home/vgmuser/Desktop' 
-      const prefixPath = '/home/vgm/Desktop';
-      const startPoint = 720; // ipfs 299 file done 1350
-      const endPoint = 2250;
+      // const prefixPath = '/home/vgm/Desktop';
+      // const startPoint = 720; // ipfs 299 file done 1350
+      // const endPoint = 2250;
       // this._electronService.ipcRenderer.send('test', prefixPath, fileType, startPoint, endPoint); // 'test' 'fastly' 
       // this._electronService.ipcRenderer.send('cloud-to-ipfs', prefixPath, fileType, startPoint, endPoint);
-      this._electronService.ipcRenderer.send('get-count');
+      // this._electronService.ipcRenderer.send('get-count');
       // this._electronService.ipcRenderer.send('xor-key-ipfs', prefixPath, startPoint, endPoint);
       // this._electronService.ipcRenderer.send('ipfs-hash-to-db', prefixPath, startPoint, endPoint);
       // this._electronService.ipcRenderer.send('ipfs-unpin', prefixPath, startPoint, endPoint);
-      // const xorPath = '/home/vgm/Desktop/test/STK'
-      // this._electronService.ipcRenderer.send('xor-key', xorPath, true);
+      const xorPath = '/home/vgm/Desktop'
+      this._electronService.ipcRenderer.send('xor-key', xorPath, false);
       // this._electronService.ipcRenderer.send('create-instance-db', prefixPath, startPoint, endPoint);
     }
 
