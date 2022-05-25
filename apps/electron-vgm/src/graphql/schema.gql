@@ -190,19 +190,19 @@ type Root {
 type Query {
   root(id: String!): Root!
   level1Unique(id: String!): Level1!
-  level1Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level1!]!
+  level1Queries(id: String, isLeaf: Boolean, isVideo: Boolean): [Level1!]!
   level2Unique(id: String!): Level2!
-  level2Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level2!]!
+  level2Queries(id: String, isLeaf: Boolean, isVideo: Boolean): [Level2!]!
   level3Unique(id: String!): Level3!
-  level3Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level3!]!
+  level3Queries(id: String, isLeaf: Boolean, isVideo: Boolean): [Level3!]!
   level4Unique(id: String!): Level4!
-  level4Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level4!]!
+  level4Queries(id: String, isLeaf: Boolean, isVideo: Boolean): [Level4!]!
   level5Unique(id: String!): Level5!
-  level5Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level5!]!
+  level5Queries(id: String, isLeaf: Boolean, isVideo: Boolean): [Level5!]!
   level6Unique(id: String!): Level6!
-  level6Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level6!]!
+  level6Queries(id: String, isLeaf: Boolean, isVideo: Boolean): [Level6!]!
   level7Unique(id: String!): Level7!
-  level7Queries(id: String, isLeaf: Boolean, isVideo: Boolean!): [Level7!]!
+  level7Queries(id: String, isLeaf: Boolean, isVideo: Boolean): [Level7!]!
 }
 
 type Mutation {

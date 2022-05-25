@@ -5,130 +5,35 @@
   <ion-segment
     (ionChange)="segmentChanged($event)"
     scrollable
-    value="{{ rcloneConf[0].name }}"
+    value="{{ rcloneConf[0].id }}"
   >
-    <ion-segment-button value="{{ rcloneConf[0].name }}">
-      <ion-label>{{ 'setting.warehouse' | translate }}</ion-label>
-    </ion-segment-button>
-    <ion-segment-button value="{{ rcloneConf[1].name }}">
-      <ion-label>{{ 'setting.encrypted' | translate }}</ion-label>
-    </ion-segment-button>
-    <ion-segment-button value="{{ rcloneConf[2].name }}">
-      <ion-label>{{ 'setting.ipfs' | translate }}</ion-label>
+    <ion-segment-button *ngFor="let conf of rcloneConf" value="{{ conf.id }}">
+      <ion-label>{{ conf.id }}</ion-label>
     </ion-segment-button>
   </ion-segment>
 </ion-header>
 <ion-content>
-  <ion-card #warehouse *ngIf="selectedTab === rcloneConf[0].name">
-    <ion-card-content>
-      <ion-list>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.type' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[0].type"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.provider' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[0].provider"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.key' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[0].access_key_id"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.secret' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[0].secret_access_key"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.endpoint' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[0].endpoint"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.acl' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[0].acl"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.bucket' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[0].bucket"></ion-input>
-        </ion-item>
+  <ion-card>
+    <ion-card-content *ngFor="let conf of rcloneConf; index as i">
+      <ion-list *ngIf="selectedTab === conf.id">
+        <ion-row *ngFor="let item of conf | keyvalue">
+          <ion-item *ngIf="item.key !== 'id'">
+            <ion-label
+              position="fixed"
+              style="min-width: 150px; font-size: 15px"
+              >{{ item.key | uppercase }}:
+            </ion-label>
+            <ion-input
+              color="primary"
+              debounce="1000"
+              [(ngModel)]="conf[item.key]"
+            ></ion-input>
+          </ion-item>
+        </ion-row>
       </ion-list>
     </ion-card-content>
   </ion-card>
 
-  <ion-card *ngIf="selectedTab === rcloneConf[1].name">
-    <ion-card-content>
-      <ion-list>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.type' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[1].type"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.provider' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[1].provider"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.key' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[1].access_key_id"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.secret' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[1].secret_access_key"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.endpoint' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[1].endpoint"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.acl' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[1].acl"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.bucket' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[1].bucket"></ion-input>
-        </ion-item>
-      </ion-list>
-    </ion-card-content>
-  </ion-card>
-
-  <ion-card *ngIf="selectedTab === rcloneConf[2].name">
-    <ion-card-content>
-      <ion-list>
-        <ion-item>
-          <ion-label position="fixed">{{
-            'setting.s3.gateway' | translate
-          }}</ion-label>
-          <ion-input [(ngModel)]="rcloneConf[2].endpoint"></ion-input>
-        </ion-item>
-      </ion-list>
-    </ion-card-content>
-  </ion-card>
   <ion-row style="justify-content: center">
     <ion-button
       (click)="saveConf(selectedTab)"

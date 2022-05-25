@@ -25,7 +25,14 @@
 		"title": "Database"
 	},
 	"converter": {
-		"title": "Converter"
+		"title": "Converter",
+		"subtitle": "M3U8 Streaming Transcoder",
+		"input":"Browse Input Source",
+		"placeholder": "Select input source...",
+		"browse": "browse",
+		"file": "Files only",
+		"database": "Database Location:",
+		"start": "start conversion"
 	},
 	"analytic": {
 		"title": "Analytic"

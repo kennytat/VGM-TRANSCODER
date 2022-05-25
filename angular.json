@@ -400,7 +400,10 @@
             "allowedCommonJsDependencies": [
               "lodash",
               "zen-observable",
-              "crypto-js"
+              "crypto-js",
+              "p-any",
+              "p-queue",
+              "meilisearch"
             ],
             "outputPath": "apps/ionic-vgm/www",
             "index": "apps/ionic-vgm/src/index.html",
@@ -558,6 +561,14 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "allowedCommonJsDependencies": [
+              "lodash",
+              "zen-observable",
+              "crypto-js",
+              "p-any",
+              "p-queue",
+              "meilisearch"
+            ],
             "outputPath": "dist/apps/electron-vgm",
             "index": "apps/ionic-vgm/src/index.html",
             "main": "apps/ionic-vgm/src/main.ts",

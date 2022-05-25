@@ -1,4 +1,5 @@
 export interface S3Conf {
+	id: string;
 	name: string;
 	type: string;
 	provider: string;

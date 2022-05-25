@@ -20,16 +20,6 @@
             >
               test
             </ion-button>
-
-            <ion-button
-              fill="clear"
-              slot="end"
-              style="margin: 0; font-size: 17px"
-              color="warning"
-              (click)="exportSpeakerAPI()"
-            >
-              <ion-icon name="download-outline"> </ion-icon>
-            </ion-button>
             <ion-button
               fill="clear"
               slot="end"
@@ -37,19 +27,9 @@
               color="warning"
               (click)="exportAPI()"
             >
-              <ion-icon name="download-outline"> </ion-icon>
-            </ion-button>
-
-            <ion-button
-              fill="clear"
-              slot="end"
-              style="margin: 0; font-size: 17px"
-              color="{{_searchInit ? 'success' : 'dark'}}"
-              (click)="uploadDB()"
-              [disabled]="!_searchInit"
-            >
               <ion-icon name="cloud-upload-outline"> </ion-icon>
             </ion-button>
+
             <ion-button
               fill="clear"
               slot="end"

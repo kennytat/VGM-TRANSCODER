@@ -83,8 +83,8 @@ hr.new {
     color: black;
   }
   .setting-modal {
-    --width: 520px;
-    --height: 540px;
+    --width: 600px;
+    --height: 600px;
     ion-content {
       --padding-start: 10px;
       --padding-bottom: 10px;
@@ -96,12 +96,11 @@ hr.new {
 				}
         ion-list {
           justify-content: center;
-          ion-item {
-						--padding-start: 0
-					}
 					ion-row {
-						justify-content: center;
-						padding-top: 10px;
+						ion-item {
+							width: 100%;
+							--padding-start: 0
+						}
 					}
         }
       }
