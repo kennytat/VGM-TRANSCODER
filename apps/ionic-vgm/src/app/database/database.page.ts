@@ -203,6 +203,7 @@ export class DatabasePage implements OnInit {
 	}
 
 	async refreshDB() {
+		await this.presentLoading(this._translateService.instant('database.msg.refresh-waiting'), 3000)
 		await this._dataService.treeRefresh(this.isVideo);
 	}
 
@@ -566,7 +567,7 @@ export class DatabasePage implements OnInit {
 					}
 				})
 			} else {
-				this._electronService.ipcRenderer.invoke('error-message', 'empty-select');
+				this._electronService.ipcRenderer.invoke('popup-message', 'empty-select');
 			}
 		}
 	}
@@ -676,11 +677,11 @@ export class DatabasePage implements OnInit {
 		}
 	}
 
-	async presentLoading(msg) {
+	async presentLoading(msg, duration = 0) {
 		this.loadingModal = await this.loadingController.create({
 			cssClass: 'loading-modal',
 			message: msg,
-			duration: 0
+			duration: duration
 		});
 		await this.loadingModal.present();
 	}

@@ -26,7 +26,8 @@
 		"msg": {
 		"export-api": "Your API has been exported sucessfully",
 		"export-waiting": "Exporting - Please wait",
-		"process-waiting": "Processing database - Please wait"
+		"process-waiting": "Processing database - Please wait",
+		"refresh-waiting": "Refreshing database"
 		}
 	},
 	"converter": {

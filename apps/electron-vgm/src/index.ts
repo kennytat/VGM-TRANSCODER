@@ -54,6 +54,7 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	},
 
 };
+export const tmpDir = path.join(os.tmpdir(), app.getName());
 
 
 // create graphql server function
@@ -176,7 +177,6 @@ try {
 			databaseService();
 			convertService();
 			tmpService();
-			const tmpDir = `${os.tmpdir()}/vgm`;
 			if (!fs.existsSync(tmpDir)) {
 				fs.mkdirSync(tmpDir);
 			}
@@ -202,13 +202,14 @@ try {
 	});
 
 	// Listen to renderer process and open dialog for input and output path
-	ipcMain.handle('open-dialog', async (event, isFile) => {
+	ipcMain.handle('open-dialog', async (event, isFile: boolean = false, isVideo: boolean = true) => {
+		const fileType = isVideo ? 'mp4' : 'mp3';
 		try {
 			let options = {};
 			if (isFile) {
 				options = {
 					title: 'Browse Video Folder',
-					filters: [{ name: 'Media', extensions: ['mkv', 'avi', 'mp4', 'm4a', 'mp3', 'wav', 'wma', 'aac', 'webm'] }],
+					filters: [{ name: 'Media', extensions: [fileType] }],
 					properties: ['openFile', 'multiSelections']
 				}
 			} else {
@@ -225,20 +226,7 @@ try {
 		}
 	})
 
-	ipcMain.handle('save-dialog', async (event) => {
-		try {
-			const result = await dialog.showOpenDialog(win, {
-				title: 'Browse Output Folder',
-				properties: ['openDirectory']
-			})
-			return result.filePaths;
-		} catch (error) {
-			console.log(error);
-			return null;
-		}
-	})
-
-	ipcMain.handle('error-message', (event, arg) => {
+	ipcMain.handle('popup-message', (event, arg) => {
 		if (arg === 'missing-path') {
 			const options = {
 				type: 'warning',
@@ -247,7 +235,8 @@ try {
 				detail: 'Please select valid source, destination and database',
 			};
 			showMessageBox(options);
-		} else if (arg === 'empty-select') {
+		}
+		if (arg === 'empty-select') {
 			const options = {
 				type: 'warning',
 				title: 'Warning',
@@ -255,12 +244,31 @@ try {
 				detail: 'Select file to be modified, please try again',
 			};
 			showMessageBox(options);
-		} else if (arg === 'topic-db-error') {
+		}
+		if (arg === 'topic-db-error') {
 			const options = {
 				type: 'warning',
 				title: 'Warning',
 				message: 'Error creating new topic',
 				detail: 'Existing topic or server error',
+			};
+			showMessageBox(options);
+		}
+		if (arg === 'no-file-found') {
+			const options = {
+				type: 'warning',
+				title: 'Warning',
+				message: 'No media file found',
+				detail: 'No valid media files found, please try again.',
+			};
+			showMessageBox(options);
+		}
+		if (arg === 'exec-done') {
+			const options = {
+				type: 'info',
+				title: 'Done',
+				message: 'Congratulations',
+				detail: 'Your files have been converted sucessfully',
 			};
 			showMessageBox(options);
 		}
@@ -1169,6 +1177,7 @@ try {
 
 function quit() {
 	if (process.platform !== 'darwin') {
+		fs.rmdirSync(tmpDir, { recursive: true });
 		app.quit();
 	}
 }

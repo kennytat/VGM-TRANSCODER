@@ -6,9 +6,9 @@
           <ion-item>
             <ion-icon name="folder-open-outline" slot="start"></ion-icon>
             <ion-label>{{'converter.subtitle' | translate}}</ion-label>
-            <ion-button fill="outline" slot="end" (click)="test()"
+            <!-- <ion-button fill="outline" slot="end" (click)="test()"
               >Test</ion-button
-            >
+            > -->
           </ion-item>
 
           <ion-card-content>
@@ -30,7 +30,7 @@
                     disabled="{{isConverting}}"
                     expand="block"
                     size="small"
-                    (click)="OpenDialog()"
+                    (click)="openDialog()"
                     >{{'converter.browse' | translate}}</ion-button
                   >
 
@@ -169,7 +169,7 @@
           </ion-input> -->
 
           <ion-card-content *ngIf="!isConverting; else stop_convert">
-            <ion-button expand="block" (click)="Convert()"
+            <ion-button expand="block" (click)="convert()"
               >{{'converter.start' | translate}}</ion-button
             >
           </ion-card-content>
@@ -216,7 +216,7 @@
               </ion-grid>
             </ion-card-content>
             <ion-card-content>
-              <ion-button expand="block" (click)="Cancel()">STOP</ion-button>
+              <ion-button expand="block" (click)="cancel()">STOP</ion-button>
             </ion-card-content>
           </ng-template>
         </ion-card>

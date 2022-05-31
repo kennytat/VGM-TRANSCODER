@@ -4,7 +4,8 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
 import { showMessageBox, nonAccentVietnamese, uploadIPFS, rcloneSync } from './function';
-import { FileInfo, encryptedConf } from './database';
+import { FileInfo } from './database';
+import { tmpDir } from './index';
 // import { create, globSource, CID } from 'ipfs-http-client'
 import * as CryptoJS from "crypto-js";
 import { slice } from 'ramda';
@@ -16,8 +17,8 @@ const queue = new PQueue();
 export const convertService = () => {
 
 	// Get input and output path from above and execute sh file
-	ipcMain.handle('start-convert', async (event, argInPath, fileOnly, pItem) => {
-		const tmpOutPath = path.join(os.tmpdir(), 'vgm');
+	ipcMain.handle('start-convert', async (event, inputFile: string, pItem) => {
+
 		const checkMP4 = async (tmpPath, fType) => {
 			console.log('checking downloaded file', `${tmpPath}`);
 			return new Promise(async (resolve) => {
@@ -91,7 +92,8 @@ export const convertService = () => {
 				// process filename
 				const nonVietnamese = nonAccentVietnamese(fileInfo.name);
 				fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
-				const outPath = `${tmpOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
+
+				const outPath = `${tmpDir}/${nonVietnamese.replace(/\s/g, '')}`;
 				fileInfo.isVideo = pItem.isVideo;
 				fileInfo.pid = pItem.id;
 				fileInfo.dblevel = pItem.dblevel + 1;
@@ -99,7 +101,7 @@ export const convertService = () => {
 				console.log(`'bash', ['ffmpeg-exec.sh', "${file}", "${outPath}", ${fType}]`);
 				const conversion = spawn('bash', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fType]);
 				conversion.stdout.on('data', async (data) => {
-					console.log(`conversion stdout: ${data}`, totalFiles, convertedFiles);
+					console.log(`conversion stdout: ${data}`);
 					const ffmpeg_progress_stat: string[] = data.toString().split('\n');
 					if (ffmpeg_progress_stat && fType === 'video') {
 						// get fps and total duration
@@ -117,7 +119,7 @@ export const convertService = () => {
 								}
 							}
 						}
-						event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+						event.sender.send('progression', progression_status);
 					} else if (ffmpeg_progress_stat && fType === 'audio') {
 						// get converted time
 						const time_stat: string = ffmpeg_progress_stat.filter(time => time.includes('out_time_ms=')).toString();
@@ -129,7 +131,7 @@ export const convertService = () => {
 								progression_status = converted_time / audio_duration;
 							}
 						}
-						event.sender.send('progression', progression_status, convertedFiles, totalFiles);
+						event.sender.send('progression', progression_status);
 					}
 				});
 
@@ -158,8 +160,10 @@ export const convertService = () => {
 						fileInfo.hash = encryptedCID ? CryptoJS.AES.encrypt(encryptedCID, secretKey).toString() : '';
 						// upload converted to s3
 						const VGM = fType === 'audio' ? 'VGMA' : fType === 'video' ? 'VGMV' : '';
-						const upConvertedPath = `${encryptedConf.name}:${encryptedConf.bucket}/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`;
-						await rcloneSync(`${outPath}`, upConvertedPath, encryptedConf.path);
+						console.log('start uploading');
+
+						// const upConvertedPath = `${encryptedConf.name}:${encryptedConf.bucket}/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`;
+						// await rcloneSync(`${outPath}`, upConvertedPath, encryptedConf.path);
 						// upload done -> delete converted folder
 						console.log('updated fileInfo', fileInfo);
 						await fs.rmdirSync(outPath, { recursive: true });
@@ -174,65 +178,34 @@ export const convertService = () => {
 			});
 		}
 
-		let files: string[];
-		let totalFiles: number = 0;
-		let convertedFiles: number = 0;
+		// let files: string;
+		// let totalFiles: number = 0;
+		// let convertedFiles: number = 0;
 		let progression_status: number = 0;
-		let fileType: string;
+		// let fileType: string;
 		// Get total input file count 
-		if (fileOnly) {
-			files = argInPath;
-		} else {
-			files = execSync(`find '${argInPath}' -regextype posix-extended -regex '.*.(mp4|mp3)'`, { encoding: "utf8" }).split('\n');
-			files.pop();
-		}
-		totalFiles = files.length;
-		if (files && totalFiles > 0 && convertedFiles < totalFiles) {
-			if (pItem.isVideo) {
-				fileType = 'video';
-				queue.concurrency = 1;
+		// if (fileOnly) {
+		// 	files = inputFile;
+		// } else {
+		// 	files = execSync(`find '${inputFile}' -regextype posix-extended -regex '.*.(mp4|mp3)'`, { encoding: "utf8" }).split('\n');
+		// 	files.pop();
+		// }
+		// totalFiles = files.length;
+		const fileType = pItem.isVideo ? 'video' : 'audio';
+
+		return new Promise(async (resolve, reject) => {
+			const fileOk = await checkMP4(inputFile, fileType); // audio dont need check MP4
+			if (fileOk) {
+				// convert and up encrypted and database
+				const checkNonSilence = await execSync(`ffmpeg -i "${inputFile}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
+				const fStat = checkNonSilence ? fileType : 'videoSilence';
+				await convertFile(inputFile, fStat, pItem);
+				resolve(true);
 			} else {
-				fileType = 'audio';
-				queue.concurrency = 20;
+				console.log(`file data error: cannot read - ${inputFile}`);
+				resolve(false)
 			}
-
-			let tasks = [];
-			files.forEach(file => {
-				tasks.push(async () => {
-					const fileOk = await checkMP4(file, fileType); // audio dont need check MP4
-					if (fileOk) {
-						// convert and up encrypted and database
-						let fStat: string;
-						const checkNonSilence = await execSync(`ffmpeg -i "${file}" 2>&1 | grep Audio | awk '{print $0}' | tr -d ,`, { encoding: 'utf8' });
-						if (checkNonSilence) fStat = fileType; else fStat = 'videoSilence';
-						await convertFile(file, fileType, pItem);
-					} else {
-						console.log(`file data error: cannot read - ${file}`);
-					}
-					convertedFiles++;
-				})
-			});
-			await Promise.all(tasks.map(task => queue.add(task))).then(async () => {
-				const options = {
-					type: 'info',
-					title: 'Done',
-					message: 'Congratulations',
-					detail: 'Your files have been converted sucessfully',
-				};
-				showMessageBox(options);
-				event.sender.send('exec-done');
-			});
-
-		} else {
-			const options = {
-				type: 'warning',
-				title: 'Warning',
-				message: 'No video found',
-				detail: 'No valid video files found, please try again.',
-			};
-			showMessageBox(options);
-			event.sender.send('exec-done');
-		}
+		})
 
 	})
 

@@ -12,7 +12,7 @@ import {
 	dnsGWCheck,
 	searchGWCheck
 } from './function';
-import { win } from './index';
+import { win, tmpDir } from './index';
 
 export interface FileInfo {
 	pid: string,
@@ -45,7 +45,7 @@ export const databaseService = () => {
 	ipcMain.handle('check-conf', async (event, config) => {
 		console.log('got conf:', config);
 		let result;
-		const confPath = path.join(os.tmpdir(), 'vgm', `${config.name}.conf`);
+		const confPath = path.join(tmpDir, `${config.name}.conf`);
 		try {
 			switch (config.id) {
 				case "warehouse":
@@ -67,11 +67,9 @@ export const databaseService = () => {
 					result = await ipfsGWCheck(config.gateway);
 					break;
 				case "search":
-					ipfsGateway = config.gateway;
 					result = await searchGWCheck(config.gateway);
 					break;
 				case "dns":
-					ipfsGateway = config.gateway;
 					result = await dnsGWCheck(config.gateway);
 					break;
 				default:
@@ -110,28 +108,35 @@ export const databaseService = () => {
 		}
 	})
 
+	// add mass DB folder recursively
+	ipcMain.handle('find-file-db', async (event, dirPath: string, isVideo: boolean) => { // instant add to db
+		const fileType = isVideo ? 'mp4' : 'mp3';
+		let filesArray = execSync(`find '${dirPath}' -name '*.${fileType}'`, { encoding: "utf8" }).split('\n');
+		filesArray.pop();
+		return filesArray;
+	})
+
 
 	ipcMain.handle('export-database', async (event, apiType: string, item, fileType) => {
 		console.log('export-database called', item);
-		const outPath = `${os.tmpdir()}/vgm`;
 		const json = fileType === 'searchAPI' ? JSON.stringify(item) : JSON.stringify(item, null, 2);
 
 		// handle file path
 		let filePath: string;
 		if (fileType === 'itemList') {
-			filePath = path.join(outPath.toString(), `API-${apiType}`, 'items', 'list', `${item.url}.json`);
+			filePath = path.join(tmpDir, `API-${apiType}`, 'items', 'list', `${item.url}.json`);
 		} else if (fileType === 'itemSingle') {
-			filePath = path.join(outPath.toString(), `API-${apiType}`, 'items', 'single', `${item.url}.json`);
+			filePath = path.join(tmpDir, `API-${apiType}`, 'items', 'single', `${item.url}.json`);
 		} else if (fileType === 'topicList') {
-			filePath = path.join(outPath.toString(), `API-${apiType}`, 'topics', 'list', `${item.url}.json`);
+			filePath = path.join(tmpDir, `API-${apiType}`, 'topics', 'list', `${item.url}.json`);
 		} else if (fileType === 'topicSingle') {
-			filePath = path.join(outPath.toString(), `API-${apiType}`, 'topics', 'single', `${item.url}.json`);
+			filePath = path.join(tmpDir, `API-${apiType}`, 'topics', 'single', `${item.url}.json`);
 		} else if (fileType === 'searchAPI') {
-			filePath = path.join(outPath.toString(), `API-${apiType}`, `searchAPI.json`);
+			filePath = path.join(tmpDir, `API-${apiType}`, `searchAPI.json`);
 		} else if (fileType === 'apiVersion') {
-			filePath = path.join(outPath.toString(), `API-${apiType}`, `apiVersion.json`);
+			filePath = path.join(tmpDir, `API-${apiType}`, `apiVersion.json`);
 		} else if (fileType === 'apiJson') {
-			filePath = path.join(outPath.toString(), `API-${apiType}`, `instruction.json`);
+			filePath = path.join(tmpDir, `API-${apiType}`, `instruction.json`);
 		}
 		const dir = path.dirname(filePath)
 		if (!fs.existsSync(dir)) {
@@ -148,8 +153,7 @@ export const databaseService = () => {
 	ipcMain.handle('upload-api', async (event, apiType) => {
 		try {
 			if (apiType === 'web') {
-				const outPath = `${os.tmpdir()}/vgm`;
-				const src = path.join(outPath.toString(), `API-${apiType}`);
+				const src = path.join(tmpDir, `API-${apiType}`);
 				const des = `${encryptedConf.name}:${encryptedConf.bucket}/API`;
 				console.log('uploading API:', src, des, encryptedConf.path);
 

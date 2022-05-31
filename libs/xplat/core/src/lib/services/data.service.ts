@@ -121,11 +121,7 @@ export class DataService {
 
 
 	async treeRefresh(isVideo: boolean) {
-		if (isVideo) {
-			await this.videoTreeQuery.refetch();
-		} else {
-			await this.audioTreeQuery.refetch();
-		}
+		return isVideo && this.videoTreeQuery ? await this.videoTreeQuery.refetch() : !isVideo && this.audioTreeQuery ? await this.audioTreeQuery.refetch() : undefined;
 	}
 
 

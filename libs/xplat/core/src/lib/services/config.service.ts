@@ -101,7 +101,6 @@ export class ConfigService {
 							if (result) {
 								this.configs[i] = result;
 								const connStatus = await this.connCheck(this.configs[i]);
-
 								this.configs[i].status = connStatus as boolean;
 								this.configs$[i].next(this.configs[i]);
 								return connStatus;

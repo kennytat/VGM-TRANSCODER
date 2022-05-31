@@ -66,31 +66,16 @@ export class ConverterPage implements OnInit {
 		if (this._electronService.isElectronApp) {
 			// reset state when exec done
 			this._electronService.ipcRenderer.on('exec-done', (event) => {
-				this.zone.run(() => {
-					this.isConverting = false;
-					this.progressLoading = false;
-					this.progressionStatus = 0;
-					this.inputPath = '';
-					this._dataService.treeRefresh(this.isVideo);
-				});
+				this.execDone();
 			});
 			// update state while converting
-			this._electronService.ipcRenderer.on('progression', (event, arg1, arg2, arg3) => {
+			this._electronService.ipcRenderer.on('progression', (event, progression) => {
 				this.zone.run(() => {
-					this.progressionStatus = arg1;
-					this.convertedFiles = arg2;
-					this.totalFiles = arg3;
-					if (this.progressionStatus > 0.99) {
-						this.progressLoading = true;
-					} else {
-						this.progressLoading = false;
-					}
+					this.progressionStatus = progression;
+					this.progressLoading = this.progressionStatus > 0.99 ? true : false;
 				});
 			});
 		}
-
-
-
 	}
 
 
@@ -177,7 +162,7 @@ export class ConverterPage implements OnInit {
 		}, (error) => {
 			console.log('there was an error sending the query', error);
 			if (this._electronService.isElectronApp) {
-				this._electronService.ipcRenderer.invoke('error-message', 'topic-db-error');
+				this._electronService.ipcRenderer.invoke('popup-message', 'topic-db-error');
 			}
 		});
 	}
@@ -280,7 +265,7 @@ export class ConverterPage implements OnInit {
 	}
 
 	async test() {
-		console.log(this.newDBArray);
+		console.log(this.inputPath);
 
 		// // instance update
 		// const qmHash = 'QmQDuZsCmxQm2WwB5WHjG5n92kjuukaKrN7Py59hHC3FJs'
@@ -384,9 +369,9 @@ export class ConverterPage implements OnInit {
 
 
 
-	OpenDialog() {
+	openDialog() {
 		if (this._electronService.isElectronApp) {
-			this._electronService.ipcRenderer.invoke('open-dialog', this.fileCheckbox).then((inpath) => {
+			this._electronService.ipcRenderer.invoke('open-dialog', this.fileCheckbox, this.isVideo).then((inpath) => {
 				this.zone.run(() => {
 					this.inputPath = inpath;
 				})
@@ -394,42 +379,79 @@ export class ConverterPage implements OnInit {
 		}
 	}
 
-	// SaveDialog() {
-	// 	if (this._electronService.isElectronApp) {
-	// 		this._electronService.ipcRenderer.invoke('save-dialog').then((outpath) => {
-	// 			this.zone.run(() => {
-	// 				this.outputPath = outpath.toString();
-	// 			})
-	// 		})
-	// 	}
-	// }
 
-
-	async Convert() {
+	async convert() {
 		if (this._electronService.isElectronApp) {
 			if (!this.inputPath || !this.selectedItem) {
-				this._electronService.ipcRenderer.invoke('error-message', 'missing-path');
+				this._electronService.ipcRenderer.invoke('popup-message', 'missing-path');
 			} else {
 				this.isConverting = true;
-				// // create directory DB first
+				// create directory DB first
 				const dirList = await this._electronService.ipcRenderer.invoke('find-dir-db', this.inputPath);
-				console.log('dir list:', dirList);
 				await this.processDirDB(dirList);
-				const fileList = await this._electronService.ipcRenderer.invoke('find-file-db', this.inputPath, this.isVideo);
-				// start converting files
+				// find all files
+				const fileList = this.fileCheckbox ? this.inputPath : await this._electronService.ipcRenderer.invoke('find-file-db', this.inputPath, this.isVideo);
 				console.log('file list:', fileList);
-				// await this._electronService.ipcRenderer.invoke('start-convert', this.inputPath, this.fileCheckbox, this.selectedItem);
+				this.totalFiles = fileList.length;
+				queue.concurrency = this.selectedItem.isVideo ? 1 : 20;
+				if (fileList.length > 0) {
+					try {
+						let tasks = [];
+						fileList.forEach(file => {
+							tasks.push(async () => {
+								const pName = path.basename(path.dirname(file));
+								const index = this.newDBArray.findIndex((pItem) => pItem.name === pName);
+								const pItem = dirList.length !== 0 ? index >= 0 ? this.newDBArray[index] : undefined : this.selectedItem;
+								if (pItem) {
+									// start converting files
+									await this._electronService.ipcRenderer.invoke('start-convert', file, pItem);
+									console.log('start converting files', file, pItem);
+									this.convertedFiles++;
+								}
+							})
+						});
+						await Promise.all(tasks.map(task => queue.add(task))).then(async () => {
+							console.log('exec file done');
+							this.execDone();
+							this._electronService.ipcRenderer.invoke('popup-message', 'exec-done');
+						});
+
+					} catch (error) {
+
+					}
+
+
+
+				} else {
+					console.log('no file found');
+					this._electronService.ipcRenderer.invoke('popup-message', 'no-file-found');
+				}
+
+
 			};
 		}
 	}
 
-	Cancel() {
+	async execDone() {
 		if (this._electronService.isElectronApp) {
+			this.zone.run(() => {
+				this.isConverting = false;
+				this.inputPath = '';
+				this.convertedFiles = 0;
+				this.totalFiles = 0;
+				this.progressLoading = false;
+				this.progressionStatus = 0;
+				this._dataService.treeRefresh(this.isVideo);
+			})
+		}
+	}
+
+
+	async cancel() {
+		if (this._electronService.isElectronApp) {
+			queue.clear();
 			this._electronService.ipcRenderer.invoke('stop-convert').then((response) => {
-				this.zone.run(() => {
-					this.isConverting = false;
-					this.inputPath = '';
-				})
+				this.execDone();
 			})
 		}
 	}
