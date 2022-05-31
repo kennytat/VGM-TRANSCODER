@@ -27,6 +27,7 @@ const routes: Routes = [
 				redirectTo: 'database',
 				pathMatch: 'full',
 			},
+
 		],
 	}
 ];

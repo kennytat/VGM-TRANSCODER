@@ -403,6 +403,7 @@
               "crypto-js",
               "p-any",
               "p-queue",
+							"p-all",
               "meilisearch"
             ],
             "outputPath": "apps/ionic-vgm/www",
@@ -567,6 +568,7 @@
               "crypto-js",
               "p-any",
               "p-queue",
+							"p-all",
               "meilisearch"
             ],
             "outputPath": "dist/apps/electron-vgm",

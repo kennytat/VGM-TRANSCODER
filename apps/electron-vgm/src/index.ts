@@ -1,47 +1,32 @@
-import { app, BrowserWindow, ipcMain, screen, dialog, Menu, globalShortcut, net } from 'electron'
+import { app, BrowserWindow, ipcMain, screen, dialog, Menu, globalShortcut } from 'electron'
 import * as path from 'path'
-import * as fs from 'fs'
 import * as url from 'url'
-import { exec, spawn, execSync, spawnSync } from 'child_process'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './graphql/app.module'
-import { create, globSource, CID } from 'ipfs-http-client'
-import * as CryptoJS from "crypto-js";
-import { slice } from 'ramda';
-import * as M3U8FileParser from "m3u8-file-parser";
-import * as bitwise from 'bitwise';
+import * as fs from 'fs'
+import * as os from 'os'
+// import { exec, spawn, execSync, spawnSync } from 'child_process'
+// import { create, globSource, CID } from 'ipfs-http-client'
+// import * as CryptoJS from "crypto-js";
+// import { slice } from 'ramda';
+// import * as M3U8FileParser from "m3u8-file-parser";
+// import * as bitwise from 'bitwise';
 
-import { Buffer } from 'buffer';
-import delay from 'delay'
+// import { Buffer } from 'buffer';
+// import delay from 'delay'
 
-import PQueue from 'p-queue';
-const queue = new PQueue();
+// import PQueue from 'p-queue';
+// const queue = new PQueue();
 
 import { convertService } from './convert';
-import tmpService from './tmp';
+import { tmpService } from './tmp';
 import { databaseService } from './database';
-import { showMessageBox, nonAccentVietnamese, } from './function';
-
-
+import { showMessageBox } from './function';
 
 
 let serve;
 const args = process.argv.slice(1);
 serve = args.some((val) => val === '--serve');
-
-interface FileInfo {
-	pid: string,
-	name: string,
-	size: number,
-	md5: string,
-	duration: string,
-	qm: string,
-	url: string,
-	hash: string,
-	khash: string,
-	isVideo: boolean,
-	dblevel: number
-}
 
 export let win: Electron.BrowserWindow = null;
 let menu: Electron.Menu;
@@ -188,6 +173,13 @@ try {
 			await bootstrap();
 			createWindow();
 			createMenu();
+			databaseService();
+			convertService();
+			tmpService();
+			const tmpDir = `${os.tmpdir()}/vgm`;
+			if (!fs.existsSync(tmpDir)) {
+				fs.mkdirSync(tmpDir);
+			}
 		} catch (error) {
 			console.log(error);
 		}
@@ -208,10 +200,6 @@ try {
 	ipcMain.on('restore', () => {
 		win.restore();
 	});
-
-	convertService();
-	databaseService();
-	tmpService();
 
 	// Listen to renderer process and open dialog for input and output path
 	ipcMain.handle('open-dialog', async (event, isFile) => {

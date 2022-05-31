@@ -7,6 +7,13 @@ import * as path from 'path'
 import * as _ from 'lodash';
 import CryptoJS from "crypto-js";
 import { slice } from 'ramda';
+
+import Pqueue from 'p-queue';
+const queue = new Pqueue();
+
+
+
+
 interface SelectedTopic {
 	level: number,
 	id: string,
@@ -38,7 +45,6 @@ export class ConverterPage implements OnInit {
 	selectedLevel: string = '0';
 	// Declare variable for conversion feature
 	inputPath: string | string[] = '';
-	outputPath: string | string[] = '';
 	fileCheckbox: boolean;
 	isConverting: boolean = false;
 	progressLoading: boolean = false;
@@ -55,45 +61,40 @@ export class ConverterPage implements OnInit {
 		private _electronService: ElectronService,
 		private zone: NgZone,
 		private apollo: Apollo,
-		private dataService: DataService) {
+		private _dataService: DataService) {
 
-	}
-
-
-	ngOnInit() {
-		// create large db instant code start
 		if (this._electronService.isElectronApp) {
-			this._electronService.ipcRenderer.on('create-manual', async (event, listArray) => {
-				this.newDBArray = [];
-				if (this.selectedItem.name === 'Audio' || this.selectedItem.name === 'Video') {
-					this.selectedItem.url = '';
-				}
-				this.newDBArray.push(this.selectedItem);
-				console.log(listArray, this.newDBArray);
-				let i = 0;
-				while (i < listArray.length) {
-					if (!listArray[i].pName) {
-						listArray[i].pName = this.selectedItem.name;
-						listArray[i].pid = this.selectedItem.id;
-					}
-					const pIndex = this.newDBArray.findIndex(item => path.basename(listArray[i].pName) === item.name);
-					if (pIndex >= 0) {
-						console.log('found pItem', this.newDBArray[pIndex], listArray[i].pName);
-						const newItem = await this.createMass(listArray[i].name, this.newDBArray[pIndex]);
-						this.newDBArray.push(newItem);
-						if (newItem) {
-							i++
-						}
+			// reset state when exec done
+			this._electronService.ipcRenderer.on('exec-done', (event) => {
+				this.zone.run(() => {
+					this.isConverting = false;
+					this.progressLoading = false;
+					this.progressionStatus = 0;
+					this.inputPath = '';
+					this._dataService.treeRefresh(this.isVideo);
+				});
+			});
+			// update state while converting
+			this._electronService.ipcRenderer.on('progression', (event, arg1, arg2, arg3) => {
+				this.zone.run(() => {
+					this.progressionStatus = arg1;
+					this.convertedFiles = arg2;
+					this.totalFiles = arg3;
+					if (this.progressionStatus > 0.99) {
+						this.progressLoading = true;
 					} else {
-						console.log('pItem not found', listArray[i]);
-						i++;
+						this.progressLoading = false;
 					}
-				}
-			})
+				});
+			});
 		}
-		// create large db instant code end
+
+
+
 	}
 
+
+	ngOnInit() { }
 
 	async selectOptionChange(level, itemID) {
 		this.selectedLevel = level;
@@ -109,14 +110,13 @@ export class ConverterPage implements OnInit {
 		} else if (itemID === '1') {
 			this.selectedTopics[level - 1].id = '1';
 		} else {
-			// console.log(this.selectedTopics[level - 1], this.selectedTopics[level]);
 
 			this.selectedTopics[level - 1].id = itemID;
 			if (level !== this.selectedTopics.length) {
 				this.selectedTopics[level].id = '0';
 				this.selectedTopics[level].options = [];
 			}
-			const options: any = await this.getOptions(level, this.isVideo, itemID);
+			const options: any = await this.getOptions(level, this.isVideo, undefined, itemID);
 			if (typeof options[0] != 'undefined') {
 				this.selectedItem = _.cloneDeep(options[0]);
 			} else {
@@ -131,11 +131,10 @@ export class ConverterPage implements OnInit {
 	}
 
 
-	async getOptions(level, isVideo, id) {
+	async getOptions(level: number, isVideo = undefined, isLeaf = undefined, id = undefined, url = undefined) {
 		return new Promise(async (resolve) => {
-			const result = await this.dataService.fetchLevelDB(level, isVideo, undefined, id);
+			const result = await this._dataService.fetchLevelDB(level, isVideo, isLeaf, id, url);
 			console.log('getoption', result);
-
 			resolve(result);
 		});
 	}
@@ -162,14 +161,14 @@ export class ConverterPage implements OnInit {
 		}).subscribe(async ({ data }) => {
 			const result = data[Object.keys(data)[0]];
 			// update parent count
-			const [pItem] = _.cloneDeep(await this.dataService.fetchLevelDB(result.dblevel - 1, result.isVideo, undefined, result.pid));
+			const [pItem] = _.cloneDeep(await this._dataService.fetchLevelDB(result.dblevel - 1, result.isVideo, undefined, result.pid));
 			console.log('pItem after create new:', pItem);
 			const pItemCount = pItem.children.length - 1;
 			const updateParentOption = {
 				id: result.pid,
 				count: pItemCount,
 			};
-			await this.dataService.updateSingle(pItem.dblevel, updateParentOption);
+			await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
 			// update UI view
 			this.selectedItem = await _.cloneDeep(result);
 			await this.selectedTopics[level - 1].options.push(this.selectedItem);
@@ -183,25 +182,80 @@ export class ConverterPage implements OnInit {
 		});
 	}
 
-	// updateLeaf() {
-	//   const item = { id: this.path, dblevel: this.level }
-	//   this.updateIsLeaf(item, 0)
-	// }
-
-	updateIsLeaf(item, count) {
-		this.apollo.mutate<any>({
-			mutation: this.selectedTopics[item.dblevel - 1].updateGQL,
-			variables: {
-				id: item.id,
-				isLeaf: true,
-				count: count
-			}
-		}).subscribe(({ data }) => {
-			console.log(data);
-		}, (error) => {
-			console.log('error updating isLeaf', error);
-		});
+	async createDirDB(itemName, pItem) {
+		return new Promise<string>(async (resolve, reject) => {
+			console.log('createmass called:', itemName, pItem);
+			const gql = this.selectedTopics[pItem.dblevel + 1 - 1].createGQL;
+			const nonVietnamese = await this.nonAccentVietnamese(itemName);
+			const url = pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-");
+			await this.apollo.mutate<any>({
+				mutation: gql,
+				variables: {
+					pid: pItem.id,
+					isLeaf: false,
+					url: url,
+					isVideo: pItem.isVideo,
+					name: itemName,
+				}
+			}).subscribe(async ({ data }) => {
+				console.log('created local DB', data);
+				const result = await _.cloneDeep(data[Object.keys(data)[0]]);
+				const [pItem] = _.cloneDeep(await this._dataService.fetchLevelDB(result.dblevel - 1, result.isVideo, undefined, result.pid));
+				console.log('pItem after create new:', pItem);
+				const pItemCount = pItem.children.length + 1;
+				const updateParentOption = {
+					id: result.pid,
+					count: pItemCount,
+				};
+				await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
+				resolve(result);
+			}, async (error) => {
+				// query if existing
+				console.log('there was an error sending the query', error, 'try querying existing topic');
+				const [result]: any = await this.getOptions(pItem.dblevel + 1, pItem.isVideo, undefined, undefined, url);
+				if (result) resolve(result);
+			});
+		})
 	}
+
+
+	async processDirDB(listArray) {
+		return new Promise(async (resolve, reject) => {
+
+			// create large db instant code start
+			this.newDBArray = [];
+			if (this.selectedItem.name === 'Audio' || this.selectedItem.name === 'Video') {
+				this.selectedItem.url = '';
+			}
+			this.newDBArray.push(this.selectedItem);
+			console.log(listArray, this.newDBArray);
+
+			queue.concurrency = 1;
+			await listArray.forEach(async dir => {
+				(async () => {
+					await queue.add(async () => {
+						if (!dir.pName) {
+							dir.pName = this.selectedItem.name;
+							dir.pid = this.selectedItem.id;
+						}
+						const pIndex = this.newDBArray.findIndex(item => path.basename(dir.pName) === item.name);
+						if (pIndex >= 0) {
+							console.log('found pItem', this.newDBArray[pIndex], dir.pName);
+							const newItem = await this.createDirDB(dir.name, this.newDBArray[pIndex]);
+							this.newDBArray.push(newItem)
+						} else {
+							console.log('pItem not found', dir);
+						}
+					});
+				})();
+			});
+			await queue.onEmpty().then(async () => {
+				console.log('Queue is empty, create directory DB done');
+				resolve('done');
+			});
+		})
+	}
+
 
 	nonAccentVietnamese(str) {
 		str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
@@ -226,6 +280,8 @@ export class ConverterPage implements OnInit {
 	}
 
 	async test() {
+		console.log(this.newDBArray);
+
 		// // instance update
 		// const qmHash = 'QmQDuZsCmxQm2WwB5WHjG5n92kjuukaKrN7Py59hHC3FJs'
 		// const secretKey = slice(0, 32, `01-bai-giang.hoc-theo-sach-trong-kinh-thanh.tim-hieu-thanh-kinh.thtk01-sang-the-ky.sa01-tim-hieu-khai-quatgggggggggggggggggggggggggggggggg`);
@@ -240,11 +296,11 @@ export class ConverterPage implements OnInit {
 		// };
 		// console.log(updateOption);
 
-		// await this.dataService.updateSingle(this.updateLevel, updateOption);
-		this._electronService.ipcRenderer.send('instance-db', this.updateURL);
+		// await this._dataService.updateSingle(this.updateLevel, updateOption);
+		// this._electronService.ipcRenderer.send('instance-db', this.updateURL);
 
 
-		// const item = await this.dataService.fetchLevelDB(1, true, false);
+		// const item = await this._dataService.fetchLevelDB(1, true, false);
 		// console.log('got itemmmmmm', item);
 
 		// const testItem = await this.getOptions(1, true, '00000000-0000-0000-0000-000000000001'); // 00000000-0000-0000-0000-000000000001 3c99cef1-0b91-4cff-a01b-2aa3cc0ca1d4
@@ -256,7 +312,6 @@ export class ConverterPage implements OnInit {
 		//   this._electronService.ipcRenderer.send('test', this.path, this.level);
 		// }
 
-		// this.updateIsLeaf();
 		// console.log(this.level1.options, '\n', this.level2.options, '\n', this.level3.options, '\n', this.level4.options, '\n', this.level5.options);
 		//     const data = `/home/kennytat/Downloads/bigbig/BigBuck.mp4
 		// /home/kennytat/Downloads/bigbig/Bigbig-123.mp4`
@@ -327,45 +382,11 @@ export class ConverterPage implements OnInit {
 		// }
 	}
 
-	async createMass(itemName, pItem) {
-		return new Promise<string>(async (resolve, reject) => {
-			console.log('createmass called:', itemName, pItem);
-
-			// const pid = this.selectedTopics[level - 2].id;
-			const gql = this.selectedTopics[pItem.dblevel + 1 - 1].createGQL;
-			const nonVietnamese = await this.nonAccentVietnamese(itemName);
-			// const nonChinese = await  pinyin(itemName, {removeTone: true, keepRest: true}); // this line for non Chinese characters
-			// const pList = [...this.selectedTopics[level - 2].options];
-			// const [pItem] = pList.filter((item) => item.id.includes(pid));
-			// console.log('parent', pid, pItem, pList);
-
-			// this.selectedTopics[level - 1].name = '';
-			await this.apollo.mutate<any>({
-				mutation: gql,
-				variables: {
-					pid: pItem.id,
-					isLeaf: false,
-					url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-"),
-					isVideo: pItem.isVideo,
-					name: itemName,
-				}
-			}).subscribe(async ({ data }) => {
-				const result = await _.cloneDeep(data[Object.keys(data)[0]]);
-				resolve(result);
-			}, (error) => {
-				console.log('there was an error sending the query', error);
-				// if (this._electronService.isElectronApp) {
-				//   this._electronService.ipcRenderer.invoke('error-message', 'topic-db-error');
-				// }
-			});
-		})
-	}
 
 
 	OpenDialog() {
 		if (this._electronService.isElectronApp) {
 			this._electronService.ipcRenderer.invoke('open-dialog', this.fileCheckbox).then((inpath) => {
-				// console.log(inpath);
 				this.zone.run(() => {
 					this.inputPath = inpath;
 				})
@@ -373,49 +394,31 @@ export class ConverterPage implements OnInit {
 		}
 	}
 
-	SaveDialog() {
-		if (this._electronService.isElectronApp) {
-			this._electronService.ipcRenderer.invoke('save-dialog').then((outpath) => {
-				this.zone.run(() => {
-					this.outputPath = outpath.toString();
-				})
-			})
-		}
-	}
+	// SaveDialog() {
+	// 	if (this._electronService.isElectronApp) {
+	// 		this._electronService.ipcRenderer.invoke('save-dialog').then((outpath) => {
+	// 			this.zone.run(() => {
+	// 				this.outputPath = outpath.toString();
+	// 			})
+	// 		})
+	// 	}
+	// }
 
 
-	Convert() {
+	async Convert() {
 		if (this._electronService.isElectronApp) {
-			if (!this.inputPath || !this.outputPath || !this.selectedItem) {
+			if (!this.inputPath || !this.selectedItem) {
 				this._electronService.ipcRenderer.invoke('error-message', 'missing-path');
 			} else {
-
 				this.isConverting = true;
-				this._electronService.ipcRenderer.invoke('start-convert', this.inputPath, this.outputPath, this.fileCheckbox, this.selectedItem);
-				this._electronService.ipcRenderer.on('exec-done', (event) => {
-					this.zone.run(() => {
-						// this.updateIsLeaf(this.selectedItem, this.totalFiles);
-						this.isConverting = false;
-						this.progressLoading = false;
-						this.progressionStatus = 0;
-						this.outputPath = '';
-						this.inputPath = '';
-						// this.dataService.dbRefresh(this.isVideo);
-					});
-				});
-
-				this._electronService.ipcRenderer.on('progression', (event, arg1, arg2, arg3) => {
-					this.zone.run(() => {
-						this.progressionStatus = arg1;
-						this.convertedFiles = arg2;
-						this.totalFiles = arg3;
-						if (this.progressionStatus > 0.99) {
-							this.progressLoading = true;
-						} else {
-							this.progressLoading = false;
-						}
-					});
-				});
+				// // create directory DB first
+				const dirList = await this._electronService.ipcRenderer.invoke('find-dir-db', this.inputPath);
+				console.log('dir list:', dirList);
+				await this.processDirDB(dirList);
+				const fileList = await this._electronService.ipcRenderer.invoke('find-file-db', this.inputPath, this.isVideo);
+				// start converting files
+				console.log('file list:', fileList);
+				// await this._electronService.ipcRenderer.invoke('start-convert', this.inputPath, this.fileCheckbox, this.selectedItem);
 			};
 		}
 	}
@@ -426,8 +429,6 @@ export class ConverterPage implements OnInit {
 				this.zone.run(() => {
 					this.isConverting = false;
 					this.inputPath = '';
-					this.outputPath = '';
-					// this.dataService.dbRefresh(this.isVideo);
 				})
 			})
 		}

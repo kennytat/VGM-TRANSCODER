@@ -2,7 +2,16 @@ import { app, dialog, ipcMain } from 'electron'
 import { exec, spawn, execSync, spawnSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
-import { showMessageBox } from './function';
+import * as os from 'os'
+import {
+	showMessageBox,
+	rcloneSync,
+	s3ConfWrite,
+	s3ConnCheck,
+	ipfsGWCheck,
+	dnsGWCheck,
+	searchGWCheck
+} from './function';
 import { win } from './index';
 
 export interface FileInfo {
@@ -31,63 +40,12 @@ export let encryptedConf = {
 };
 export let ipfsGateway = '';
 
-export const s3ConfWrite = async (config) => {
-	return new Promise(async (resolve) => {
-		const confPath = path.join(app.getPath('temp'), `${config.name}.conf`);
-		let data = `[${config.name}]\n`
-		Object.getOwnPropertyNames(config).forEach((val, index, array) => {
-			if (val !== 'id' && val !== 'name' && val !== 'bucket') {
-				data = data + `${val} = ${config[val]}\n`
-			}
-		});
-		await fs.writeFileSync(confPath, data);
-		resolve('done');
-	})
-}
-
-export const s3ConnCheck = async (config) => {
-	return new Promise(async (resolve) => {
-		exec(`rclone lsd --config="${config.path}" ${config.name}:${config.bucket}`, { timeout: 15000 }, (error, stdout, stderr) => {
-			if (error) resolve(false);
-			resolve(true);
-		})
-	})
-}
-
-export const ipfsGWCheck = async (gateway) => {
-	return new Promise(resolve => {
-		exec(`curl -X POST "${gateway}/api/v0/id"`, { timeout: 5000 }, (error, stdout, stderr) => {
-			if (error) resolve(false);
-			resolve(true);
-		})
-	})
-}
-
-export const searchGWCheck = async (gateway) => {
-	return new Promise(resolve => {
-		resolve(false);
-		// exec(`curl -X POST "${gateway}/api/v0/id"`, { timeout: 5000 }, (error, stdout, stderr) => {
-		// 	if (error) resolve(false);
-		// 	resolve(true);
-		// })
-	})
-}
-
-export const dnsGWCheck = async (gateway) => {
-	return new Promise(resolve => {
-		resolve(false);
-		// exec(`curl -X POST "${gateway}/api/v0/id"`, { timeout: 5000 }, (error, stdout, stderr) => {
-		// 	if (error) resolve(false);
-		// 	resolve(true);
-		// })
-	})
-}
 
 export const databaseService = () => {
 	ipcMain.handle('check-conf', async (event, config) => {
 		console.log('got conf:', config);
 		let result;
-		const confPath = path.join(app.getPath('temp'), `${config.name}.conf`);
+		const confPath = path.join(os.tmpdir(), 'vgm', `${config.name}.conf`);
 		try {
 			switch (config.id) {
 				case "warehouse":
@@ -125,10 +83,37 @@ export const databaseService = () => {
 		}
 	})
 
+	// add mass DB folder recursively
+	ipcMain.handle('find-dir-db', async (event, dirPath: string) => { // instant add to db
+		let apiArray = [];
+		try {
+			const list = await execSync(`find '${dirPath}' -type d -printf '%h\\0%d\\0%p\\n' | sort -t '\\0' -n | awk -F '\\0' '{print $3}'`, { encoding: 'utf8' });
+			const listArray = await list.toString().split('\n');
+			listArray.pop();
+			listArray.shift();
+			console.log('listArray:', listArray, listArray.length);
+			if (listArray) {
+				for await (const folderPath of listArray) {
+					const folderName = path.basename(folderPath);
+					const re = new RegExp(`${dirPath}[\/]?`, "g");
+					const pAPI = path.dirname(folderPath).replace(re, '');
+					apiArray.push({
+						pName: pAPI,
+						name: folderName,
+					})
+				}
+				console.log(apiArray);
+				return apiArray;
+			}
+		} catch (error) {
+			console.log('fs promise error:', error);
+		}
+	})
+
 
 	ipcMain.handle('export-database', async (event, apiType: string, item, fileType) => {
 		console.log('export-database called', item);
-		const outPath = app.getPath('temp');
+		const outPath = `${os.tmpdir()}/vgm`;
 		const json = fileType === 'searchAPI' ? JSON.stringify(item) : JSON.stringify(item, null, 2);
 
 		// handle file path
@@ -160,17 +145,37 @@ export const databaseService = () => {
 	})
 
 
+	ipcMain.handle('upload-api', async (event, apiType) => {
+		try {
+			if (apiType === 'web') {
+				const outPath = `${os.tmpdir()}/vgm`;
+				const src = path.join(outPath.toString(), `API-${apiType}`);
+				const des = `${encryptedConf.name}:${encryptedConf.bucket}/API`;
+				console.log('uploading API:', src, des, encryptedConf.path);
+
+				await rcloneSync(src, des, encryptedConf.path);
+				return 'done';
+			}
+			if (apiType === 'speaker') {
+				return 'done';
+			}
+		} catch (error) {
+			console.log(error);
+			return null
+		}
+	})
+
 	ipcMain.handle('upload-db-confirmation', async (event) => {
 		try {
-			let options = {
+			let options;
+			options = {
 				type: 'question',
 				buttons: ['Cancel', 'Upload'],
 				defaultId: 0,
-				title: 'Upload Database Confirmation',
-				message: 'Do you want to upload your database online?',
-				detail: 'This process will take approximately 15 mins!',
+				title: 'Upload Confirmation',
+				message: 'Upload API to S3',
+				detail: 'Upload process takes approxmately 15 mins',
 			}
-
 			return await dialog.showMessageBox(win, options).then(result => {
 				return result.response
 			})

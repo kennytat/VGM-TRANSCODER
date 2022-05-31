@@ -22,7 +22,12 @@
 		}
 	},
 	"database": {
-		"title": "Database"
+		"title": "Database",
+		"msg": {
+		"export-api": "Your API has been exported sucessfully",
+		"export-waiting": "Exporting - Please wait",
+		"process-waiting": "Processing database - Please wait"
+		}
 	},
 	"converter": {
 		"title": "Converter",

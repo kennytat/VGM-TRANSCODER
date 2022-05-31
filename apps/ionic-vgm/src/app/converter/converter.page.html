@@ -108,7 +108,7 @@
                     </option>
                     <option
                       [ngValue]="'1'"
-                      *ngIf="i !== 0"
+                      *ngIf="i !== 0 && selectedItem && !selectedItem.isLeaf"
                       style="color: var(--ion-color-warning)"
                     >
                       Create new topic

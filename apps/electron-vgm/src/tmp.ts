@@ -10,7 +10,7 @@ import PQueue from 'p-queue';
 const queue = new PQueue();
 // import { NFTStorage, File, Blob } from 'nft.storage'
 
-const tmpService = () => {
+export const tmpService = () => {
 
 
 	// const endpoint: any = 'https://api.nft.storage'; // the default
@@ -245,39 +245,6 @@ const tmpService = () => {
 	// })
 
 
-	// // add mass DB folder recursively
-	// ipcMain.on('instance-db', async (event, url) => { // instant add to db
-	// 	let apiArray = [];
-	// 	// const txtPath = '/home/vgm/Desktop/database/audiotopicSingle.txt'
-	// 	// add directory to database start
-	// 	try {
-	// 		// const raw = fs.readFileSync(txtPath, { encoding: 'utf8' });
-	// 		// if (raw) {
-	// 		// const listArray = raw.toString().split('\n');
-	// 		const list = await execSync(`find '${url}' -type d -printf '%h\\0%d\\0%p\\n' | sort -t '\\0' -n | awk -F '\\0' '{print $3}'`, { encoding: 'utf8' });
-	// 		const listArray = await list.toString().split('\n');
-	// 		listArray.pop();
-	// 		listArray.shift();
-	// 		console.log('listArray:', listArray, listArray.length);
-	// 		if (listArray) {
-	// 			for await (const folderPath of listArray) {
-	// 				const folderName = path.basename(folderPath);
-	// 				const pAPI = path.dirname(folderPath).replace(url, '').replace('\/', '');
-	// 				apiArray.push({
-	// 					pName: pAPI,
-	// 					name: folderName,
-	// 				})
-	// 			}
-	// 			event.sender.send('create-manual', apiArray)
-	// 			console.log(apiArray);
-	// 		}
-	// 		// }
-	// 	} catch (error) {
-	// 		console.log('fs promise error:', error);
-	// 	}
-	// 	// add directory to database end
-	// })
-
 
 	// ipcMain.on('xor-key', async (event, url, isVideo) => { // start instant code 
 	// 	// encrypte && decrypte key start
@@ -481,7 +448,3 @@ const tmpService = () => {
 
 
 }
-
-
-
-export default tmpService;

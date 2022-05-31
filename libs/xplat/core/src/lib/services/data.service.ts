@@ -3,6 +3,8 @@ import { BehaviorSubject, Subscription } from 'rxjs';
 import * as type from "./graphql.types";
 import { Apollo, QueryRef } from 'apollo-angular';
 import * as _ from 'lodash';
+import { MeiliSearch } from 'meilisearch';
+import { ConfigService } from './config.service';
 
 
 @Injectable({
@@ -51,7 +53,12 @@ export class DataService {
 	public audioTree: any = {};
 	public audioTree$: BehaviorSubject<any> = new BehaviorSubject<any>({});
 
-	constructor(private apollo: Apollo) {
+	public meiliSearch;
+
+	constructor(
+		private apollo: Apollo,
+		private _configService: ConfigService
+	) {
 		this.videoDB$.subscribe((newList: any[]) => {
 			this.videoDB = newList;
 		});
@@ -69,8 +76,13 @@ export class DataService {
 
 	async dbInit() {
 		try {
-			// await this.fetchDB();
 			await this.fetchTree();
+			if (this._configService.searchGateway.status) {
+				this.meiliSearch = new MeiliSearch({
+					host: this._configService.searchGateway.gateway, // 'http://search.hjm.bid'
+					apiKey: this._configService.searchGateway.key, // 'KYV2oMHSE5G2p9ZXwUGH3CfWpaXB1CF5'
+				})
+			}
 		} catch (error) {
 			console.log(error);
 		}
@@ -81,30 +93,6 @@ export class DataService {
 			}
 		});
 	}
-
-	// async fetchDB() {
-	// 	this.videoDBQuery = this.apollo.watchQuery<any>({
-	// 		query: type.ALL_DATA,
-	// 		variables: {
-	// 			id: '00000000-0000-0000-0000-000000000001'
-	// 		},
-	// 		fetchPolicy: 'cache-and-network',
-	// 	})
-	// 	this.videoDBSub = this.videoDBQuery.valueChanges.subscribe(({ data }) => {
-	// 		this.videoDB$.next([_.cloneDeep(data[Object.keys(data)[0]])]);
-	// 	});
-
-	// 	this.audioDBQuery = this.apollo.watchQuery<any>({
-	// 		query: type.ALL_DATA,
-	// 		variables: {
-	// 			id: '00000000-0000-0000-0000-000000000002'
-	// 		},
-	// 		fetchPolicy: 'cache-and-network',
-	// 	})
-	// 	this.audioDBSub = this.audioDBQuery.valueChanges.subscribe(({ data }) => {
-	// 		this.audioDB$.next([_.cloneDeep(data[Object.keys(data)[0]])]);
-	// 	});
-	// }
 
 	async fetchTree() {
 		this.videoTreeQuery = this.apollo.watchQuery<any>({
@@ -131,13 +119,6 @@ export class DataService {
 		});
 	}
 
-	// async dbRefresh(isVideo: boolean) {
-	// 	if (isVideo) {
-	// 		await this.videoDBQuery.refetch();
-	// 	} else {
-	// 		await this.audioDBQuery.refetch();
-	// 	}
-	// }
 
 	async treeRefresh(isVideo: boolean) {
 		if (isVideo) {
@@ -148,14 +129,15 @@ export class DataService {
 	}
 
 
-	async fetchLevelDB(level: number, isVideo?, isLeaf?, id?: string): Promise<any> {
+	async fetchLevelDB(level: number, isVideo?, isLeaf?, id?: string, url?: string): Promise<any> {
 		return new Promise((resolve) => {
 			this.levelSub = this.apollo.watchQuery<any>({
 				query: this.queryGQL[level - 1],
 				variables: {
 					isVideo: isVideo,
 					isLeaf: isLeaf,
-					id: id
+					id: id,
+					url: url,
 				},
 				fetchPolicy: 'cache-and-network',
 			}).valueChanges.subscribe(({ data }) => {

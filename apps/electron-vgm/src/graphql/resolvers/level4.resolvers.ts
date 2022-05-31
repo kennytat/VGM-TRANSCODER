@@ -154,6 +154,7 @@ export class Level4Resolver {
 		@Args('isVideo', { nullable: true }) isVideo: boolean,
 		@Args('isLeaf', { nullable: true }) isLeaf: boolean,
 		@Args('id', { nullable: true }) id: string,
+		@Args('url', { nullable: true }) url: string,
 		@Context() ctx) {
 		// const or = isVideo
 		//   ? {
@@ -167,7 +168,8 @@ export class Level4Resolver {
 			where: {
 				isVideo: isVideo,
 				isLeaf: isLeaf,
-				id: id
+				id: id,
+				url: url
 			},
 		})
 	}

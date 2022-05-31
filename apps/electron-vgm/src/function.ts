@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, screen, dialog, Menu, globalShortcut } fro
 import { exec, spawn, execSync, spawnSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as os from 'os'
 import { ipfsGateway } from './database';
 // Show message box function
 export function showMessageBox(options, win = null) {
@@ -43,8 +44,8 @@ export function nonAccentVietnamese(str) {
 export const packCar = async (input, output) => {
 	console.log('packing Car:', input, output);
 	return new Promise(async (resolve, reject) => {
-		await fs.unlinkSync(output);
-		await execSync(`ipfs-car --wrapWithDirectory false --pack ${input} --output ${output}`);
+		if (fs.existsSync(output)) await fs.unlinkSync(output);
+		await execSync(`ipfs-car --wrapWithDirectory false --pack '${input}' --output '${output}'`);
 		console.log('packed car done');
 		resolve(true);
 	})
@@ -53,39 +54,41 @@ export const packCar = async (input, output) => {
 
 // uploadIPFS function
 export const uploadIPFS = async (srcPath, type) => {
-
-	const carPath = `${app.getPath('temp')}/${path.basename(srcPath)}-${type}.car`;
-	await packCar(srcPath, carPath);
-
-	console.log('uploadingIPFS:', carPath);
-	console.time(path.parse(carPath).name)
 	return new Promise(async (resolve) => {
 		try {
-			// add via dag import
-			exec(`curl -X POST -F file=@${carPath} "${ipfsGateway}/api/v0/dag/import"`, async (err, stdout, stderr) => {
-				if (stdout) {
-					const cid = JSON.parse(stdout).Root.Cid["/"];
-					console.timeEnd(path.parse(carPath).name)
-					await fs.unlinkSync(carPath);
-					resolve(cid.toString());
-				}
-				if (err) {
-					console.timeEnd(path.parse(carPath).name)
-					await fs.unlinkSync(carPath);
-					resolve(false);
-				}
-			})
-
+			const gwStatus = await ipfsGWCheck(ipfsGateway);
+			if (gwStatus) {
+				const carPath = path.join(os.tmpdir(), 'vgm', `${path.basename(srcPath)}-${type}.car`);
+				await packCar(srcPath, carPath);
+				console.log('uploadingIPFS:', carPath);
+				console.time(path.parse(carPath).name)
+				// add via dag import
+				exec(`curl -X POST -F file=@'${carPath}' "${ipfsGateway}/api/v0/dag/import"`, async (err, stdout, stderr) => {
+					if (stdout) {
+						const cid = JSON.parse(stdout).Root.Cid["/"];
+						console.timeEnd(path.parse(carPath).name)
+						await fs.unlinkSync(carPath);
+						resolve(cid.toString());
+					}
+					if (err) {
+						console.timeEnd(path.parse(carPath).name)
+						await fs.unlinkSync(carPath);
+						resolve(false);
+					}
+				})
+			}
+			resolve(false);
 		} catch (error) {
 			console.log(error);
+			resolve(false);
 		}
 	});
 }
 
-export async function rcloneSync(source, des) {
-	console.log('Rclone sync:', `${source}/`, `${des}/`);
+export const rcloneSync = async (source, des, confPath?) => {
+	console.log('Rclone sync:', `'${source}/'`, `'${des}/'`, `--config '${confPath}'`);
 	return new Promise((resolve) => {
-		const rclone = spawn('rclone', ['sync', '--progress', `${source}/`, `${des}/`]);
+		const rclone = spawn('rclone', ['copy', '--progress', '--config', `${confPath}`, `${source}/`, `${des}/`], { detached: true });
 		rclone.stdout.on('data', async (data) => {
 			console.log(`rclone sync stdout: ${data}`);
 		});
@@ -97,4 +100,57 @@ export async function rcloneSync(source, des) {
 			resolve('done');
 		})
 	});
+}
+
+
+export const s3ConfWrite = async (config) => {
+	return new Promise(async (resolve) => {
+		const confPath = path.join(os.tmpdir(), 'vgm', `${config.name}.conf`);
+		let data = `[${config.name}]\n`
+		Object.getOwnPropertyNames(config).forEach((val, index, array) => {
+			if (val !== 'id' && val !== 'status' && val !== 'name' && val !== 'bucket') {
+				data = data + `${val} = ${config[val]}\n`
+			}
+		});
+		await fs.writeFileSync(confPath, data);
+		resolve('done');
+	})
+}
+
+export const s3ConnCheck = async (config) => {
+	return new Promise(async (resolve) => {
+		exec(`rclone lsd --config="${config.path}" ${config.name}:`, { timeout: 15000 }, (error, stdout, stderr) => {
+			if (error) resolve(false);
+			resolve(true);
+		})
+	})
+}
+
+export const ipfsGWCheck = async (gateway) => {
+	return new Promise(resolve => {
+		exec(`curl -X POST "${gateway}/api/v0/id"`, { timeout: 5000 }, (error, stdout, stderr) => {
+			if (error) resolve(false);
+			resolve(true);
+		})
+	})
+}
+
+export const searchGWCheck = async (gateway) => {
+	return new Promise(resolve => {
+		resolve(false);
+		// exec(`curl -X POST "${gateway}/api/v0/id"`, { timeout: 5000 }, (error, stdout, stderr) => {
+		// 	if (error) resolve(false);
+		// 	resolve(true);
+		// })
+	})
+}
+
+export const dnsGWCheck = async (gateway) => {
+	return new Promise(resolve => {
+		resolve(false);
+		// exec(`curl -X POST "${gateway}/api/v0/id"`, { timeout: 5000 }, (error, stdout, stderr) => {
+		// 	if (error) resolve(false);
+		// 	resolve(true);
+		// })
+	})
 }

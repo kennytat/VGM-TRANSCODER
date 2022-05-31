@@ -17,7 +17,7 @@
     <ion-card-content *ngFor="let conf of rcloneConf; index as i">
       <ion-list *ngIf="selectedTab === conf.id">
         <ion-row *ngFor="let item of conf | keyvalue">
-          <ion-item *ngIf="item.key !== 'id'">
+          <ion-item *ngIf="item.key !== 'id' && item.key !== 'status'">
             <ion-label
               position="fixed"
               style="min-width: 150px; font-size: 15px"
@@ -25,7 +25,7 @@
             </ion-label>
             <ion-input
               color="primary"
-              debounce="1000"
+              debounce="500"
               [(ngModel)]="conf[item.key]"
             ></ion-input>
           </ion-item>

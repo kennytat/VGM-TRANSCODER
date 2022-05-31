@@ -9,9 +9,9 @@ import { ConfigService, LocalforageService } from '@vgm-converter/xplat/core';
 })
 
 export class SettingModalComponent implements OnInit {
+	@Input() rcloneConf;
 	selectedTab: string;
 	checkingConf = false;
-	rcloneConf;
 
 	constructor(
 		public modalController: ModalController,
@@ -20,7 +20,7 @@ export class SettingModalComponent implements OnInit {
 		private _configService: ConfigService,
 		private _localForage: LocalforageService
 	) {
-		this.rcloneConf = this._configService.configs;
+
 	}
 
 	async ngOnInit() {
@@ -35,15 +35,18 @@ export class SettingModalComponent implements OnInit {
 		this.checkingConf = true;
 		console.log('checking conf:', id)
 		const i = this.rcloneConf.findIndex(conf => conf.id === id)
-		console.log(id, 'config saved:', this.rcloneConf[i]);
+		console.log('config saved:', this.rcloneConf[i]);
 		await this._localForage.set(this.rcloneConf[i].id, this.rcloneConf[i]);
+
 		const connectionResult = await this._configService.connCheck(this.rcloneConf[i]);
 		this.checkingConf = false;
+
 		if (connectionResult) {
 			this.presentToast(this._translateService.instant('setting.s3.message-success'), 'toast-success');
 		} else {
 			this.presentToast(this._translateService.instant('setting.s3.message-error'), 'toast-error')
 		}
+
 	}
 
 	async presentToast(message, cssClass) {

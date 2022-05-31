@@ -20,7 +20,7 @@ export class TabsPage implements OnInit {
 	) { }
 
 	async ngOnInit() {
-		this.confValid = await this._configService.confCheck();
+		this.confValid = await this._configService.confCheck() as boolean;
 		if (!this.confValid) this.editSetting();
 	}
 
@@ -31,12 +31,12 @@ export class TabsPage implements OnInit {
 
 
 	async editSetting() {
+		this.confValid = await this._configService.confCheck() as boolean;
 		this.presentModal();
-		this.confValid = await this._configService.confCheck();
 		if (this.confValid) {
-			this.presentToast(this._translateService.instant('setting.s3.message-success'), 'toast-success');
+			await this.presentToast(this._translateService.instant('setting.s3.message-success'), 'toast-success');
 		} else {
-			this.presentToast(this._translateService.instant('setting.s3.message-error'), 'toast-error')
+			await this.presentToast(this._translateService.instant('setting.s3.message-error'), 'toast-error')
 		}
 	}
 
@@ -45,9 +45,9 @@ export class TabsPage implements OnInit {
 			component: SettingModalComponent,
 			cssClass: 'setting-modal',
 			animated: false,
-			// componentProps: {
-			// 	rcloneConf: this.configs
-			// }
+			componentProps: {
+				rcloneConf: this._configService.configs
+			}
 		});
 		return await modal.present();
 	}

@@ -2,6 +2,7 @@ import { app, ipcMain } from 'electron'
 import { exec, spawn, execSync, spawnSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as os from 'os'
 import { showMessageBox, nonAccentVietnamese, uploadIPFS, rcloneSync } from './function';
 import { FileInfo, encryptedConf } from './database';
 // import { create, globSource, CID } from 'ipfs-http-client'
@@ -12,18 +13,11 @@ import * as bitwise from 'bitwise';
 import PQueue from 'p-queue';
 const queue = new PQueue();
 
-
-const rcloneConfig = {
-	encrypted: 'vgm-aliyun:vgm/output' // 'VGM-Converted:vgmencrypted/encrypted' 'vgm-aliyun:vgm/output'
-}
-
-
-
 export const convertService = () => {
 
 	// Get input and output path from above and execute sh file
 	ipcMain.handle('start-convert', async (event, argInPath, fileOnly, pItem) => {
-		const tmpOutPath = app.getPath('temp');
+		const tmpOutPath = path.join(os.tmpdir(), 'vgm');
 		const checkMP4 = async (tmpPath, fType) => {
 			console.log('checking downloaded file', `${tmpPath}`);
 			return new Promise(async (resolve) => {
@@ -111,7 +105,8 @@ export const convertService = () => {
 						// get fps and total duration
 						const fps_stat: string = metaData.filter(name => name.includes("avg_frame_rate=")).toString();
 						const converted_frames: string = ffmpeg_progress_stat.filter(name => name.includes("frame=")).toString();
-						if (fps_stat && duration_stat && converted_frames) {
+						const multi_stream: string = ffmpeg_progress_stat.filter(name => name.includes("stream_0_1_q=")).toString();
+						if (fps_stat && duration_stat && converted_frames && multi_stream) {
 							const fps: number = parseInt(fps_stat.match(/\d+/g)[0]) / parseInt(fps_stat.match(/\d+/g)[1]);
 							// calculate total frames
 							if (fps && duration) {
@@ -164,7 +159,7 @@ export const convertService = () => {
 						// upload converted to s3
 						const VGM = fType === 'audio' ? 'VGMA' : fType === 'video' ? 'VGMV' : '';
 						const upConvertedPath = `${encryptedConf.name}:${encryptedConf.bucket}/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`;
-						await rcloneSync(`${outPath}`, upConvertedPath);
+						await rcloneSync(`${outPath}`, upConvertedPath, encryptedConf.path);
 						// upload done -> delete converted folder
 						console.log('updated fileInfo', fileInfo);
 						await fs.rmdirSync(outPath, { recursive: true });

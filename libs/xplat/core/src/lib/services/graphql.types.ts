@@ -359,10 +359,12 @@ export const LEVEL_1_UNIQUE = gql`
 export const LEVEL_1_QUERIES = gql`
   query level1Queries($isVideo:Boolean,
       $isLeaf:Boolean,
-      $id:String){
+      $id:String,
+			$url:String){
     level1Queries(isVideo:$isVideo,
       isLeaf:$isLeaf,
-      id:$id)
+      id:$id,
+			url:$url)
       {
         id
         pid
@@ -397,11 +399,13 @@ export const LEVEL_2_QUERIES = gql`
   query level2Queries(
       $isVideo:Boolean,
       $isLeaf:Boolean,
-      $id:String){
+      $id:String,
+			$url:String){
     level2Queries(
       isVideo:$isVideo,
       isLeaf:$isLeaf,
-      id:$id)
+      id:$id,
+			url:$url)
       {
         id
         pid
@@ -442,11 +446,13 @@ export const LEVEL_3_QUERIES = gql`
   query level3Queries(
       $isVideo:Boolean,
       $isLeaf:Boolean,
-      $id:String){
+      $id:String,
+			$url:String){
     level3Queries(
       isVideo:$isVideo,
       isLeaf:$isLeaf,
-      id:$id)
+      id:$id,
+			url:$url)
       {
         id
         pid
@@ -487,11 +493,13 @@ export const LEVEL_4_QUERIES = gql`
   query level4Queries(
       $isVideo:Boolean,
       $isLeaf:Boolean,
-      $id:String){
+      $id:String,
+			$url:String){
     level4Queries(
       isVideo:$isVideo,
       isLeaf:$isLeaf,
-      id:$id)
+      id:$id,
+			url:$url)
       {
         id
         pid
@@ -532,11 +540,13 @@ export const LEVEL_5_QUERIES = gql`
   query level5Queries(
       $isVideo:Boolean,
       $isLeaf:Boolean,
-      $id:String){
+      $id:String,
+			$url:String){
     level5Queries(
       isVideo:$isVideo,
       isLeaf:$isLeaf,
-      id:$id)
+      id:$id,
+			url:$url)
       {
         id
         pid
@@ -577,11 +587,14 @@ export const LEVEL_6_QUERIES = gql`
   query level6Queries(
       $isVideo:Boolean,
       $isLeaf:Boolean,
-      $id:String){
+      $id:String,
+			$url:String,
+			){
     level6Queries(
       isVideo:$isVideo,
       isLeaf:$isLeaf,
-      id:$id)
+      id:$id,
+			url:$url)
       {
         id
         pid
@@ -622,11 +635,13 @@ export const LEVEL_7_QUERIES = gql`
   query level7Queries(
       $isVideo:Boolean,
       $isLeaf:Boolean,
-      $id:String){
+      $id:String,
+			$url:String){
     level7Queries(
       isVideo:$isVideo,
       isLeaf:$isLeaf,
-      id:$id)
+      id:$id,
+			url:$url)
       {
         id
         pid
