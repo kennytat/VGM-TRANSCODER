@@ -4,7 +4,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
 import { showMessageBox, nonAccentVietnamese, uploadIPFS, rcloneSync } from './function';
-import { FileInfo } from './database';
+import { FileInfo, encryptedConf } from './database';
 import { tmpDir } from './index';
 // import { create, globSource, CID } from 'ipfs-http-client'
 import * as CryptoJS from "crypto-js";
@@ -162,8 +162,8 @@ export const convertService = () => {
 						const VGM = fType === 'audio' ? 'VGMA' : fType === 'video' ? 'VGMV' : '';
 						console.log('start uploading');
 
-						// const upConvertedPath = `${encryptedConf.name}:${encryptedConf.bucket}/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`;
-						// await rcloneSync(`${outPath}`, upConvertedPath, encryptedConf.path);
+						const upConvertedPath = `${encryptedConf.name}:${encryptedConf.bucket}/${VGM}/${fileInfo.url.replace(/\./g, '\/')}`;
+						await rcloneSync(`${outPath}`, upConvertedPath, encryptedConf.path);
 						// upload done -> delete converted folder
 						console.log('updated fileInfo', fileInfo);
 						await fs.rmdirSync(outPath, { recursive: true });

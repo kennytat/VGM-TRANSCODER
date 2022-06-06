@@ -287,26 +287,31 @@ export class DatabasePage implements OnInit {
 			this._electronService.ipcRenderer.invoke('upload-db-confirmation').then(async (result) => {
 				if (result === 1) {
 					await this.presentLoading(this._translateService.instant('database.msg.export-waiting'));
-					await this.exportWebAPI();
-					// if (this._configService.encryptedConf.status) {
-					// 	await this._electronService.ipcRenderer.invoke('upload-api', 'web');
-					// }
-					await this.exportSpeakerAPI();
-					// if (this._configService.ipfsAPIGateway.status) {
-					// 				await this._electronService.ipcRenderer.invoke('upload-api', 'speaker');
-					// 			}
-					// 	let apiJson = await fetch(apiGateway).then(async (response) => await (await response.clone()).json());
-					// 	console.log('apiJson', apiJson);
-					// 	await this._electronService.ipcRenderer.invoke('export-database', 'speaker', apiJson, 'apiJson');
-					// await this._electronService.ipcRenderer.invoke('add-ipfs', `${outpath}/API-speaker`).then(async (hash) => {
-					// 	apiJson.version += 1;
-					// 	apiJson.api = hash;
-					// 	await this._electronService.ipcRenderer.invoke('export-database', 'speaker', apiJson, outpath, 'apiJson');
-					// 	await this._electronService.ipcRenderer.invoke('add-ipfs', `${outpath}/API-speaker/instruction.json`).then(async (apiHash) => {
-					// 		const updateDNS = await this._electronService.ipcRenderer.invoke('update-dns', apiHash);
-					// 		console.log('Update DNS Status:', apiHash, '\n', updateDNS);
-					// 	})
-					// });
+					if (this._configService.encryptedConf.status) {
+						// await this.exportWebAPI();
+						// await this._electronService.ipcRenderer.invoke('upload-api', 'web');
+						await this._electronService.ipcRenderer.invoke('upload-tmp-api', 'web');
+					} else {
+						await this.presentToast(this._translateService.instant('database.msg.cloud-error'), 'toast-error');
+					}
+					if (this._configService.ipfsAPIGateway.status) {
+						await this.exportSpeakerAPI();
+						await this._electronService.ipcRenderer.invoke('upload-api', 'speaker');
+						// 	let apiJson = await fetch(apiGateway).then(async (response) => await (await response.clone()).json());
+						// 	console.log('apiJson', apiJson);
+						// 	await this._electronService.ipcRenderer.invoke('export-database', 'speaker', apiJson, 'apiJson');
+						// await this._electronService.ipcRenderer.invoke('add-ipfs', `${outpath}/API-speaker`).then(async (hash) => {
+						// 	apiJson.version += 1;
+						// 	apiJson.api = hash;
+						// 	await this._electronService.ipcRenderer.invoke('export-database', 'speaker', apiJson, outpath, 'apiJson');
+						// 	await this._electronService.ipcRenderer.invoke('add-ipfs', `${outpath}/API-speaker/instruction.json`).then(async (apiHash) => {
+						// 		const updateDNS = await this._electronService.ipcRenderer.invoke('update-dns', apiHash);
+						// 		console.log('Update DNS Status:', apiHash, '\n', updateDNS);
+						// 	})
+						// });
+					} else {
+						await this.presentToast(this._translateService.instant('database.msg.ipfs-error'), 'toast-error');
+					}
 					await this.loadingModal.dismiss();
 					await this.presentToast(this._translateService.instant('database.msg.export-api'), 'toast-success');
 				}

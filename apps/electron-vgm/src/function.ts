@@ -143,18 +143,19 @@ export const uploadIPFS = async (srcPath, type) => {
 	});
 }
 
-export const rcloneSync = async (source, des, confPath?) => {
-	console.log('Rclone sync:', `'${source}/'`, `'${des}/'`, `--config '${confPath}'`);
+export const rcloneSync = async (source, des, confPath, extraOption = []) => {
+	const confOption = confPath ? [`--config="${confPath}"`] : [];
+	console.log('Rclone sync:', `'${source}/'`, `'${des}/'`, confOption, extraOption);
 	return new Promise((resolve) => {
-		const rclone = spawn('rclone', ['copy', '--progress', '--config', `${confPath}`, `${source}/`, `${des}/`], { detached: true });
+		const rclone = spawn('rclone', ['copy', '--progress', `${source}/`, `${des}/`].concat(confOption).concat(extraOption), { detached: true });
 		rclone.stdout.on('data', async (data) => {
-			console.log(`rclone sync stdout: ${data}`);
+			console.log(`rclone copy stdout: ${data}`);
 		});
 		rclone.stderr.on('data', async (data) => {
 			console.log(`Stderr: ${data}`);
 		});
 		rclone.on('close', async (code) => {
-			console.log(`Rclone sync file done with code:`, code);
+			console.log(`Rclone copy file done with code:`, code);
 			resolve('done');
 		})
 	});

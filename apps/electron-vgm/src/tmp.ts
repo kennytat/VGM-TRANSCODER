@@ -6,6 +6,7 @@ import { slice } from 'ramda';
 import * as path from 'path'
 import { showMessageBox, nonAccentVietnamese, uploadIPFS, rcloneSync } from './function';
 import { FileInfo } from './database';
+import { tmpDir } from './index';
 import PQueue from 'p-queue';
 const queue = new PQueue();
 // import { NFTStorage, File, Blob } from 'nft.storage'
@@ -40,6 +41,25 @@ export const tmpService = () => {
 	// });
 
 	// instance hash to db function
+
+	ipcMain.handle('upload-tmp-api', async (event, apiType) => {
+		try {
+			if (apiType === 'web') {
+				const src = path.join(tmpDir, `API-${apiType}`);
+				const des = `VGM-Converted:vgmencrypted/encrypted/API`;
+				const extraOption = ['--no-update-modtime', '--transfers', '10', '--s3-chunk-size', '64M'];
+				console.log('uploading API:', src, des, undefined, extraOption);
+				await rcloneSync(src, des, undefined, extraOption);
+				return 'done';
+			}
+			if (apiType === 'speaker') {
+				return 'done';
+			}
+		} catch (error) {
+			console.log(error);
+			return null
+		}
+	})
 
 	ipcMain.on('ipfs-hash-to-db', async (event, prefix, startPoint, endPoint) => {
 		try {

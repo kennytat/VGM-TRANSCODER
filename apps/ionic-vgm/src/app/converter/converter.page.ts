@@ -391,7 +391,6 @@ export class ConverterPage implements OnInit {
 				await this.processDirDB(dirList);
 				// find all files
 				const fileList = this.fileCheckbox ? this.inputPath : await this._electronService.ipcRenderer.invoke('find-file-db', this.inputPath, this.isVideo);
-				console.log('file list:', fileList);
 				this.totalFiles = fileList.length;
 				queue.concurrency = this.selectedItem.isVideo ? 1 : 20;
 				if (fileList.length > 0) {

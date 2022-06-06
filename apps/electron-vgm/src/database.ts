@@ -155,9 +155,9 @@ export const databaseService = () => {
 			if (apiType === 'web') {
 				const src = path.join(tmpDir, `API-${apiType}`);
 				const des = `${encryptedConf.name}:${encryptedConf.bucket}/API`;
+				const extraOption = ['--no-update-modtime', '--transfers', '10', '--s3-chunk-size', '64M'];
 				console.log('uploading API:', src, des, encryptedConf.path);
-
-				await rcloneSync(src, des, encryptedConf.path);
+				await rcloneSync(src, des, encryptedConf.path, extraOption);
 				return 'done';
 			}
 			if (apiType === 'speaker') {

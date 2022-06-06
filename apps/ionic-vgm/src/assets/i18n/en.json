@@ -27,7 +27,9 @@
 		"export-api": "Your API has been exported sucessfully",
 		"export-waiting": "Exporting - Please wait",
 		"process-waiting": "Processing database - Please wait",
-		"refresh-waiting": "Refreshing database"
+		"refresh-waiting": "Refreshing database",
+		"cloud-error": "Please check your cloud connection",
+		"ipfs-error": "Please check your ipfs connection"
 		}
 	},
 	"converter": {
