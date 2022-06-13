@@ -9,10 +9,7 @@ import CryptoJS from "crypto-js";
 import { slice } from 'ramda';
 
 import Pqueue from 'p-queue';
-const queue = new Pqueue();
-
-
-
+const queue = new Pqueue({ concurrency: 1 });
 
 interface SelectedTopic {
 	level: number,
@@ -20,7 +17,7 @@ interface SelectedTopic {
 	name?: string,
 	createGQL?: any,
 	updateGQL?: any,
-	options: any[]
+	item: any
 }
 @Component({
 	selector: 'vgm-converter',
@@ -30,17 +27,20 @@ interface SelectedTopic {
 export class ConverterPage implements OnInit {
 	isVideo: boolean = true;
 	level1: SelectedTopic = {
-		level: 1, id: '0', options: [
-			{ name: 'videoDB', id: '00000000-0000-0000-0000-000000000001', location: '/VGMV', url: '' },
-			{ name: 'audioDB', id: '00000000-0000-0000-0000-000000000002', location: '/VGMA', url: '' }
-		]
+		level: 1, id: '0', item: {
+			children: [
+				{ name: 'videoDB', id: '00000000-0000-0000-0000-000000000001', location: '/VGMV', url: '' },
+				{ name: 'audioDB', id: '00000000-0000-0000-0000-000000000002', location: '/VGMA', url: '' }
+			]
+		}
 	}
-	level2: SelectedTopic = { level: 2, id: '0', createGQL: type.CREATE_LEVEL_2, updateGQL: type.UPDATE_LEVEL_2, options: [] }
-	level3: SelectedTopic = { level: 3, id: '0', createGQL: type.CREATE_LEVEL_3, updateGQL: type.UPDATE_LEVEL_3, options: [] }
-	level4: SelectedTopic = { level: 4, id: '0', createGQL: type.CREATE_LEVEL_4, updateGQL: type.UPDATE_LEVEL_4, options: [] }
-	level5: SelectedTopic = { level: 5, id: '0', createGQL: type.CREATE_LEVEL_5, updateGQL: type.UPDATE_LEVEL_5, options: [] }
-	level6: SelectedTopic = { level: 6, id: '0', createGQL: type.CREATE_LEVEL_6, updateGQL: type.UPDATE_LEVEL_6, options: [] }
-	selectedTopics = [this.level1, this.level2, this.level3, this.level4, this.level5, this.level6]
+	level2: SelectedTopic = { level: 2, id: '0', createGQL: type.CREATE_LEVEL_2, updateGQL: type.UPDATE_LEVEL_2, item: {} }
+	level3: SelectedTopic = { level: 3, id: '0', createGQL: type.CREATE_LEVEL_3, updateGQL: type.UPDATE_LEVEL_3, item: {} }
+	level4: SelectedTopic = { level: 4, id: '0', createGQL: type.CREATE_LEVEL_4, updateGQL: type.UPDATE_LEVEL_4, item: {} }
+	level5: SelectedTopic = { level: 5, id: '0', createGQL: type.CREATE_LEVEL_5, updateGQL: type.UPDATE_LEVEL_5, item: {} }
+	level6: SelectedTopic = { level: 6, id: '0', createGQL: type.CREATE_LEVEL_6, updateGQL: type.UPDATE_LEVEL_6, item: {} }
+	level7: SelectedTopic = { level: 7, id: '0', createGQL: type.CREATE_LEVEL_7, updateGQL: type.UPDATE_LEVEL_7, item: {} }
+	selectedTopics = [this.level1, this.level2, this.level3, this.level4, this.level5, this.level6, this.level7]
 	selectedItem: any;
 	selectedLevel: string = '0';
 	// Declare variable for conversion feature
@@ -56,12 +56,18 @@ export class ConverterPage implements OnInit {
 	updateURL: string = '';
 	updateLevel: number = 0;
 	newDBArray = [];
-
+	isGPU = false;
 	constructor(
 		private _electronService: ElectronService,
 		private zone: NgZone,
 		private apollo: Apollo,
 		private _dataService: DataService) {
+		queue.on('idle', () => {
+			console.log(`Queue is idle.  Size: ${queue.size}  Pending: ${queue.pending}`);
+			// console.log('exec file done');
+			// this.execDone();
+			// this._electronService.ipcRenderer.invoke('popup-message', 'exec-done');
+		});
 
 		if (this._electronService.isElectronApp) {
 			// reset state when exec done
@@ -81,37 +87,46 @@ export class ConverterPage implements OnInit {
 
 	ngOnInit() { }
 
+
 	async selectOptionChange(level, itemID) {
 		this.selectedLevel = level;
-		if (itemID === this.level1.options[0].id) {
+		if (itemID === this.level1.item.children[0].id) {
 			this.isVideo = true;
-		} else if (itemID === this.level1.options[1].id) {
+		} else if (itemID === this.level1.item.children[1].id) {
 			this.isVideo = false;
 		}
-		console.log(level, itemID);
+		this.selectedTopics[level - 1].id = itemID;
+		if (level >= 1 && level < this.selectedTopics.length) {
+			this.selectedTopics[level].id = '0';
+			this.selectedTopics[level].item.children = [];
+		}
 
-		if (itemID === '0') {
-			this.selectedTopics[level - 1].id = '0';
-		} else if (itemID === '1') {
-			this.selectedTopics[level - 1].id = '1';
-		} else {
-
-			this.selectedTopics[level - 1].id = itemID;
-			if (level !== this.selectedTopics.length) {
-				this.selectedTopics[level].id = '0';
-				this.selectedTopics[level].options = [];
-			}
+		if (itemID !== '0' && itemID !== '1') {
 			const options: any = await this.getOptions(level, this.isVideo, undefined, itemID);
 			if (typeof options[0] != 'undefined') {
 				this.selectedItem = _.cloneDeep(options[0]);
 			} else {
 				this.selectedItem = _.cloneDeep(options);
 			};
-			if (this.selectedItem.children && this.selectedItem.children.length > 0 && this.selectedItem.isLeaf === false) {
-				this.selectedTopics[level].options = this.selectedItem.children;
+			if (this.selectedItem.isLeaf) {
+				this.selectedItem.children = [];
+				this.selectedTopics[level].id = '0';
+			};
+			this.selectedTopics[level].item = this.selectedItem;
+
+			if (this.selectedItem.children && this.selectedItem.children.length > 0) {
+				this.selectedTopics[level].id = '1';
 			}
-			console.log('selected', this.selectedItem);
+
+		} else {
+			this.selectedItem = this.selectedTopics[level - 1].item;
+			this.selectedTopics[level].id = itemID;
 		}
+
+		console.log(level, itemID);
+		console.log('selected Topic -1 :', this.selectedTopics[level - 1]);
+		console.log('selected Topic:', level, this.selectedTopics[level]);
+		console.log('selected Item:', this.selectedItem);
 
 	}
 
@@ -126,53 +141,56 @@ export class ConverterPage implements OnInit {
 
 
 	async createNewTopic(level, value) {
-		const pid = this.selectedTopics[level - 2].id;
-		const gql = this.selectedTopics[level - 1].createGQL;
-		const nonVietnamese = await this.nonAccentVietnamese(value);
-		const pList = [...this.selectedTopics[level - 2].options];
-		const [pItem] = pList.filter((item) => item.id.includes(pid));
-		// console.log('parent', pid, pItem, pList);
+		return new Promise<string>(async (resolve, reject) => {
+			const pid = this.selectedTopics[level - 2].id;
+			const gql = this.selectedTopics[level - 1].createGQL;
+			const pureLatin = await this.langToLatin(value);
+			const pList = [...this.selectedTopics[level - 2].item.children];
+			const [pItem] = pList.filter((item) => item.id.includes(pid));
+			// console.log('parent', pid, pItem, pList);
+			this.selectedTopics[level - 1].name = '';
+			await this.apollo.mutate<any>({
+				mutation: gql,
+				variables: {
+					pid: pid,
+					isLeaf: false,
+					url: pItem.url.concat('.', pureLatin.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-"),
+					isVideo: this.isVideo,
+					name: value,
+				}
+			}).subscribe(async ({ data }) => {
+				const result = data[Object.keys(data)[0]];
+				// update parent count
+				const [pItem] = _.cloneDeep(await this._dataService.fetchLevelDB(result.dblevel - 1, result.isVideo, undefined, result.pid));
+				console.log('pItem after create new:', pItem);
+				const pItemCount = pItem.children.length - 1;
+				const updateParentOption = {
+					id: result.pid,
+					count: pItemCount,
+				};
+				await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
+				// update UI view
+				this.selectedItem = await _.cloneDeep(result);
+				await this.selectedTopics[level - 1].item.children.push(this.selectedItem);
+				await this.selectOptionChange(level, this.selectedItem.id);
+				console.log(this.selectedItem);
+				resolve('done');
+			}, (error) => {
+				console.log('there was an error sending the query', error);
+				if (this._electronService.isElectronApp) {
+					this._electronService.ipcRenderer.invoke('popup-message', 'topic-db-error');
+				}
+			});
 
-		this.selectedTopics[level - 1].name = '';
-		await this.apollo.mutate<any>({
-			mutation: gql,
-			variables: {
-				pid: pid,
-				isLeaf: false,
-				url: pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-"),
-				isVideo: this.isVideo,
-				name: value,
-			}
-		}).subscribe(async ({ data }) => {
-			const result = data[Object.keys(data)[0]];
-			// update parent count
-			const [pItem] = _.cloneDeep(await this._dataService.fetchLevelDB(result.dblevel - 1, result.isVideo, undefined, result.pid));
-			console.log('pItem after create new:', pItem);
-			const pItemCount = pItem.children.length - 1;
-			const updateParentOption = {
-				id: result.pid,
-				count: pItemCount,
-			};
-			await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
-			// update UI view
-			this.selectedItem = await _.cloneDeep(result);
-			await this.selectedTopics[level - 1].options.push(this.selectedItem);
-			await this.selectOptionChange(level, this.selectedItem.id);
-			console.log(this.selectedItem);
-		}, (error) => {
-			console.log('there was an error sending the query', error);
-			if (this._electronService.isElectronApp) {
-				this._electronService.ipcRenderer.invoke('popup-message', 'topic-db-error');
-			}
-		});
+		})
 	}
 
 	async createDirDB(itemName, pItem) {
 		return new Promise<string>(async (resolve, reject) => {
 			console.log('createmass called:', itemName, pItem);
 			const gql = this.selectedTopics[pItem.dblevel + 1 - 1].createGQL;
-			const nonVietnamese = await this.nonAccentVietnamese(itemName);
-			const url = pItem.url.concat('.', nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-");
+			const pureLatin = await this.langToLatin(itemName);
+			const url = pItem.url.concat('.', pureLatin.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-");
 			await this.apollo.mutate<any>({
 				mutation: gql,
 				variables: {
@@ -208,7 +226,7 @@ export class ConverterPage implements OnInit {
 		return new Promise(async (resolve, reject) => {
 
 			// create large db instant code start
-			this.newDBArray = [];
+			// this.newDBArray = [];
 			if (this.selectedItem.name === 'Audio' || this.selectedItem.name === 'Video') {
 				this.selectedItem.url = '';
 			}
@@ -231,7 +249,7 @@ export class ConverterPage implements OnInit {
 						} else {
 							console.log('pItem not found', dir);
 						}
-					});
+					}, { priority: 1 });
 				})();
 			});
 			await queue.onEmpty().then(async () => {
@@ -242,26 +260,45 @@ export class ConverterPage implements OnInit {
 	}
 
 
-	nonAccentVietnamese(str) {
+	langToLatin(str) {
 		str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
-		str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
-		str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
-		str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
-		str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+		str = str.replace(/ƀ/g, "b");
+		str = str.replace(/č/g, "c");
+		str = str.replace(/è|é|ẹ|ẻ|ẽ|ĕ|ê|ề|ế|ệ|ể|ễ|ê̆/g, "e");
+		str = str.replace(/ì|í|ị|ỉ|ĩ|ĭ/g, "i");
+		str = str.replace(/ò|ó|ọ|ỏ|õ|ŏ|ô|ồ|ố|ộ|ổ|ỗ|ô̆|ơ|ờ|ớ|ợ|ở|ỡ|ơ̆/g, "o");
+		str = str.replace(/ù|ú|ụ|ủ|ũ|ŭ|ư|ừ|ứ|ự|ử|ữ|ư̆/g, "u");
 		str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
 		str = str.replace(/đ/g, "d");
+		str = str.replace(/ñ/g, "n");
 
 		str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
-		str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
-		str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
-		str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
-		str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+		str = str.replace(/Ƀ/g, "B");
+		str = str.replace(/Č/g, "C");
+		str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ĕ|Ê̆|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+		str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ|Ĭ/g, "I");
+		str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ|Ŏ|Ơ̆|Ô̆/g, "O");
+		str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ŭ|Ư|Ừ|Ứ|Ự|Ử|Ữ|Ư̆/g, "U");
 		str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
 		str = str.replace(/Đ|Ð/g, "D");
+		str = str.replace(/Ñ/g, "N");
 		// Some system encode vietnamese combining accent as individual utf-8 characters
 		str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // Huyền sắc hỏi ngã nặng 
 		str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
 		return str;
+	}
+
+	findIndexArray(arr, md5) {
+		return new Promise(function (resolve, reject) {
+			let i = 0;
+			while (i < arr.length) {
+				const index = arr[i].children.findIndex(item => item.md5 === md5);
+				if (index > -1) resolve(arr[i].children[index]);
+				i++
+				if (i === arr.length) { resolve(false) };
+			}
+
+		})
 	}
 
 	async test() {
@@ -380,55 +417,78 @@ export class ConverterPage implements OnInit {
 	}
 
 
-	async convert() {
+	async preConvert() {
 		if (this._electronService.isElectronApp) {
 			if (!this.inputPath || !this.selectedItem) {
-				this._electronService.ipcRenderer.invoke('popup-message', 'missing-path');
-			} else {
-				this.isConverting = true;
-				// create directory DB first
-				const dirList = await this._electronService.ipcRenderer.invoke('find-dir-db', this.inputPath);
-				await this.processDirDB(dirList);
-				// find all files
-				const fileList = this.fileCheckbox ? this.inputPath : await this._electronService.ipcRenderer.invoke('find-file-db', this.inputPath, this.isVideo);
-				this.totalFiles = fileList.length;
-				queue.concurrency = this.selectedItem.isVideo ? 1 : 20;
-				if (fileList.length > 0) {
-					try {
-						let tasks = [];
-						fileList.forEach(file => {
-							tasks.push(async () => {
-								const pName = path.basename(path.dirname(file));
-								const index = this.newDBArray.findIndex((pItem) => pItem.name === pName);
-								const pItem = dirList.length !== 0 ? index >= 0 ? this.newDBArray[index] : undefined : this.selectedItem;
-								if (pItem) {
-									// start converting files
-									await this._electronService.ipcRenderer.invoke('start-convert', file, pItem);
-									console.log('start converting files', file, pItem);
-									this.convertedFiles++;
-								}
-							})
-						});
-						await Promise.all(tasks.map(task => queue.add(task))).then(async () => {
-							console.log('exec file done');
-							this.execDone();
-							this._electronService.ipcRenderer.invoke('popup-message', 'exec-done');
-						});
-
-					} catch (error) {
-
-					}
-
-
-
-				} else {
-					console.log('no file found');
-					this._electronService.ipcRenderer.invoke('popup-message', 'no-file-found');
-				}
-
-
-			};
+				return this._electronService.ipcRenderer.invoke('popup-message', 'missing-path');
+			}
+			if (this.selectedTopics[this.selectedItem.dblevel].id === '0') {
+				return await this.startConvert();
+			}
+			if (this.selectedTopics[this.selectedItem.dblevel].id === '1' && !this.fileCheckbox) {
+				await this.createNewTopic(this.selectedItem.dblevel + 1, path.basename(this.inputPath.toString()))
+				return await this.startConvert();
+			}
+			return this._electronService.ipcRenderer.invoke('popup-message', 'topic-db-error');
 		}
+	}
+
+
+	async startConvert() {
+		this.isConverting = true;
+		// create directory DB first
+		const dirList = this.fileCheckbox ? [] : await this._electronService.ipcRenderer.invoke('find-dir-db', this.inputPath);
+		await this.processDirDB(dirList);
+		// find all files
+		const fileList = this.fileCheckbox ? this.inputPath : await this._electronService.ipcRenderer.invoke('find-file-db', this.inputPath, this.isVideo);
+		this.totalFiles += fileList.length;
+		queue.concurrency = this.isVideo ? 1 : 20;
+		if (fileList.length > 0) {
+			try {
+				let tasks = [];
+				fileList.forEach(file => {
+					tasks.push(async () => {
+						const itemName = path.basename(file)
+						const pName = path.basename(path.dirname(file));
+						const index = this.newDBArray.findIndex((pItem) => pItem.name === pName);
+						const pItem = dirList.length !== 0 ? index >= 0 ? this.newDBArray[index] : undefined : this.selectedItem;
+						if (pItem) {
+							const md5 = await this._electronService.ipcRenderer.invoke('checksum', file);
+							const fileExist: any = await this.findIndexArray(this.newDBArray, md5);
+							if (fileExist && fileExist.name !== itemName) {
+								const updateItemOption = {
+									id: fileExist.id,
+									name: itemName,
+								};
+								await this._dataService.updateSingle(fileExist.dblevel, updateItemOption);
+							}
+							if (!fileExist) {
+								// start converting files
+								console.log('start converting files', file, pItem);
+								await this._electronService.ipcRenderer.invoke('start-convert', file, pItem, this.isGPU);
+							}
+							this.convertedFiles++;
+						}
+					})
+				});
+				await Promise.all(tasks.map(task => queue.add(task))).then(async () => {
+					console.log('exec file done');
+					this.execDone();
+					this._electronService.ipcRenderer.invoke('popup-message', 'exec-done');
+				});
+
+			} catch (error) {
+
+			}
+
+
+
+		} else {
+			console.log('no file found');
+			this._electronService.ipcRenderer.invoke('popup-message', 'no-file-found');
+		}
+
+
 	}
 
 	async execDone() {
@@ -440,6 +500,7 @@ export class ConverterPage implements OnInit {
 				this.totalFiles = 0;
 				this.progressLoading = false;
 				this.progressionStatus = 0;
+				this.newDBArray = [];
 				this._dataService.treeRefresh(this.isVideo);
 			})
 		}

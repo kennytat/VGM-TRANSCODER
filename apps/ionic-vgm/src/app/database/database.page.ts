@@ -264,7 +264,7 @@ export class DatabasePage implements OnInit {
 			// const xorPath = '/home/vgm/Desktop'
 			// this._electronService.ipcRenderer.send('xor-key', xorPath, false);
 			// this._electronService.ipcRenderer.send('create-instance-db', prefixPath, startPoint, endPoint);
-			// this._electronService.ipcRenderer.invoke('upload-api', 'web');
+			this._electronService.ipcRenderer.invoke('test-data', '/home/vgm/Desktop/test/toilaai/testmp4.mp4');
 		}
 
 		// const fileInfo = {
@@ -288,7 +288,7 @@ export class DatabasePage implements OnInit {
 				if (result === 1) {
 					await this.presentLoading(this._translateService.instant('database.msg.export-waiting'));
 					if (this._configService.encryptedConf.status) {
-						// await this.exportWebAPI();
+						await this.exportWebAPI();
 						// await this._electronService.ipcRenderer.invoke('upload-api', 'web');
 						await this._electronService.ipcRenderer.invoke('upload-tmp-api', 'web');
 					} else {
@@ -597,7 +597,7 @@ export class DatabasePage implements OnInit {
 				},
 			}).subscribe(async ({ data }) => {
 				const result = data[Object.keys(data)[0]];
-				await this.updateSearch('add', [result]);
+				await this._dataService.updateSearch('add', [result]);
 				console.log('updated local DB', data);
 			}, (error) => {
 				console.log('error updating files', error);
@@ -638,7 +638,11 @@ export class DatabasePage implements OnInit {
 								count: pItemCount,
 							};
 							await this._dataService.updateSingle(pItem.dblevel, updateParentOption);
-							this.updateSearch('delete', [fileID]);
+							await this._dataService.updateSearch('delete', [fileID]);
+							if (this._electronService.isElectronApp) {
+								const fileType = result.isVideo ? 'VGMV' : 'VGMA';
+								await this._electronService.ipcRenderer.invoke('delete-file', `${fileType}/${result.url.replace(/\./g, '\/')}`);
+							}
 						}, (error) => {
 							console.log('error deleting files', error);
 						});
@@ -655,21 +659,7 @@ export class DatabasePage implements OnInit {
 		})
 	}
 
-	async updateSearch(method: string, list: any[]) {
-		if (this._configService.searchGateway.status && this._dataService.meiliSearch) {
-			this.meiliSearch = this._dataService.meiliSearch.index(this._configService.searchGateway.database);
-			switch (method) {
-				case 'add':
-					this.meiliSearch.addDocuments(list);
-					break;
-				case 'delete':
-					this.meiliSearch.deleteDocument(list);
-					break;
-				default:
-					break;
-			}
-		}
-	}
+
 
 	// Show corresponding message when mutating db done
 	execDBDone(message) {

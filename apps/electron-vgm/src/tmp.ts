@@ -4,7 +4,7 @@ import * as fs from 'fs'
 import * as CryptoJS from "crypto-js";
 import { slice } from 'ramda';
 import * as path from 'path'
-import { showMessageBox, nonAccentVietnamese, uploadIPFS, rcloneSync } from './function';
+import { showMessageBox, langToLatin, uploadIPFS, rcloneSync, md5Checksum } from './function';
 import { FileInfo } from './database';
 import { tmpDir } from './index';
 import PQueue from 'p-queue';
@@ -12,6 +12,14 @@ const queue = new PQueue();
 // import { NFTStorage, File, Blob } from 'nft.storage'
 
 export const tmpService = () => {
+
+	ipcMain.handle('test-data', async (event, str) => {
+
+		const result = await md5Checksum(str);
+		console.log(result);
+		return result;
+
+	})
 
 
 	// const endpoint: any = 'https://api.nft.storage'; // the default
@@ -134,8 +142,8 @@ export const tmpService = () => {
 
 				return new Promise(async (resolve) => {
 
-					const nonVietnamese = nonAccentVietnamese(file);
-					const api = `${nonVietnamese.replace(/(.*VGMA\/|.*VGMV\/)/, '').toLowerCase().replace(/(\.mp3$|\.mp4$)/g, '').replace(/\./g, '-').replace(/\//g, '.').replace(/(?!\.)[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+					const pureLatin = langToLatin(file);
+					const api = `${pureLatin.replace(/(.*VGMA\/|.*VGMV\/)/, '').toLowerCase().replace(/(\.mp3$|\.mp4$)/g, '').replace(/\./g, '-').replace(/\//g, '.').replace(/(?!\.)[\W\_]/g, '-').replace(/-+-/g, "-")}`;
 					console.log('file API:', api);
 					const pApi = api.match(/.*(?=\..*$)/).toString();
 					console.log('pAPI:', pApi);

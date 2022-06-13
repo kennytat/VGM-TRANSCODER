@@ -78,10 +78,11 @@ export class DataService {
 		try {
 			await this.fetchTree();
 			if (this._configService.searchGateway.status) {
-				this.meiliSearch = new MeiliSearch({
+				const search = new MeiliSearch({
 					host: this._configService.searchGateway.gateway, // 'http://search.hjm.bid'
 					apiKey: this._configService.searchGateway.key, // 'KYV2oMHSE5G2p9ZXwUGH3CfWpaXB1CF5'
 				})
+				this.meiliSearch = search.index(this._configService.searchGateway.database);
 			}
 		} catch (error) {
 			console.log(error);
@@ -151,13 +152,30 @@ export class DataService {
 				mutation: this.updateGQL[dblevel - 2],
 				variables: options,
 				fetchPolicy: 'network-only',
-			}).subscribe(({ data }) => {
-				console.log(data);
-				resolve('done');
+			}).subscribe(async ({ data }) => {
+				const result = data[Object.keys(data)[0]];
+				console.log('updateSingleItem:', result);
+				await this.updateSearch('add', [result]);
+				resolve(result);
 			}, (error) => {
 				console.log('error updating single item', error);
 			});
 		})
+	}
+
+	async updateSearch(method: string, list: any[]) {
+		if (this._configService.searchGateway.status && this.meiliSearch) {
+			switch (method) {
+				case 'add':
+					this.meiliSearch.addDocuments(list);
+					break;
+				case 'delete':
+					this.meiliSearch.deleteDocument(list);
+					break;
+				default:
+					break;
+			}
+		}
 	}
 
 

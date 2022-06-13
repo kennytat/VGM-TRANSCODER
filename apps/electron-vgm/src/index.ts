@@ -60,9 +60,9 @@ export const tmpDir = path.join(os.tmpdir(), app.getName());
 // create graphql server function
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule)
-	await app.listen(3000, () => {
+	await app.listen(3033, () => {
 		console.log(`
-  🚀 Server ready at: http://localhost:3000/graphql
+  🚀 Server ready at: http://localhost:3033/graphql
   ⭐️ See sample queries: http://pris.ly/e/ts/graphql-nestjs#using-the-graphql-api
   `)
 	})
@@ -250,7 +250,7 @@ try {
 				type: 'warning',
 				title: 'Warning',
 				message: 'Error creating new topic',
-				detail: 'Existing topic or server error',
+				detail: 'Unknown error occurred, please try again!',
 			};
 			showMessageBox(options);
 		}
@@ -690,9 +690,9 @@ try {
 	// 				// read file.ini for name (instant code)
 	// 				fileInfo.name = vName;
 	// 				// process filename
-	// 				const nonVietnamese = nonAccentVietnamese(vName);
-	// 				fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
-	// 				const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
+	// 				const pureLatin = langToLatin(vName);
+	// 				fileInfo.url = `${pItem.url}.${pureLatin.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+	// 				const outPath = `${argOutPath}/${pureLatin.replace(/\s/g, '')}`;
 	// 				fileInfo.isVideo = pItem.isVideo;
 	// 				fileInfo.pid = pItem.id;
 	// 				fileInfo.dblevel = pItem.dblevel + 1;
@@ -805,8 +805,8 @@ try {
 	// 				fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
 	// 				fileInfo.name = vName;
 	// 				// process filename
-	// 				const nonVietnamese = nonAccentVietnamese(vName);
-	// 				fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+	// 				const pureLatin = langToLatin(vName);
+	// 				fileInfo.url = `${pItem.url}.${pureLatin.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
 	// 				fileInfo.isVideo = pItem.isVideo;
 	// 				fileInfo.pid = pItem.id;
 	// 				fileInfo.dblevel = pItem.dblevel + 1;
@@ -822,8 +822,8 @@ try {
 	// 		const checkFileExists = async (vName: string, pUrl, fType) => {
 	// 			return new Promise((resolve) => {
 	// 				// process filename
-	// 				const nonVietnamese = nonAccentVietnamese(vName);
-	// 				const api = `${pUrl}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+	// 				const pureLatin = langToLatin(vName);
+	// 				const api = `${pUrl}.${pureLatin.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
 	// 				const fileUrl = api.replace(/\./g, '/');
 	// 				let quality;
 	// 				if (fType === 'video') quality = '480'; else quality = '128';
@@ -851,8 +851,8 @@ try {
 	// 		const checkDBExists = async (vName: string, pUrl) => {
 	// 			return new Promise((resolve) => {
 	// 				// process filename
-	// 				const nonVietnamese = nonAccentVietnamese(vName);
-	// 				const api = `${pUrl}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+	// 				const pureLatin = langToLatin(vName);
+	// 				const api = `${pUrl}.${pureLatin.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
 	// 				// const fileUrl = api.replace(/\./g, '/');
 	// 				// const url = `${gateway}/${fileUrl}/128p.m3u8`; // if video 480p/data0.vgmx audio 128p.m3u8
 	// 				const itemAPIPath = `${apiPath}/items/single/${api}.json`;
@@ -872,9 +872,9 @@ try {
 	// 			console.log('convertFile args:', file, vName, argOutPath);
 
 	// 			return new Promise((resolve) => {
-	// 				const nonVietnamese = nonAccentVietnamese(vName);
-	// 				const urlPath = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
-	// 				const outPath = `${argOutPath}/${nonVietnamese.replace(/\s/g, '')}`;
+	// 				const pureLatin = langToLatin(vName);
+	// 				const urlPath = `${pItem.url}.${pureLatin.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+	// 				const outPath = `${argOutPath}/${pureLatin.replace(/\s/g, '')}`;
 	// 				console.log('start extracting thumbnail', 'bash', 'ffmpeg-thumb.sh', `"${file}"`, `"${outPath}"`);
 
 	// 				const conversion = spawn('bash', ['ffmpeg-thumb.sh', `"${file}"`, `"${outPath}"`]);
@@ -923,9 +923,9 @@ try {
 	// 					} else if (fType === 'audio') {
 	// 						re = /^.*VGMA\//;
 	// 					}
-	// 					const nonVietnamese = nonAccentVietnamese(path.dirname(fileIni[0]).replace(re, ''));
-	// 					console.log('nonVietnamese', nonVietnamese);
-	// 					const pUrl = nonVietnamese.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
+	// 					const pureLatin = langToLatin(path.dirname(fileIni[0]).replace(re, ''));
+	// 					console.log('pureLatin', pureLatin);
+	// 					const pUrl = pureLatin.toLowerCase().replace(/\./g, '-').replace(/\//g, '\.').replace(/[\s\_\+\=\*\>\<\,\'\"\;\:\!\@\#\$\%\^\&\*\(\)]/g, '-');
 	// 					// await checkFileExists(fileName, pUrl, fType);
 	// 					console.log('pURL', pUrl);
 	// 					const pAPI = execSync(`find '${apiPath}/topics/single' -type f -name "${pUrl}.json"`, { encoding: "utf8" }).split('\n');

@@ -2,7 +2,8 @@ import { dialog } from 'electron'
 import { exec, spawn, execSync, spawnSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as os from 'os'
+import * as pinyin from 'chinese-to-pinyin';
+import * as md5 from 'md5';
 import { ipfsGateway } from './database';
 import { tmpDir } from './index';
 
@@ -66,8 +67,14 @@ export function showMessageBox(options, win = null) {
 	}).catch(err => { console.log(err) });
 }
 
+export function md5Checksum(filePath) {
+	console.log('checksum called:', filePath);
+	const buf = fs.readFileSync(filePath);
+	return md5(buf)
+}
+
 // Rewrite vietnamese function
-export function nonAccentVietnamese(str) {
+export function langToLatin(str) {
 	str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
 	str = str.replace(/ƀ/g, "b");
 	str = str.replace(/č/g, "c");
@@ -92,7 +99,8 @@ export function nonAccentVietnamese(str) {
 	// Some system encode vietnamese combining accent as individual utf-8 characters
 	str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // Huyền sắc hỏi ngã nặng 
 	str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
-	// str = str.replace(/-+-/g, "-"); //thay thế 2- thành 1- 
+	// non chinese characters
+	str = pinyin(str, { removeTone: true, keepRest: true })
 	return str;
 }
 
@@ -144,8 +152,8 @@ export const uploadIPFS = async (srcPath, type) => {
 }
 
 export const rcloneSync = async (source, des, confPath, extraOption = []) => {
-	const confOption = confPath ? [`--config="${confPath}"`] : [];
-	console.log('Rclone sync:', `'${source}/'`, `'${des}/'`, confOption, extraOption);
+	const confOption = confPath ? ['--config', confPath] : [];
+	console.log('Rclone copy:', `'${source}/'`, `'${des}/'`, confOption, extraOption);
 	return new Promise((resolve) => {
 		const rclone = spawn('rclone', ['copy', '--progress', `${source}/`, `${des}/`].concat(confOption).concat(extraOption), { detached: true });
 		rclone.stdout.on('data', async (data) => {
@@ -156,6 +164,24 @@ export const rcloneSync = async (source, des, confPath, extraOption = []) => {
 		});
 		rclone.on('close', async (code) => {
 			console.log(`Rclone copy file done with code:`, code);
+			resolve('done');
+		})
+	});
+}
+
+export const rcloneDelete = async (des, confPath, extraOption = []) => {
+	const confOption = confPath ? ['--config', confPath] : [];
+	console.log('Rclone delete:', `'${des}/'`, confOption, extraOption);
+	return new Promise((resolve) => {
+		const rclone = spawn('rclone', ['delete', '--progress', `${des}/`].concat(confOption).concat(extraOption), { detached: true });
+		rclone.stdout.on('data', async (data) => {
+			console.log(`rclone delete stdout: ${data}`);
+		});
+		rclone.stderr.on('data', async (data) => {
+			console.log(`Stderr: ${data}`);
+		});
+		rclone.on('close', async (code) => {
+			console.log(`Rclone delete file done with code:`, code);
 			resolve('done');
 		})
 	});

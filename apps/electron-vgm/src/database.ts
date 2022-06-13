@@ -6,11 +6,13 @@ import * as os from 'os'
 import {
 	showMessageBox,
 	rcloneSync,
+	rcloneDelete,
 	s3ConfWrite,
 	s3ConnCheck,
 	ipfsGWCheck,
 	dnsGWCheck,
-	searchGWCheck
+	searchGWCheck,
+	md5Checksum
 } from './function';
 import { win, tmpDir } from './index';
 
@@ -111,9 +113,16 @@ export const databaseService = () => {
 	// add mass DB folder recursively
 	ipcMain.handle('find-file-db', async (event, dirPath: string, isVideo: boolean) => { // instant add to db
 		const fileType = isVideo ? 'mp4' : 'mp3';
+		console.log('got DirPath:', dirPath);
+
 		let filesArray = execSync(`find '${dirPath}' -name '*.${fileType}'`, { encoding: "utf8" }).split('\n');
 		filesArray.pop();
 		return filesArray;
+	})
+
+	// checkSum MD5 file
+	ipcMain.handle('checksum', async (event, filePath: string) => {
+		return await md5Checksum(filePath);
 	})
 
 
@@ -214,6 +223,18 @@ export const databaseService = () => {
 			return await dialog.showMessageBox(win, options).then(result => {
 				return { method: method, response: result.response }
 			})
+		} catch (error) {
+			console.log(error);
+			return null
+		}
+	})
+
+	ipcMain.handle('delete-file', async (event, url) => {
+		try {
+			const des = `${encryptedConf.name}:${encryptedConf.bucket}/${url}`;
+			console.log('deleteing data:', des, encryptedConf.path);
+			await rcloneDelete(des, encryptedConf.path);
+			return 'done';
 		} catch (error) {
 			console.log(error);
 			return null

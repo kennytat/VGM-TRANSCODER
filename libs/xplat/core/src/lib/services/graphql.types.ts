@@ -1282,6 +1282,7 @@ mutation deleteLevel2 ($id: String!) {
     pid
     dblevel
     isVideo
+		url
   }
 }`;
 
@@ -1293,6 +1294,7 @@ mutation deleteLevel3 ($id: String!) {
     pid
     dblevel
     isVideo
+		url
   }
 }`;
 export const DELETE_LEVEL_4 = gql`
@@ -1303,6 +1305,7 @@ mutation deleteLevel4 ($id: String!) {
     pid
     dblevel
     isVideo
+		url
   }
 }`;
 export const DELETE_LEVEL_5 = gql`
@@ -1313,6 +1316,7 @@ mutation deleteLevel5 ($id: String!) {
     pid
     dblevel
     isVideo
+		url
   }
 }`;
 export const DELETE_LEVEL_6 = gql`
@@ -1323,6 +1327,7 @@ mutation deleteLevel6 ($id: String!) {
     pid
     dblevel
     isVideo
+		url
   }
 }`;
 export const DELETE_LEVEL_7 = gql`
@@ -1333,5 +1338,6 @@ mutation deleteLevel7 ($id: String!) {
     pid
     dblevel
     isVideo
+		url
   }
 }`;

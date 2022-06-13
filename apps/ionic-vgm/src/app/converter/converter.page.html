@@ -6,6 +6,9 @@
           <ion-item>
             <ion-icon name="folder-open-outline" slot="start"></ion-icon>
             <ion-label>{{'converter.subtitle' | translate}}</ion-label>
+            <ion-text>CPU</ion-text>
+            <ion-toggle [(ngModel)]="isGPU"></ion-toggle>
+            <ion-text>GPU</ion-text>
             <ion-button fill="outline" slot="end" (click)="test()"
               >Test</ion-button
             >
@@ -101,20 +104,25 @@
                   <select
                     [(ngModel)]="level.id"
                     (ngModelChange)="selectOptionChange(level.level, level.id)"
-                    [ngStyle]="{ 'padding-left.px': i * 20, 'color': level.id === '0' ? 'var(--ion-color-success)' : '' }"
+                    [ngStyle]="{ 'padding-left.px': i * 20, 'color': level.id === '0' ? 'var(--ion-color-success)' : level.id === '1' ? 'var(--ion-color-warning)' :'' }"
                   >
-                    <option [ngValue]="'0'" selected>
+                    <option
+                      [ngValue]="'0'"
+                      selected
+                      *ngIf="i === 0 || i >= 1 && level.item.children.length <= 0 || level.item.isLeaf"
+                    >
                       {{ i === 0 ? 'Select Database' :'Use current categories'}}
                     </option>
                     <option
                       [ngValue]="'1'"
-                      *ngIf="i !== 0 && selectedItem && !selectedItem.isLeaf"
+                      selected
+                      *ngIf="i !== 0 && level.item && !level.item.isLeaf"
                       style="color: var(--ion-color-warning)"
                     >
-                      Create new topic
+                      {{ 'Create new topic'}}
                     </option>
                     <option
-                      *ngFor="let item of level.options, index as i"
+                      *ngFor="let item of level.item.children, index as i"
                       [ngValue]="item.id"
                       style="color: var(--ion-color-dark)"
                     >
@@ -122,7 +130,7 @@
                     </option>
                   </select>
                 </ion-col>
-                <ion-col
+                <!-- <ion-col
                   style="width: 100%"
                   class="no-vertical-padding"
                   *ngIf="level.id === '1' && i !== 0 && selectedTopics[i-1].id !== '0' && selectedTopics[i-1].id !== '1'  && selectedLevel >= i"
@@ -146,7 +154,7 @@
                       <ion-icon name="checkmark-outline"></ion-icon>
                     </ion-button>
                   </ion-input>
-                </ion-col>
+                </ion-col> -->
               </ion-row>
             </ion-grid>
           </ion-card-content>
@@ -169,7 +177,7 @@
           </ion-input> -->
 
           <ion-card-content *ngIf="!isConverting; else stop_convert">
-            <ion-button expand="block" (click)="convert()"
+            <ion-button expand="block" (click)="preConvert()"
               >{{'converter.start' | translate}}</ion-button
             >
           </ion-card-content>

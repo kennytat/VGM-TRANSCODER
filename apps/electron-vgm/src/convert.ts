@@ -3,7 +3,7 @@ import { exec, spawn, execSync, spawnSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
-import { showMessageBox, nonAccentVietnamese, uploadIPFS, rcloneSync } from './function';
+import { showMessageBox, langToLatin, uploadIPFS, rcloneSync, md5Checksum } from './function';
 import { FileInfo, encryptedConf } from './database';
 import { tmpDir } from './index';
 // import { create, globSource, CID } from 'ipfs-http-client'
@@ -17,7 +17,7 @@ const queue = new PQueue();
 export const convertService = () => {
 
 	// Get input and output path from above and execute sh file
-	ipcMain.handle('start-convert', async (event, inputFile: string, pItem) => {
+	ipcMain.handle('start-convert', async (event, inputFile: string, pItem, isGPU = true) => {
 
 		const checkMP4 = async (tmpPath, fType) => {
 			console.log('checking downloaded file', `${tmpPath}`);
@@ -76,7 +76,7 @@ export const convertService = () => {
 
 
 		const convertFile = async (file: string, fType: string, pItem) => {
-			return new Promise((resolve) => {
+			return new Promise(async (resolve) => {
 				let fileInfo: FileInfo = { pid: '', md5: '', name: '', size: 0, duration: '', qm: '', url: '', hash: '', khash: '', isVideo: false, dblevel: 0 };
 				let metaData: any = [];
 				// get file Info
@@ -88,18 +88,19 @@ export const convertService = () => {
 				fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
 				fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
 				fileInfo.name = path.parse(file).name;
-				fileInfo.md5 = (execSync(`md5sum "${file}" | awk '{print $1}'`, { encoding: "utf8" })).split('\n')[0];
+				fileInfo.md5 = await md5Checksum(file);
 				// process filename
-				const nonVietnamese = nonAccentVietnamese(fileInfo.name);
-				fileInfo.url = `${pItem.url}.${nonVietnamese.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
+				const pureLatin = langToLatin(fileInfo.name);
+				fileInfo.url = `${pItem.url}.${pureLatin.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;
 
-				const outPath = `${tmpDir}/${nonVietnamese.replace(/\s/g, '')}`;
+				const outPath = `${tmpDir}/${pureLatin.replace(/\s/g, '')}`;
 				fileInfo.isVideo = pItem.isVideo;
 				fileInfo.pid = pItem.id;
 				fileInfo.dblevel = pItem.dblevel + 1;
 				console.log(fileInfo, 'start converting ffmpeg');
 				console.log(`'bash', ['ffmpeg-exec.sh', "${file}", "${outPath}", ${fType}]`);
-				const conversion = spawn('bash', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fType]);
+				const hardware = isGPU ? 'gpu' : 'cpu';
+				const conversion = spawn('bash', ['ffmpeg-exec.sh', `"${file}"`, `"${outPath}"`, fType, hardware]);
 				conversion.stdout.on('data', async (data) => {
 					console.log(`conversion stdout: ${data}`);
 					const ffmpeg_progress_stat: string[] = data.toString().split('\n');
