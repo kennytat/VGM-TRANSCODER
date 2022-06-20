@@ -55,8 +55,10 @@ export class ConverterPage implements OnInit {
 	updateID: string = '';
 	updateURL: string = '';
 	updateLevel: number = 0;
+	isGPU = true;
 	newDBArray = [];
-	isGPU = false;
+	tasks: string[] = [];
+	concurrency: string = "1";
 	constructor(
 		private _electronService: ElectronService,
 		private zone: NgZone,
@@ -92,8 +94,10 @@ export class ConverterPage implements OnInit {
 		this.selectedLevel = level;
 		if (itemID === this.level1.item.children[0].id) {
 			this.isVideo = true;
+			this.concurrency = '1';
 		} else if (itemID === this.level1.item.children[1].id) {
 			this.isVideo = false;
+			this.concurrency = '20';
 		}
 		this.selectedTopics[level - 1].id = itemID;
 		if (level >= 1 && level < this.selectedTopics.length) {
@@ -147,6 +151,7 @@ export class ConverterPage implements OnInit {
 			const pureLatin = await this.langToLatin(value);
 			const pList = [...this.selectedTopics[level - 2].item.children];
 			const [pItem] = pList.filter((item) => item.id.includes(pid));
+			const url = pItem.url.concat('.', pureLatin.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-");
 			// console.log('parent', pid, pItem, pList);
 			this.selectedTopics[level - 1].name = '';
 			await this.apollo.mutate<any>({
@@ -154,7 +159,7 @@ export class ConverterPage implements OnInit {
 				variables: {
 					pid: pid,
 					isLeaf: false,
-					url: pItem.url.concat('.', pureLatin.toLowerCase().replace(/[\W\_]/g, '-')).replace(/^\.|\.$/g, '').replace(/-+-/g, "-"),
+					url: url,
 					isVideo: this.isVideo,
 					name: value,
 				}
@@ -174,12 +179,12 @@ export class ConverterPage implements OnInit {
 				await this.selectedTopics[level - 1].item.children.push(this.selectedItem);
 				await this.selectOptionChange(level, this.selectedItem.id);
 				console.log(this.selectedItem);
-				resolve('done');
-			}, (error) => {
-				console.log('there was an error sending the query', error);
-				if (this._electronService.isElectronApp) {
-					this._electronService.ipcRenderer.invoke('popup-message', 'topic-db-error');
-				}
+				resolve(result);
+			}, async (error) => {
+				// query if existing
+				console.log('there was an error sending the query', error, 'try querying existing topic');
+				const [result]: any = await this.getOptions(pItem.dblevel + 1, pItem.isVideo, undefined, undefined, url);
+				if (result) resolve(result);
 			});
 
 		})
@@ -230,32 +235,30 @@ export class ConverterPage implements OnInit {
 			if (this.selectedItem.name === 'Audio' || this.selectedItem.name === 'Video') {
 				this.selectedItem.url = '';
 			}
-			this.newDBArray.push(this.selectedItem);
+			if (this.newDBArray.findIndex(item => item.id === this.selectedItem.id) < 0) this.newDBArray.push(this.selectedItem);
 			console.log(listArray, this.newDBArray);
+			let i = 0;
+			while (i < listArray.length) {
+				if (!listArray[i].pName) {
+					listArray[i].pName = this.selectedItem.name;
+					listArray[i].pid = this.selectedItem.id;
+				}
+				const pIndex = this.newDBArray.findIndex(item => path.basename(listArray[i].pName) === item.name);
+				if (pIndex >= 0) {
+					console.log('found pItem', this.newDBArray[pIndex], listArray[i].pName);
+					const newItem = await this.createDirDB(listArray[i].name, this.newDBArray[pIndex]);
+					this.newDBArray.push(newItem);
+					if (newItem) {
+						i++;
+					}
+				} else {
+					console.log('pItem not found', listArray[i]);
+				}
+			}
+			if (i === listArray.length) {
+				resolve('done')
+			}
 
-			queue.concurrency = 1;
-			await listArray.forEach(async dir => {
-				(async () => {
-					await queue.add(async () => {
-						if (!dir.pName) {
-							dir.pName = this.selectedItem.name;
-							dir.pid = this.selectedItem.id;
-						}
-						const pIndex = this.newDBArray.findIndex(item => path.basename(dir.pName) === item.name);
-						if (pIndex >= 0) {
-							console.log('found pItem', this.newDBArray[pIndex], dir.pName);
-							const newItem = await this.createDirDB(dir.name, this.newDBArray[pIndex]);
-							this.newDBArray.push(newItem)
-						} else {
-							console.log('pItem not found', dir);
-						}
-					}, { priority: 1 });
-				})();
-			});
-			await queue.onEmpty().then(async () => {
-				console.log('Queue is empty, create directory DB done');
-				resolve('done');
-			});
 		})
 	}
 
@@ -288,16 +291,19 @@ export class ConverterPage implements OnInit {
 		return str;
 	}
 
-	findIndexArray(arr, md5) {
+	async findIndexArray(arr, md5) {
 		return new Promise(function (resolve, reject) {
 			let i = 0;
 			while (i < arr.length) {
 				const index = arr[i].children.findIndex(item => item.md5 === md5);
-				if (index > -1) resolve(arr[i].children[index]);
+				if (index > -1) {
+					console.log('found exist:', arr[i].children, md5);
+					resolve(arr[i].children[index])
+					break;
+				};
 				i++
 				if (i === arr.length) { resolve(false) };
 			}
-
 		})
 	}
 
@@ -419,43 +425,58 @@ export class ConverterPage implements OnInit {
 
 	async preConvert() {
 		if (this._electronService.isElectronApp) {
+			console.log('preConvert called');
+
 			if (!this.inputPath || !this.selectedItem) {
 				return this._electronService.ipcRenderer.invoke('popup-message', 'missing-path');
 			}
 			if (this.selectedTopics[this.selectedItem.dblevel].id === '0') {
-				return await this.startConvert();
+				return await this.startConvert(this.inputPath, this.fileCheckbox, this.selectedItem, this.isVideo, this.isGPU);
 			}
 			if (this.selectedTopics[this.selectedItem.dblevel].id === '1' && !this.fileCheckbox) {
-				await this.createNewTopic(this.selectedItem.dblevel + 1, path.basename(this.inputPath.toString()))
-				return await this.startConvert();
+				const pItem = this.selectedItem;
+				for (let i = 0; i < this.inputPath.length; i++) {
+					const selectedItem = await this.createNewTopic(pItem.dblevel + 1, path.basename(this.inputPath[i]));
+					this.startConvert(this.inputPath[i], this.fileCheckbox, selectedItem, this.isVideo, this.isGPU);
+				}
+				return 'done';
 			}
 			return this._electronService.ipcRenderer.invoke('popup-message', 'topic-db-error');
 		}
 	}
 
 
-	async startConvert() {
+	async startConvert(inputPath, fileCheckbox, selectedItem, isVideo, isGPU) {
+		console.log('startConvert Called:', inputPath, selectedItem);
+		const task: string = inputPath.join();
+		this.tasks.push(task);
 		this.isConverting = true;
 		// create directory DB first
-		const dirList = this.fileCheckbox ? [] : await this._electronService.ipcRenderer.invoke('find-dir-db', this.inputPath);
+		const dirList = fileCheckbox ? [] : await this._electronService.ipcRenderer.invoke('find-dir-db', inputPath);
+		console.log('dirList Called:', dirList);
 		await this.processDirDB(dirList);
 		// find all files
-		const fileList = this.fileCheckbox ? this.inputPath : await this._electronService.ipcRenderer.invoke('find-file-db', this.inputPath, this.isVideo);
+		const fileList = fileCheckbox ? inputPath : await this._electronService.ipcRenderer.invoke('find-file-db', inputPath, isVideo);
+		console.log('fileList Called:', fileList);
 		this.totalFiles += fileList.length;
-		queue.concurrency = this.isVideo ? 1 : 20;
+		console.log('Checking input source', fileList, this.totalFiles);
+
+		queue.concurrency = parseInt(this.concurrency);
 		if (fileList.length > 0) {
 			try {
 				let tasks = [];
 				fileList.forEach(file => {
-					tasks.push(async () => {
-						const itemName = path.basename(file)
-						const pName = path.basename(path.dirname(file));
-						const index = this.newDBArray.findIndex((pItem) => pItem.name === pName);
-						const pItem = dirList.length !== 0 ? index >= 0 ? this.newDBArray[index] : undefined : this.selectedItem;
-						if (pItem) {
+					const itemName = path.basename(file)
+					const pName = path.basename(path.dirname(file));
+					const index = this.newDBArray.findIndex((pItem) => pItem.name === pName);
+					const pItem = dirList.length !== 0 ? index >= 0 ? this.newDBArray[index] : undefined : selectedItem;
+					if (pItem) {
+						tasks.push(async () => {
 							const md5 = await this._electronService.ipcRenderer.invoke('checksum', file);
 							const fileExist: any = await this.findIndexArray(this.newDBArray, md5);
+							console.log('check file exist:', fileExist);
 							if (fileExist && fileExist.name !== itemName) {
+								console.log('file exist, update item name');
 								const updateItemOption = {
 									id: fileExist.id,
 									name: itemName,
@@ -465,24 +486,24 @@ export class ConverterPage implements OnInit {
 							if (!fileExist) {
 								// start converting files
 								console.log('start converting files', file, pItem);
-								await this._electronService.ipcRenderer.invoke('start-convert', file, pItem, this.isGPU);
+								await this._electronService.ipcRenderer.invoke('start-convert', file, md5, pItem, isGPU);
+
 							}
 							this.convertedFiles++;
-						}
-					})
+						})
+					}
 				});
 				await Promise.all(tasks.map(task => queue.add(task))).then(async () => {
-					console.log('exec file done');
-					this.execDone();
-					this._electronService.ipcRenderer.invoke('popup-message', 'exec-done');
+					this.tasks.splice(this.tasks.indexOf(task), 1)
+					if (queue.size === 0 && queue.pending === 0) {
+						this.execDone();
+						this._electronService.ipcRenderer.invoke('popup-message', 'exec-done');
+					}
 				});
 
 			} catch (error) {
-
+				console.log(error);
 			}
-
-
-
 		} else {
 			console.log('no file found');
 			this._electronService.ipcRenderer.invoke('popup-message', 'no-file-found');

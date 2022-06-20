@@ -264,7 +264,7 @@ export class DatabasePage implements OnInit {
 			// const xorPath = '/home/vgm/Desktop'
 			// this._electronService.ipcRenderer.send('xor-key', xorPath, false);
 			// this._electronService.ipcRenderer.send('create-instance-db', prefixPath, startPoint, endPoint);
-			this._electronService.ipcRenderer.invoke('test-data', '/home/vgm/Desktop/test/toilaai/testmp4.mp4');
+			this._electronService.ipcRenderer.invoke('test-data', '/home/vgm/Desktop/newupload/7 Kỳ Lễ/6_Lễ Thổi Kèn.mp4');
 		}
 
 		// const fileInfo = {

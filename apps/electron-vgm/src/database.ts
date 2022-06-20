@@ -122,7 +122,9 @@ export const databaseService = () => {
 
 	// checkSum MD5 file
 	ipcMain.handle('checksum', async (event, filePath: string) => {
-		return await md5Checksum(filePath);
+		const md5Sum = await md5Checksum(filePath);
+		console.log('gotsum', md5Sum);
+		return md5Sum;
 	})
 
 

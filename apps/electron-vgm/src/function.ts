@@ -3,7 +3,7 @@ import { exec, spawn, execSync, spawnSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as pinyin from 'chinese-to-pinyin';
-import * as md5 from 'md5';
+import * as md5 from 'md5-file';
 import { ipfsGateway } from './database';
 import { tmpDir } from './index';
 
@@ -67,10 +67,9 @@ export function showMessageBox(options, win = null) {
 	}).catch(err => { console.log(err) });
 }
 
-export function md5Checksum(filePath) {
+export async function md5Checksum(filePath) {
 	console.log('checksum called:', filePath);
-	const buf = fs.readFileSync(filePath);
-	return md5(buf)
+	return await md5(filePath);
 }
 
 // Rewrite vietnamese function

@@ -49,7 +49,8 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	// to hide title bar, uncomment:
 	// titleBarStyle: 'hidden',
 	webPreferences: {
-		devTools: debugMode,
+		// to hide devTools, change to false: else debugMode
+		devTools: false,
 		nodeIntegration: debugMode,
 	},
 
@@ -60,9 +61,9 @@ export const tmpDir = path.join(os.tmpdir(), app.getName());
 // create graphql server function
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule)
-	await app.listen(3033, () => {
+	await app.listen(3000, () => {
 		console.log(`
-  🚀 Server ready at: http://localhost:3033/graphql
+  🚀 Server ready at: http://localhost:3000/graphql
   ⭐️ See sample queries: http://pris.ly/e/ts/graphql-nestjs#using-the-graphql-api
   `)
 	})
@@ -215,7 +216,7 @@ try {
 			} else {
 				options = {
 					title: 'Browse Video Folder',
-					properties: ['openDirectory']
+					properties: ['openDirectory', 'multiSelections']
 				}
 			}
 			const result = await dialog.showOpenDialog(win, options);

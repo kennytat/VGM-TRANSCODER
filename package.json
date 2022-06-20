@@ -90,7 +90,7 @@
     "localforage": "^1.10.0",
     "lodash": "^4.17.21",
     "m3u8-file-parser": "^0.2.4",
-    "md5": "^2.3.0",
+    "md5-file": "^5.0.0",
     "meilisearch": "^0.20.0",
     "ngx-electron": "^2.2.0",
     "ngx-treeview": "^10.0.2",

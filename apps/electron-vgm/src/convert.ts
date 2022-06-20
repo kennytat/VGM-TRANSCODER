@@ -3,7 +3,7 @@ import { exec, spawn, execSync, spawnSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
-import { showMessageBox, langToLatin, uploadIPFS, rcloneSync, md5Checksum } from './function';
+import { showMessageBox, langToLatin, uploadIPFS, rcloneSync } from './function';
 import { FileInfo, encryptedConf } from './database';
 import { tmpDir } from './index';
 // import { create, globSource, CID } from 'ipfs-http-client'
@@ -17,8 +17,7 @@ const queue = new PQueue();
 export const convertService = () => {
 
 	// Get input and output path from above and execute sh file
-	ipcMain.handle('start-convert', async (event, inputFile: string, pItem, isGPU = true) => {
-
+	ipcMain.handle('start-convert', async (event, inputFile: string, md5 = '', pItem, isGPU = true) => {
 		const checkMP4 = async (tmpPath, fType) => {
 			console.log('checking downloaded file', `${tmpPath}`);
 			return new Promise(async (resolve) => {
@@ -58,19 +57,23 @@ export const convertService = () => {
 
 		const xorKey = async (folderPath: string, fType) => {
 			return new Promise(async (resolve) => {
-				const reader = new M3U8FileParser();
-				const keyPath = fType === 'audio' ? `${folderPath}/128p.m3u8` : fType === 'video' ? `${folderPath}/480p.m3u8` : '';
-				const segment = await fs.readFileSync(keyPath, { encoding: 'utf-8' });
-				reader.read(segment);
-				const m3u8 = reader.getResult();
-				const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
-				// get buffer from key and iv
-				const code = Buffer.from(secret);
-				const key: Buffer = await fs.readFileSync(`${folderPath}/key.vgmk`);
-				const encrypted = bitwise.buffer.xor(key, code, false);
-				await fs.writeFileSync(`${folderPath}/key.vgmk`, encrypted, { encoding: 'binary' });
-				console.log('Encrypt key file done');
-				resolve('done')
+				const keyPath = `${folderPath}/key.vgmk`;
+				const m3u8Path = fType === 'audio' ? `${folderPath}/128p.m3u8` : fType === 'video' ? `${folderPath}/480p.m3u8` : '';
+				if (fs.existsSync(m3u8Path) && fs.existsSync(keyPath)) {
+					const reader = new M3U8FileParser();
+					const segment = await fs.readFileSync(m3u8Path, { encoding: 'utf-8' });
+					reader.read(segment);
+					const m3u8 = reader.getResult();
+					const secret = `VGM-${m3u8.segments[0].key.iv.slice(0, 6).replace("0x", "")}`;
+					// get buffer from key and iv
+					const code = Buffer.from(secret);
+					const key: Buffer = await fs.readFileSync(keyPath);
+					const encrypted = bitwise.buffer.xor(key, code, false);
+					await fs.writeFileSync(keyPath, encrypted, { encoding: 'binary' });
+					console.log('Encrypt key file done');
+					resolve(true);
+				}
+				resolve(false)
 			})
 		}
 
@@ -88,7 +91,7 @@ export const convertService = () => {
 				fileInfo.duration = `${minutes}:${Math.floor(duration) - (minutes * 60)}`;
 				fileInfo.size = parseInt(metaData.filter(name => name.includes("size=")).toString().replace('size=', ''));
 				fileInfo.name = path.parse(file).name;
-				fileInfo.md5 = await md5Checksum(file);
+				fileInfo.md5 = md5;
 				// process filename
 				const pureLatin = langToLatin(fileInfo.name);
 				fileInfo.url = `${pItem.url}.${pureLatin.toLowerCase().replace(/[\W\_]/g, '-').replace(/-+-/g, "-")}`;

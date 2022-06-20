@@ -38,9 +38,9 @@ ffmpegGPUVideoMultiple() {
 	ffmpeg -v quiet -progress pipe:1 -stats_period 0.5 -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "${inPath}" \
 		-filter_complex \
 		"[0:v]split=3[v1][v2][v3]; \
-[v1]scale_npp=w=1920:h=1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[v1out]; \
-[v2]scale_npp=w=1280:h=720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2[v2out]; \
-[v3]scale_npp=w=854:h=480:force_original_aspect_ratio=decrease,pad=854:480:(ow-iw)/2:(oh-ih)/2[v3out]" \
+[v1]scale_npp=w=1920:h=1080:force_original_aspect_ratio=decrease[v1out]; \
+[v2]scale_npp=w=1280:h=720:force_original_aspect_ratio=decrease[v2out]; \
+[v3]scale_npp=w=854:h=480:force_original_aspect_ratio=decrease[v3out]" \
 		-map "[v1out]" -c:v h264_nvenc -preset:v p7 -tune:v hq -rc:v vbr -cq:v 19 -b:v:0 "$rate1080"K -maxrate:v:0 "$rate1080"K -bufsize:v:0 "$buf1080"K -g 48 -sc_threshold 0 -keyint_min 48 \
 		-map "[v2out]" -c:v h264_nvenc -preset:v p7 -tune:v hq -rc:v vbr -cq:v 19 -b:v:1 "$rate720"K -maxrate:v:1 "$rate720"K -bufsize:v:1 "$buf720"K -g 48 -sc_threshold 0 -keyint_min 48 \
 		-map "[v3out]" -c:v h264_nvenc -preset:v p7 -tune:v hq -rc:v vbr -cq:v 19 -b:v:2 "$rate480"K -maxrate:v:2 "$rate480"K -bufsize:v:2 "$buf480"K -g 48 -sc_threshold 0 -keyint_min 48 \
@@ -113,11 +113,11 @@ ffmpegThumbnail() {
 	if [[ $hardware == 'cpu' ]]; then
 		scale="scale"
 		inputOption="-threads 1 -skip_frame nokey"
-		outputOption="fps=1/7,select='not(mod(n\,5))' -format nv12 -r 0.1 -frames:v 7 -vsync vfr -q:v 2 -vcodec libwebp -lossless 0 -compression_level 6"
+		outputOption="select='not(mod(n\,5))',format=nv12,fps=1/7 -r 0.1 -frames:v 7 -vsync vfr -q:v 2 -vcodec libwebp -lossless 0 -compression_level 6"
 	elif [[ $hardware == 'gpu' ]]; then
 		scale="scale_npp"
 		inputOption="-hwaccel cuvid -c:v h264_cuvid -threads 1 -skip_frame nokey"
-		outputOption="fps=1/7,select=\'not(mod(n\,5))\',hwdownload -format nv12 -r 0.1 -frames:v 7 -vsync vfr -q:v 2 -vcodec libwebp -lossless 0 -compression_level 6"
+		outputOption="select='not(mod(n\,5))',hwdownload,format=nv12,fps=1/7 -r 0.1 -frames:v 7 -vsync vfr -q:v 2 -vcodec libwebp -lossless 0 -compression_level 6"
 	fi
 	ffmpeg -v quiet -y -ss 00:00:10 ${inputOption} -i "${inPath}" \
 		-vf ${scale}=1920:1080,${outputOption} "$outPath"/1080/%01d.webp \
@@ -162,7 +162,7 @@ mkdir -p "$outPath" && cd "$outPath" &&
 	else
 		mkdir -p "$outPath"/128p && ffmpegAudioCPU
 	fi &&
-	rm file.keyinfo
+	rm -rf file.keyinfo
 # Timer end
 ((end = $(date +%s) - $start))
 echo "Total converted time: $(date -u -d @${end} +"%T")"
