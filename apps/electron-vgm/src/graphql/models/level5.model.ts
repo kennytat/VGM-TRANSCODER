@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { ObjectType, Field, Int } from '@nestjs/graphql'
+import { ObjectType, Field, Int, Float } from '@nestjs/graphql'
 import { Level4 } from './level4.model'
 import { Level6 } from './level6.model'
 
@@ -23,8 +23,8 @@ export class Level5 {
   @Field((type) => Boolean, { nullable: true })
   isLeaf: boolean
 
-  @Field((type) => String)
-  location: string
+  @Field((type) => String, { nullable: true })
+  md5: string
 
   @Field((type) => String)
   url: string
@@ -50,6 +50,9 @@ export class Level5 {
   @Field((type) => String, { nullable: true })
   hash?: string
 
+  @Field((type) => String, { nullable: true })
+  khash?: string
+
   @Field((type) => Int, { nullable: true })
   audience?: number
 
@@ -62,7 +65,7 @@ export class Level5 {
   @Field((type) => String, { nullable: true })
   duration?: string
 
-  @Field((type) => Int, { nullable: true })
+  @Field((type) => Float, { nullable: true })
   size?: number
 
   @Field((type) => [Level4])

@@ -142,7 +142,7 @@
   "Experimental": {
     "FilestoreEnabled": false,
     "UrlstoreEnabled": false,
-    "ShardingEnabled": false,
+    "ShardingEnabled": true,
     "GraphsyncEnabled": false,
     "Libp2pStreamMounting": false,
     "P2pHttpProxy": false,

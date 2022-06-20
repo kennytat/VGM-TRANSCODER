@@ -12,25 +12,24 @@
             <ion-label>
               {{ _dbInit ? 'Database Connected' : 'Connect Database' }}
             </ion-label>
+            <!-- <ion-button
+              fill="outline"
+              slot="end"
+              style="font-size: 17px"
+              (click)="test()"
+            >
+              test
+            </ion-button> -->
             <ion-button
               fill="clear"
               slot="end"
               style="margin: 0; font-size: 17px"
               color="warning"
-              (click)="downloadDB()"
-            >
-              <ion-icon name="download-outline"> </ion-icon>
-            </ion-button>
-            <ion-button
-              fill="clear"
-              slot="end"
-              style="margin: 0; font-size: 17px"
-              color="{{_searchInit ? 'success' : 'dark'}}"
-              (click)="uploadDB()"
-              [disabled]="!_searchInit"
+              (click)="exportAPI()"
             >
               <ion-icon name="cloud-upload-outline"> </ion-icon>
             </ion-button>
+
             <ion-button
               fill="clear"
               slot="end"
@@ -200,10 +199,10 @@
                           </div>
                           <div class="file-info-segment" *ngIf="pathFilter">
                             <div>
-                              <ion-label>Location</ion-label>
+                              <ion-label>MD5</ion-label>
                               <ion-input
                                 type="text"
-                                placeholder="{{ file.location}}"
+                                placeholder="{{ file.md5}}"
                                 value=""
                                 [style.pointerEvents]="'none'"
                               ></ion-input>
@@ -233,12 +232,12 @@
                           <div class="file-info-segment" *ngIf="metaFilter">
                             <div>
                               <ion-label>Updated</ion-label>
-                              <input
+                              <ion-input
                                 type="text"
                                 placeholder="{{file.updatedAt | date }}"
                                 value=""
                                 [style.pointerEvents]="'none'"
-                              />
+                              ></ion-input>
                             </div>
                             <div>
                               <ion-label>Keyword</ion-label>

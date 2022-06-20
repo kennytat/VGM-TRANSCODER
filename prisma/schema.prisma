@@ -24,9 +24,10 @@ model Level1 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String
-  isLeaf    Boolean  @default(false)
+  md5       String?
+  isLeaf    Boolean? @default(false)
   isVideo   Boolean
+  url       String   @default("")
   name      String
   count     Int      @default(0)
   // parent children list
@@ -44,22 +45,23 @@ model Level2 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   // children list
   // parent children list
   parent    Level1   @relation(fields: [pid], references: [id])
@@ -76,22 +78,23 @@ model Level3 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   parent    Level2   @relation(fields: [pid], references: [id])
   children  Level4[]
 
@@ -106,22 +109,23 @@ model Level4 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   parent    Level3   @relation(fields: [pid], references: [id])
   children  Level5[]
 
@@ -136,22 +140,23 @@ model Level5 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   parent    Level4   @relation(fields: [pid], references: [id])
   children  Level6[]
 
@@ -166,22 +171,23 @@ model Level6 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   parent    Level5   @relation(fields: [pid], references: [id])
   children  Level7[]
 
@@ -196,22 +202,23 @@ model Level7 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // topic & item fields
-  location  String   @default("")
   isVideo   Boolean
   url       String   @default("")
   name      String
   count     Int      @default(0)
   isLeaf    Boolean?
   // item only fields
+  md5       String?
   keyword   String?
   thumb     String?
   qm        String?
   hash      String?
+  khash     String?
   audience  Int?
   mtime     Int?
   viewCount Int?
   duration  String?
-  size      Int?
+  size      Float?
   parent    Level6   @relation(fields: [pid], references: [id])
   // children Level8[]          ?????????????
 

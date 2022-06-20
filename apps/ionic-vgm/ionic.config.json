@@ -1,8 +1,7 @@
 {
   "name": "vgm",
-  "type": "angular",
   "integrations": {
     "capacitor": {}
   },
-  "app_id": ""
+  "type": "angular"
 }

@@ -68,3 +68,42 @@
 hr.new {
   border-top: 1px solid rgba(var(--ion-color-dark-rgb), 0.4);
 }
+
+:root {
+	.toast-success {
+    text-align: center !important;
+		--background:var(--ion-color-success); 
+		font-weight: bold;
+    color: black;
+  }
+	.toast-error {
+    text-align: center !important;
+		--background: var(--ion-color-warning);
+		font-weight: bold;
+    color: black;
+  }
+  .setting-modal {
+    --width: 600px;
+    --height: 600px;
+    ion-content {
+      --padding-start: 10px;
+      --padding-bottom: 10px;
+      --padding-end: 10px;
+      ion-card {
+				ion-card-content {
+					padding-top: 0;
+					padding-bottom: 0;
+				}
+        ion-list {
+          justify-content: center;
+					ion-row {
+						ion-item {
+							width: 100%;
+							--padding-start: 0
+						}
+					}
+        }
+      }
+    }
+  }
+}
